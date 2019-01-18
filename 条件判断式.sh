@@ -68,10 +68,20 @@
     ----------------------------   3 使用 && 和  ||  -------------------------------
     ## && 条件1执行成功, 执行条件 2
     [gkdaxue]# name='www gkdaxue com'
+    
+    ## 条件1 执行失败, 不执行条件2
+    [gkdaxue]# [ "${name}" == 'www.gkdaxue.com' ] && echo 'equals'
+    ## 条件1 执行成功, 执行条件2
     [gkdaxue]# [ "${name}" == 'www gkdaxue com' ] && echo 'equals'
     equals
     
+    
     ## || 条件1执行失败, 执行条件2
+    [gkdaxue]# name='www gkdaxue com'
+    
+    ## 条件1执行成功, 不执行条件2
+    [gkdaxue]# [ "${name}" == 'www gkdaxue com' ] || echo 'no equals'
+    # 条件1执行失败, 执行条件2
     [gkdaxue]# [ "${name}" == 'www.gkdaxue.com' ] || echo 'no equals'
     no equals
     
