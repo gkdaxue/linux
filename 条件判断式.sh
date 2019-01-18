@@ -25,7 +25,6 @@
     ## 使用变量不用引号的情况, 报错,提示参数过多
     [gkdaxue]# [ ${name} == 'www gkdaxue com' ]
     -bash: [: too many arguments
-
     ## 相当于是这么操作的, 但是因为一个判断式仅能有两个数据的对比, 所以提示参数太多
     [gkdaxue]# [ www gkdaxue com == 'www gkdaxue com' ]
     -bash: [: too many arguments
@@ -41,24 +40,21 @@
     ------------------------------   2 多重判断  -------------------------------
     ## -a : 表示两边都要满足条件
     [gkdaxue]# name='www gkdaxue com'
-    
     ## 满足前边, 不满足后边
     [gkdaxue]# [ "${name}" == 'www gkdaxue com' -a "${name}" == 'www.gkdaxue.com' ]
-    
     ## 所以上次命令执行失败, 返回非0(各个linux返回值可能不同,只要非0表示执行失败)
     [gkdaxue]# echo $?
     1
-    
     ## 这个为啥是 0 呢, 因为表示的是上个命令执行, echo 成功执行, 所以是 0 
     [gkdaxue]# echo $?
     0
+    
     
     ## 同理 -o : 只要满足一个即可,一个都不满足, 返回非 0 
     [gkdaxue]# name='www gkdaxue com'
     [gkdaxue]# [ "${name}" == 'www gkdaxue com' -o "${name}" == 'www.gkdaxue.com' ]
     [gkdaxue]# echo $?
     0
-    
     ##  -o : 一个都不满足
     [gkdaxue]# [ "${name}" == 'www.gkdaxue.com' -o "${name}" == 'www.gkdaxue.com' ]
     [gkdaxue]# echo $?
@@ -68,7 +64,6 @@
     ----------------------------   3 使用 && 和  ||  -------------------------------
     ## && 条件1执行成功, 执行条件 2
     [gkdaxue]# name='www gkdaxue com'
-    
     ## 条件1 执行失败, 不执行条件2
     [gkdaxue]# [ "${name}" == 'www.gkdaxue.com' ] && echo 'equals'
     ## 条件1 执行成功, 执行条件2
@@ -78,7 +73,6 @@
     
     ## || 条件1执行失败, 执行条件2
     [gkdaxue]# name='www gkdaxue com'
-    
     ## 条件1执行成功, 不执行条件2
     [gkdaxue]# [ "${name}" == 'www gkdaxue com' ] || echo 'no equals'
     # 条件1执行失败, 执行条件2
