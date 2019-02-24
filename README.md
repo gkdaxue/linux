@@ -1,3 +1,6 @@
+[第一章](https://github.com/gkdaxue/linux/blob/master/tutorial/chapter-00.md)
+
+
 ## Welcome to GitHub Pages
 
 You can use the [editor on GitHub](https://github.com/gkdaxue/linux/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
