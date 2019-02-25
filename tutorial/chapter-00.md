@@ -47,7 +47,7 @@
 
 # Linux是什么
 
-    Linux就是一个操作系统,就是内核(Kernel)与系统调用(System Call)那两层. 操作系统知识在管理 整个硬件信息, 包含CPU, 内存, 输入输出设备及系统文件. 如图0-3所示
+    Linux就是一个操作系统, 就是内核(Kernel)与系统调用(System Call)那两层. 操作系统知识在管理整个硬件信息, 包含CPU, 内存, 输入输出设备及系统文件等. 如图0-3所示
 ![操作系统的角色](https://github.com/gkdaxue/linux/raw/master/image/chapter_03.png)  
 
 ## 内核(Kernel)
