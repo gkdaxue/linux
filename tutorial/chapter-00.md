@@ -124,7 +124,7 @@
 > 
 > 逻辑分区从编号5开始
 
-![第一个扇区中的数据信息](https://github.com/gkdaxue/linux/raw/master/image/chapter_04.png)
+![第一个扇区中的数据信息](https://github.com/gkdaxue/linux/raw/master/image/chapter_04.png)<br>
     `由于分区表只有 64字节, 最多只能容纳四个分区`, 这四个分区被称为主(Primary)或扩展(Extended)分区,  那么是不是表示我的一块硬盘最多只能分四个区呢, 当然不是, 这就要通过我们说的扩展分区来解决更多的分区需求.
 
 > **`扩展分区本身并不能被用来格式化`**
