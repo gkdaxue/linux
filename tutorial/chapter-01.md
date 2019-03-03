@@ -112,7 +112,9 @@
 
 #### 自定义磁盘分区
 
-    准备使用自定义分区, 来让我们熟悉前一章节的内容, 主分区, 扩展分区和逻辑分区等等.
+    准备使用自定义分区, 来让我们熟悉前一章节的内容, 主分区, 扩展分区和逻辑分区等等. 
+
+**为了方便计算和记忆, 我们设定  1G = 1000M**
 
 | 目录信息  | 占据空间          |
 | ----- | ------------- |
@@ -133,6 +135,15 @@
 > 选中 /dev/sda (想一下磁盘命名规则, 为啥是/dev/sda ? ) , 然后点击 `Create` 按钮 , 选择 `Standard Partition (标准分区)`  然后点击 'Create' 按钮,  创建以上几个分区, 都是这个步骤. 然后写入不同的 `Mount Point` 以及 `Size` 即可.
 
 ![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_021.png)
+
+> ext4 : Linux使用的文件系统类型
+> 
+> physical volumn(LVM) : 弹性调整文件系统大小的一种机制
+> 
+> software RAID : 不同RAID的级别效果不同
+> 
+> swap : 内存交换空间 (**不需要挂载点**)
+
 ![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_022.png)
 ![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_023.png)
 ![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_024.png)
@@ -140,7 +151,9 @@
 
 ##### 创建 swap
 
-> 其他内容类似, 只是在弹框的选择不同而已, File System Type 为 `swap` (只能下拉选), 无 `Mount Point`
+> 其他内容类似, 只是在弹框的选择不同而已, File System Type 为 `swap` (只能下拉选), 无 `Mount Point(挂载点)`
+> 
+> 有些教程中, 会提到 `swap的大小为物理内存的2倍`, 一般会是这样, 不过还是要看具体需求.
 
 ![创建swap](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_026.png)
 
@@ -167,6 +180,8 @@
 > 已经全部创建完成, 确认无误,  点击`Next` 按钮, 如果有不同, 请修改后再点击 `Next` 按钮
 
 ![创建home](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_032.png)
+
+>     我们发现, 系统已经帮我们自己创建了 主分区, 扩展分区和逻辑分区. 并且把所有的可用空间都分给了扩展分区, 然后我们就可以再此基础上划分出来逻辑分区. 可以复习一下分区设备文件的命名规则.
 
 #### 格式化并写入硬盘
 
