@@ -1,4 +1,4 @@
-# 安装CentOS 6.9
+# 安装实验环境
 
 ## 实验环境
 
@@ -60,6 +60,133 @@
 
 ![创建虚拟机](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_000.gif)
 
-### 安装操作系统
+### 安装操作系统 (CentOS 6.9 64位)
 
+![开启虚拟机](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_008.png)
 
+---
+
+![安装操作系统](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_009.png)
+
+---
+
+![跳过检查](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_010.png)
+
+---
+
+![安装引导界面](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_011.png)
+
+---
+
+![选择语言](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_012.png)
+
+---
+
+![选择键盘](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_013.png)
+
+---
+
+![设备类型](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_014.png)
+
+---
+
+![删除数据](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_015.png)
+
+---
+
+![设置主机名](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_016.png)
+
+---
+
+![选择时区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_017.png)
+
+---
+
+![设置root密码](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_018.png)
+
+---
+
+![选择自定义分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_019.png)
+
+---
+
+#### 自定义磁盘分区
+
+    准备使用自定义分区, 来让我们熟悉前一章节的内容, 主分区, 扩展分区和逻辑分区等等.
+
+| 目录信息  | 占据空间          |
+| ----- | ------------- |
+| /     | 2GB           |
+| /boot | 200MB         |
+| /usr  | 4GB           |
+| /var  | 2GB           |
+| /tmp  | 1GB           |
+| swap  | 1GB           |
+| /home | 5GB ( LVM模式 ) |
+
+##### 创建普通分区
+
+![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_020.png)
+
+> 如 /, /boot, /usr, /var, /tmp这些
+> 
+> 选中 /dev/sda (想一下磁盘命名规则, 为啥是/dev/sda ? ) , 然后点击 `Create` 按钮 , 选择 `Standard Partition (标准分区)`  然后点击 'Create' 按钮,  创建以上几个分区, 都是这个步骤. 然后写入不同的 `Mount Point` 以及 `Size` 即可.
+
+![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_021.png)
+![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_022.png)
+![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_023.png)
+![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_024.png)
+![创建普通分区](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_025.png)
+
+##### 创建 swap
+
+> 其他内容类似, 只是在弹框的选择不同而已, File System Type 为 `swap` (只能下拉选), 无 `Mount Point`
+
+![创建swap](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_026.png)
+
+##### 创建 LVM
+
+>  因为 /home 要求为 lvm 模式, 所以需要先创建 lvm
+> 
+> 和刚才创建 swap 类型, 不过不是 swap, 需要选择 `physical volume (LVM)` 这个, 然后选择输入大小, 点击 `OK` 按钮即可
+
+![创建lvm](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_027.png)
+
+##### 创建 /home
+
+> 先选择自己创建的 lvm, 然后点击 `Create` 按钮, 选择 `LVM Volume Group` 后点击 `Create` 按钮, 在按图中设置即可, 因为涉及到后面的内容, 所以只要做出来就可以.
+
+![创建home](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_028.png)
+![创建home](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_029.png)
+![创建home](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_030.png)
+
+![创建home](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_031.png)
+
+##### 全部创建完成截图
+
+> 已经全部创建完成, 确认无误,  点击`Next` 按钮, 如果有不同, 请修改后再点击 `Next` 按钮
+
+![创建home](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_032.png)
+
+#### 格式化并写入硬盘
+
+![写入硬盘](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_033.png)
+![写入硬盘](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_034.png)
+![写入硬盘](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_035.png)
+
+#### 其他操作
+
+> 选择需要安装的软件信息, 等待安装完成,  然后点击 'Reboot' 按钮, 等待系统重新启动完成, 然后设置即可.
+
+![其他操作](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_036.png)
+![其他操作](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_037.png)
+![其他操作](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_038.gif)
+
+> 到此, 我们的操作系统就安装完成了, 就可以正常登录使用了, 有兴趣的同学, 可以自己登录摸索一番.
+
+### 快照的使用
+
+>      快照的主要作用是备份系统, 这是VMwave 自带的一个功能, 在真正服务器上是没有这个功能, 如果我们之前备份了一个快照, 然后不小心执行了 `rm -rf /*` 这个爆炸性的命令, 系统就会挂了, 那么我们就可以通过快照功能来还原系统, 而不必重新安装系统.
+
+![快照操作](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_039.png)
+![快照操作](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_040.png)
