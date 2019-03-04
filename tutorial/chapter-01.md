@@ -46,6 +46,12 @@
 
    ![网络类型](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_005.png)
 
+   > 桥接模式  : 相当于在物理主机与虚拟机网卡之间架设了一座桥梁，可以通过物理主机的网卡访问外网
+   > 
+   > NAT模式 : 让VM虚拟机的网络服务发挥路由器的作用，可以通过物理主机访问外网，对应物理网卡是VMnet8
+   > 
+   > 仅主机模式 : 仅让虚拟机与物理机通信不能访问外网，对应的物理网卡是VMnet1
+
 6. 磁盘大小( 40G )
 
    ![磁盘大小](https://github.com/gkdaxue/linux/raw/master/image/chapter_A1_006.png)
@@ -246,4 +252,126 @@
 
      `启动终端后, 在终端设备附加一个交互式应用程序`, 这样我们就可以通过终端, 来执行我们的操作. 
 
+## 分类
 
+Graphical User Interface : 图形用户界面 (GUI), 例如 X protocol, GNOME, Window Manage, Desktop等.
+
+Command Line Interface : 命令行界面 (CLI  或者叫 终端界面\[ terminal, console \] ), 例如 sh, csh, tcsh, ksh, Bash 等,
+
+>      Shell(也称为终端或壳)是一个命令行工具。充当的是人与内核（硬件）之间的翻译官，用户把一些命令“告诉”终端，它就会调用相应的程序服务去完成某些工作。现在许多主流Linux系统默认使用的终端是`Bash（Bourne-Again Shell` 解释器. 
+
+所以我们看下图, 体会一下 Shell 的作用,  是否有了一些新的理解和体会.
+
+![shell的位置](https://github.com/gkdaxue/linux/raw/master/image/chapter_03.png)
+
+## CUI 与 CLI 的切换
+
+     交互式界面有 `GUI` 以及 `CLI` 这两种方式, 那么它们之前应该怎么进行切换呢? 
+
+>      命令行模式 : 也被称为终端界面( terminal 或 console ), Linux 默认会提供6个 terminal 来让用户登录使用, 切换的的方式为`Ctrl + Alt + F[1-6]` 的组合按钮. 并分别命名为 `tty[1-6]` . 这就是我们所说的 `虚拟终端(本地终端)`
+> 
+>      图形界面 : `Ctrl + Alt + F7` (但是在VMwave中, 却是 `Ctrl + Alt + F1`) `图形终端`
+
+     在 Linux 默认登录模式中, 主要有两种, 一种是 `纯文本界面(runlevel 3)` 的登录环境, 还有一种就是 `图形化的登录环境(runlevel 5)` , 我们安装时, 没有更改, 所以默认是图形化界面登录.
+
+### 命令行登录系统
+
+     那么我们如何使用终端界面来登录呢? 这就需要用到我们之前说的 `Ctrl + Alt + F[1-6]` 了,  例如我们刚才按了 `Ctrl + Alt + F2` 就打开了一个纯文本界面来登录, 显示如下:
+
+```
+CentOS release 6.9 (Final)
+Kernel 2.6.32-696.el6.x86_64 on an x86_64
+localhost login: root
+Passwd:    <= 输入用户名, 敲回车才会显示此行, 并且输入密码时, 不显示出来
+[root@localhost ~]#
+```
+
+> CentOS release 6.9 (Final) : Linux 发行的名称(CentOS) 和 版本(6.9)
+> 
+> Kernel 2.6.32-696.el6.x86\_64 on an x86\_64 : 内核版本以及硬件信息
+> 
+> localhost login : 
+> 
+>         localhost : 主机名(因为我们的主机名为 localhost.localdomain, 通常只取第一个小数点前的字母)
+>     
+>         login : 后边可以输入用户名, 敲击回车即可输入密码
+> 
+> Passwd : 只有输入用户名并敲回车才会显示, `输入的密码不会显示` , 所以输入完密码, 敲击回车即可
+> 
+> \[root@localhost ~\]# :   PS1 命令提示符( prompt ).  以后讲解, 现在了解即可.
+> 
+>         root : 登录的用户名
+>     
+>         localhost : 主机名
+>     
+>         ~ : 是一个变量, 表示用户的家目录, 比如 root 的家目录为 /root
+>     
+>         # : root的命令提示符为 # , 一般用户的命令提示符为 $ 
+
+注销登录, 离开系统, 使用 `exit` 命令即可:
+
+> \[root@localhost ~\]# exit \
+
+### Bash (Bourne-Again Shell)
+
+     我们在之前说过 shell 可以称为终端, 并且现在许多主流Linux系统默认使用的终端是`Bash (Bourne-Again Shell)` 解释器. 那么Bash 到底有哪些优点呢, 让主流的 Linux 都选择了它, 主要如下:
+
+> 1. 通过上下方向键来调取过往执行过的Linux命令
+> 
+> 2. 命令或参数仅需输入前几位就可以用Tab键补全
+> 
+> 3. 具有强大的批处理脚本
+> 
+> 4. 具有实用的环境变量功能
+
+我们会在以后的实验中, 体会到我们说的这些优点. 以下内容初学者知道就好
+
+```Shell
+## 查看当前系统中默认的 Shell
+[root@localhost ~]# echo $SHELL
+/bin/bash
+
+## 查看系统中所有的 Shell
+[root@localhost ~]# cat /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/bin/dash
+/bin/tcsh
+/bin/csh
+```
+
+
+
+### PS1 : 命令提示符( prompt )
+
+这里只要先了解即可, 以后可以来深入理解一下.
+
+```
+[root@localhost ~]# echo $PS1   # echo 输出变量的意思
+[\u@\h \W]\$
+```
+
+| 符号   | 含义                     |
+| ---- |:---------------------- |
+| \h   | 显示简写主机名                |
+| \u   | 显示当前用户名                |
+| \d   | 显示日期,格式为"星期 月 日"       |
+| \t   | 24小时制, 格式为"HH:MM:SS"   |
+| \T   | 12小时制, 格式为"HH:MM:SS"   |
+| \A   | 24小时制, 格式为"HH:MM"      |
+| \u   | 显示当前用户名                |
+| \w   | 显示当前所在目录的完整名称          |
+| \W   | 显示最后一次所在的目录            |
+| \# : | 执行的第几个命令               |
+| \$ : | 提示符, root (#), 普通用户($) |
+
+所以这里我们就可以自己理解一下 `[root@localhost ~]#` 是什么意思了
+
+### 总结
+
+     Shell 是一个命令行的交互式接口, 也可以称之为终端, 因为是依附在终端上的一个程序而已, Shell 充当的是 人与内核之间的翻译官，用户把一些命令“告诉”终端，它就会调用相应的程序服务去完成某些工作.
+
+     在服务器上, 一般是不会给系统安装上图形化界面(是的, 图形化界面不是必选项), 所以一般都是通过 命令行界面(终端界面) 来操作我们的系统. 接下来我们学习一些基本的操作.
+
+# 命令行模式
