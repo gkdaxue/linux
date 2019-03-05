@@ -97,4 +97,211 @@ command not found 出现的原因如下 :
 
 # Linux 常用命令
 
-111
+## man(manual 操作说明) page
+
+     Linux系统中有那么多命令，某个命令是干嘛用的？ 以及在日常工作中遇到了一个不熟悉的Linux命令，又如何才能知道它有哪些可用参数？只要执行 `man command` 即可, 我们使用 `pwd` 来实验
+
+```bash
+[root@localhost ~]# man pwd   ## 输入此命令后, 会进入 man page 功能界面
+
+PWD(1)  <== 注意这个数字, 等会讲解         User Commands                          PWD(1)
+
+
+NAME   <== 命令的名称和用途
+
+       pwd - print name of current/working directory
+
+SYNOPSIS   <== 命令语法（摘要）
+
+       pwd [OPTION]...
+
+DESCRIPTION  <== 详细描述命令作用，及其 选项、参数的作用
+
+       Print the full filename of the current working directory.
+
+       -L, --logical   <== 有长格式和短格式两种形式
+
+              use PWD from environment, even if it contains symlinks
+
+       -P, --physical
+              avoid all symlinks  <== 选项说明
+
+
+       --help display this help and exit
+
+       --version
+              output version information and exit
+
+       NOTE:  your  shell may have its own version of pwd, which usually supersedes the ver-
+       sion described here.  Please refer to your shell’s documentation  for  details  about
+       the options it supports.
+
+
+AUTHOR  <== 作者信息
+
+       Written by Jim Meyering.
+
+REPORTING BUGS  <== 反馈bug地址
+
+       Report pwd bugs to bug-coreutils@gnu.org
+       GNU coreutils home page: <http://www.gnu.org/software/coreutils/>
+       General help using GNU software: <http://www.gnu.org/gethelp/>
+       Report pwd translation bugs to <http://translationproject.org/team/>
+
+COPYRIGHT    <== 版权信息
+
+       Copyright © 2010 Free Software Foundation, Inc.  License GPLv3+: GNU GPL version 3 or
+       later <http://gnu.org/licenses/gpl.html>.
+       This is free software: you are free to change and redistribute it.  There is NO  WAR-
+       RANTY, to the extent permitted by law.
+
+SEE ALSO   <== 相关说明
+
+       getcwd(3)
+
+       The  full  documentation  for pwd is maintained as a Texinfo manual.  If the info and
+       pwd programs are properly installed at your site, the command
+
+              info coreutils 'pwd invocation'
+
+       should give you access to the complete manual.
+```
+
+### man 手册分类
+
+| 数字  | 含义                              |
+| --- | ------------------------------- |
+| 1   | 用户在 shell 环境中可以操作的命令或者可执行文件     |
+| 2   | 系统内核可调用的函数和工具                   |
+| 3   | 一些常用的函数(function) 与函数库(library) |
+| 4   | 设备文件的说明                         |
+| 5   | 配置文件或者某些文件的格式                   |
+| 6   | 游戏                              |
+| 7   | 杂项(包含惯例, 协议等)                   |
+| 8   | 系统管理员可以使用的管理命令                  |
+| 9   | 和内核有关的文件                        |
+
+> 上表中的 `1, 5, 8` 这三个比较重要, 请记住这三个数字代表的含义
+
+     从上表中, 我们知道每个数字代表的含义, 所以导致每个命令会有多个不同的文件man page文件, 那么我们如何查看一个命令有哪些 man page 文件呢, 这个时候我们就可以使用 `man -f command` 来查看.
+
+```bash
+[root@localhost ~]# man -f pwd
+pwd                  (1p)  - return working directory name
+pwd                  (1)  - print name of current/working directory
+pwd [builtins]       (1)  - bash built-in commands, see bash(1)
+pwd.h [pwd]          (0p)  - password structure
+
+## 我们可以看出 pwd 有那么多的帮助文件信息
+命令(或文件)以及该命令的意义(数字) 以及 命令的简单说明
+```
+
+     `man command` 到底先显示 哪个数字里面的文件内容呢? 其实这和查询的顺序有关系, 查询的顺序记录在 `/etc/man.conf` 文件中, `先查询到的文件就会被先显示出来`,  一般来说, 因为排序的关系, 所以一般都是先找到数字较小的那个,并显示说来, 所以  `man pw = man 1 pwd`
+
+     那么问题又来了,  `man pwd` 默认显示的是 `PWD(1)`, 那么我如果想要查看 `PWD(1p)` 如何查看呢,  那我们就可以使用  `man  数字  command`,  如 `man 1p pwd`, 具体内容, 请自己查看.
+
+### man page 主要内容结构
+
+     我们可以从上面的执行过程中,  发现 man page 的内容被分成了好几部分, 所以我们来介绍一下各个部分所代表的含义.
+
+| 结构名称        | 描述                   |
+| ----------- | -------------------- |
+| NAME        | 命令名称和用途（摘要）          |
+| SYNOPSIS    | 命令语法（摘要）             |
+| DESCRIPTION | 详细描述命令作用，及其 选项、参数的作用 |
+| EXAMPLES    | 演示（附带简单说明）           |
+| OVERVIEW    | 概述                   |
+| DEFAULTS    | 默认的功能                |
+| OPTIONS     | 具体的可用选项（带介绍）         |
+| ENVIRONMENT | 环境变量                 |
+| FILES       | 用到的文件                |
+| SEE ALSO    | 其他参考                 |
+| BUGS        | bugs                 |
+| AUTHOR      | 作者                   |
+| COPYRIGHT   | 版权                   |
+
+有的 man page 会有很多内容, 所以我们一般的查看方式为:
+
+> 1. 先看 NAME 内容, 知道这个命令是干嘛用的
+> 
+> 2. 在看 SYNOPSIS , 知道如何使用各个选项
+> 
+> 3. 在看 DESCRIPTION 或 EXAMPLES 知道选项的作用及用法
+
+### man page 按键
+
+| 按键                     | 说明                                                              |
+| ---------------------- | --------------------------------------------------------------- |
+| **b, Page Up**         | **向文件首部翻一屏**                                                    |
+| u, Ctrl+U              | 向文件首部翻半屏                                                        |
+| y, k, \<up\>           | 向文件首部翻一行                                                        |
+| d, Ctrl+D              | 向文件尾部翻半屏                                                        |
+| **Space, Page Down**   | **向文件尾翻一屏**                                                     |
+| **Enter, e, \<down\>** | **向文件尾部翻一行**                                                    |
+| number                 | 跳转到当前行+number行                                                  |
+| **g**                  | **回到顶部**                                                        |
+| **G**                  | **回到底部**                                                        |
+| **/KEYWORD**           | **从当前位置向文件尾部搜索KEYWORD, 不区分大小写<br >n : 下一个         N : 上一个**     |
+| **?KEYWORD**           | **从当前位置向文件首部搜索,不区分大小写<br>n : 跟搜索命令同方向下一个      N : 跟搜索命令反放下上一个** |
+| h                      | 显示帮助信息                                                          |
+| **q**                  | **退出**                                                          |
+
+> 上面的按键是在 man page 中才可使用的, 只要把加粗的记住就好了, 用的熟练了, 自然就记住了. 加油
+
+```bash
+[root@localhost ~]# man pwd
+PWD(1)                           User Commands                          PWD(1)
+
+NAME
+       pwd - print name of current/working directory
+
+SYNOPSIS
+       pwd [OPTION]...
+
+DESCRIPTION
+       Print the full filename of the current working directory.
+
+       -L, --logical
+              use PWD from environment, even if it contains symlinks
+.....省略很多...........
+
+:  <== 这是刚进入 man page 时候显示的内容
+
+/pwd   <== 然后按一下 '/' 键 然后输入要查看的关键字, 敲回车就可显示 加粗找到的关键字信息,然后 n 或 N
+```
+
+## man 命令
+
+我们可以通过 `man man` 来了解 man 这个命令有什么作用?
+
+```bash
+[root@localhost ~]# man man  <== 省略部分内容
+
+man - format and display the on-line manual pages <== man 命令做什么的描述
+
+man [-fk] [section] name ...  <== 常用选项
+
+## 选项的用法, 具体干什么的, 自己 man 对应的命令去查看
+-f     Equivalent to whatis. 列出该命令所有的系统说明文件(跟 man 命令有关的说明文件)
+
+-k     Equivalent to apropos. 系统说明中只要含有 man 相关的就列出来.
+
+[root@localhost ~]# man -f man
+man                  (1)  - format and display the on-line manual pages
+man                  (1p)  - display system documentation
+man                  (7)  - macros to format man pages
+man.config [man]     (5)  - configuration data for man
+man [manpath]        (1)  - format and display the on-line manual pages
+man-pages            (7)  - conventions for writing Linux man pages
+
+[root@localhost ~]# man -k man | head -n 5
+aconnect             (1)  - ALSA sequencer connection manager
+add_key              (2)  - Add a key to the kernel's key management facility
+alias [builtins]     (1)  - bash built-in commands, see bash(1)
+alsactl_init         (7)  - alsa control management - initialization
+.............
+```
+
+     经过我们上面的实验. 我们已经初步会使用了man 这个命令来查询命令, 操作都是一样的, 所以以后会省略很多这些方面的内容. 直接开始进行讲解.
+
+
