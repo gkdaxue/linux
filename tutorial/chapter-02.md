@@ -304,4 +304,105 @@ alsactl_init         (7)  - alsa control management - initialization
 
      经过我们上面的实验. 我们已经初步会使用了man 这个命令来查询命令, 操作都是一样的, 所以以后会省略很多这些方面的内容. 直接开始进行讲解.
 
+## echo命令
+
+### 描述
+
+echo 命令用于输出字符串或者变量值
+
+### 语法
+
+> `echo [options] [ 字符串 | $变量 ]`
+> 
+> 之前我们已经讲解过`"[]"` 表示可选的意思, `"|"` 表示 类型可以是字符串或者是变量, 二选一的意思
+
+### 选项
+
+| 选项  | 含义        |
+| --- | --------- |
+| -n  | 不要输出尾部换行符 |
+| -e  | 激活转义字符    |
+
+### 实例
+
+```bash
+## 在 shell 中 # 表示注释的意思, 实际中不会运行注释的内容
+[root@localhost ~]# echo 'www.gkdaxue.com'   # <== 输出字符串
+www.gkdaxue.com
+
+[root@localhost ~]# echo $SHELL   # <== 输出变量, 变量前有 $ 符号.以后讲解变量内容
+/bin/bash
+
+## ";" 表示连续执行多个命令时使用, echo 输出完成会自动换一行
+[root@localhost ~]# echo 'www.gkdaxue.com' ; echo 'www.gkdaxue.com'
+www.gkdaxue.com
+www.gkdaxue.com
+[root@localhost ~]# echo -n 'www.gkdaxue.com' ; echo 'www.gkdaxue.com' # <== 不输出尾部换行符
+www.gkdaxue.comwww.gkdaxue.com
+
+## echo 默认不支持转义字符, \n 表示换行且光标移至行首的意思, 以后再讲
+[root@localhost ~]# echo "www.gkdaxue.com\nwww.gkdaxue.com"
+www.gkdaxue.com\nwww.gkdaxue.com
+[root@localhost ~]# echo -e "www.gkdaxue.com\nwww.gkdaxue.com"
+www.gkdaxue.com
+www.gkdaxue.com
+```
+
+## date命令
+
+### 描述
+
+date命令是我们使用比较频繁的一个命令, 比如我们需要每天备份数据库, 然后把文件自动按照“年-月-日”的格式备份. 只需要看一眼文件名称就能大概了解到文件的备份时间了. 这样便于我们的数据库出现问题时,  快速的进行修复工作.
+
+### 语法
+
+> date   \[option\]   \[+format\]
+> 
+> 命令参数除了前边带有减号 "-"之外,  特殊情况下, 参数的前边也会带有正号"+"的情况存在.
+
+### 选项
+
+| 选项        | 含义                       |
+| --------- | ------------------------ |
+| -d  <字符串> | 显示字符串指定的日期与时间(字符串加上双引号)  |
+| -s  <字符串> | 设置时间(字符串加上双引号)(root才能设置) |
+| -u        | 显示GMT ( GMT指的是格林威治中央区时 ) |
+
+### format 支持的参数
+
+| 参数  | 含义                          |
+| --- | --------------------------- |
+| %%  | 显示一个%                       |
+| %Y  | 年份 ( 四位 )                   |
+| %a  | 年份的最后两个数 ( 00～99 )          |
+| %m  | 月份 ( 01～12 )                |
+| %d  | 日期 ( 01～31 )                |
+| %D  | same %m/%d/%y               |
+| %F  | same %Y-%m-%d               |
+| %H  | 小时 ( 00～23 )                |
+| %M  | 分钟 ( 00-59 )                |
+| %S  | 秒 ( 00～59 )                 |
+| %T  | same %H:%M:%S               |
+| %s  | 从1970.1.1 00:00:00 到目前经历的秒数 |
+| %j  | 一年中第几天(001～336)             |
+
+### 实例
+
+```bash
+## 显示当前系统时间
+[root@localhost ~]# date
+Thu Mar  7 13:42:28 CST 2019  <== CST 为中国标准时间
+
+
+## 显示当前 GMT 系统时间
+[root@localhost ~]# date -u
+Thu Mar  7 05:42:28 UTC 2019  # <==  CST = GMT + 8 因为中国在 +8 时区, GMT 为 0 时区
+```
+
+
+
+111
+
+
+
 
