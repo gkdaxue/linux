@@ -421,14 +421,12 @@ Thu Mar  7 06:36:56 UTC 2019  # <==  CST = GMT + 8 因为中国在 +8 时区, GM
 ```bash
 ## 各位能看出我现在是什么用户名吗? 为什么不允许操作
 [gkdaxue@localhost ~]$ date -s "20080808"
-
 date: cannot set date: Operation not permitted
 Fri Aug  8 00:00:00 CST 2008
 
 ## 以下这些命令, 为什么又允许操作了?
 ## 只设置日期, 时间变为 00:00:00
 [root@localhost ~]# date -s "20080808" ; date "+%F %T"
-
 Fri Aug  8 00:00:00 CST 2008
 2008-08-08 00:00:00
 
@@ -546,17 +544,17 @@ echo $difference seconds.
 
 ### 选项
 
-| 选项  | 含义                              |
-| --- | ------------------------------- |
-| -a  | 显示所有文件(包含隐藏文件)                  |
-| -A  | 显示所以文件(包含隐藏文件), 不显示 . 和 ..      |
-| -l  | 长格式显示 (显示权限, 所有者, 所有组, 文件大小等信息) |
-| -i  | 显示文件的 i 节点号                     |
-| -d  | 显示目录本身信息，而不是目录下的文件. 一般与 -l 连用   |
-| -h  | 人性化显示，按照我们习惯的单位显示文件大小           |
-| -t  | 用文件和目录的更改时间排序                   |
-| -S  | 以文件大小排序                         |
-| -r  | 将文件以相反次序显示(原定依英文字母次序)           |
+| 选项          | 含义                              |
+| ----------- | ------------------------------- |
+| -a          | 显示所有文件(包含隐藏文件)                  |
+| -A          | 显示所以文件(包含隐藏文件), 不显示 . 和 ..      |
+| -l ( 小写 L ) | 长格式显示 (显示权限, 所有者, 所有组, 文件大小等信息) |
+| -i          | 显示文件的 i 节点号                     |
+| -d          | 显示目录本身信息，而不是目录下的文件. 一般与 -l 连用   |
+| -h          | 人性化显示，按照我们习惯的单位显示文件大小           |
+| -t          | 用文件和目录的更改时间排序                   |
+| -S          | 以文件大小排序                         |
+| -r          | 将文件以相反次序显示(原定依英文字母次序)           |
 
 ### 实例
 
@@ -580,7 +578,6 @@ anaconda-ks.cfg  install.log  install.log.syslog
 
 ## 查看其它目录
 [root@localhost ~]# ls /home/   #<== /home 默认为一般用户的家目录
-
 gkdaxue  lost+found
 
 ## -a : 显示所有文件, 包含隐藏文件 ( .开头的文件叫做隐藏文件 )
@@ -594,7 +591,8 @@ anaconda-ks.cfg  .bash_logout   .bashrc  .cshrc  install.log         .lesshst  .
 .bash_history    .bash_profile  .config  .gconf  install.log.syslog  .tcshrc
 
 ## -l : 长格式显示, 包含权限, 所有者, 所有组, 文件大小等信息
-[root@localhost ~]# ls -l
+[root@localhost ~]# ls -l  # <== 可以简写为 ll 因为 alias 别名的原因.
+
 total 72
 -rw-------. 1 root root  1638 Mar  3 11:42 anaconda-ks.cfg
 -rw-r--r--. 1 root root 50698 Mar  3 11:42 install.log
@@ -638,7 +636,7 @@ total 72K
 
 ### 描述
 
-     以 `绝对路径的方式( 讲解FHS时细说 )` 显示当前工作目录 ( print working directory ), 绝对路径现在只要知道是以 '/ ' 开头的路径即可.
+     以 `绝对路径的方式( 讲解FHS时细说 )` 显示当前工作目录 ( print working directory ),  绝对路径现在只要知道是以 '/ ' 开头的路径即可.
 
 ### 语法
 
@@ -653,4 +651,30 @@ total 72K
 | -L  | 有链接文件时，直接显示链接文件的路径，(不加参数时默认此方式)                              |
 | -p  | 有链接文件时，不使用链接路径，直接显示链接文件所指向的文件,<br>多层连接文件时，显示所有连接文件最终指向的文件全路径 |
 
-222
+### 实例
+
+```bash
+## 显示当前工作目录
+[root@localhost ~]# pwd
+/root
+
+## 链接文件和我们 Windows 中常说的快捷方式类似.
+## /var/mail 为链接文件 实际指向 /var/spool/mail 这个文件
+[root@localhost ~]# ls /var/mail
+lrwxrwxrwx. 1 root root 10 Mar  3 11:33 /var/mail -> spool/mail
+
+## cd 命令是跳转工作目录的意思( 稍后讲解 ), 然后在查看当前工作目录
+[root@localhost ~]# cd /var/mail/
+[root@localhost mail]# pwd -L # <==  等于 pwd 命令
+/var/mail
+
+## -P 显示链接文件所指向的文件的路径
+[root@localhost mail]# pwd -P
+/var/spool/mail
+```
+
+## cd命令
+
+
+
+
