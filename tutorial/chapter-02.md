@@ -270,6 +270,14 @@ DESCRIPTION
 /pwd   <== 然后按一下 '/' 键 然后输入要查看的关键字, 敲回车就可显示 加粗找到的关键字信息,然后 n 或 N
 ```
 
+## 命令行执行命令的情况
+
+从上面的练习中我们知道了在命令行模式里面执行命令时, 会有两种主要的情况:
+
+> 1. 该命令会直接显示结果, 然后返回到命令提示符等待下一次命令的输入
+> 
+> 2. 进入到该命令的环境, 直到结束该命令才回到命令提示符的环境(比如 man)
+
 ## man 命令
 
 我们可以通过 `man man` 来了解 man 这个命令有什么作用?
@@ -395,15 +403,12 @@ date 命令用于 显示(格式化)  或者 设置系统时间(仅root可以设�
 [root@localhost ~]# date
 Thu Mar  7 14:36:56 CST 2019  <== CST 为中国标准时间
 
-
 ## 显示当前 GMT时区 系统时间
-
 [root@localhost ~]# date -u
 Thu Mar  7 06:36:56 UTC 2019  # <==  CST = GMT + 8 因为中国在 +8 时区, GMT 为 0 时区
 
 ## 格式化输出时间
 [root@localhost ~]# date "+%Y-%m-%d %H:%M:%S"   # = date "+%F %T"
-
 2019-03-07 14:38:20
 
 ## 显示今天是一年中的 第多少天
@@ -520,7 +525,7 @@ Fri Aug  8 08:12:28 CST 2008
 #### 其他应用
 
 ```bash
-## 编写一个 shell 脚本, 判断用了多久, 代码如下(了解即可)
+## 编写一个 shell 脚本, 判断运行了多久, 代码如下(了解即可)
 #!/bin/bash
 start_time=$(date +%s)
 .....
@@ -529,4 +534,123 @@ difference=$(( end_time - start_time ))
 echo $difference seconds.
 ```
 
-1
+## ls命令
+
+### 描述
+
+列出目录的内容
+
+### 语法
+
+> ls \[ options \] ... \[ FILE \] ...
+
+### 选项
+
+| 选项  | 含义                              |
+| --- | ------------------------------- |
+| -a  | 显示所有文件(包含隐藏文件)                  |
+| -A  | 显示所以文件(包含隐藏文件), 不显示 . 和 ..      |
+| -l  | 长格式显示 (显示权限, 所有者, 所有组, 文件大小等信息) |
+| -i  | 显示文件的 i 节点号                     |
+| -d  | 显示目录本身信息，而不是目录下的文件. 一般与 -l 连用   |
+| -h  | 人性化显示，按照我们习惯的单位显示文件大小           |
+| -t  | 用文件和目录的更改时间排序                   |
+| -S  | 以文件大小排序                         |
+| -r  | 将文件以相反次序显示(原定依英文字母次序)           |
+
+### 实例
+
+```bash
+## 默认列出当前目录下的内容
+[root@localhost ~]# ls
+anaconda-ks.cfg  install.log  install.log.syslog
+
+## . 的意思表示为当前目录  ls = ls .
+[root@localhost ~]# ls .
+anaconda-ks.cfg  install.log  install.log.syslog
+
+## .. 表示上一级目录的意思
+[root@localhost ~]# ls ..
+bin   data  etc   lib    lost+found  misc  net  proc  sbin     srv  tmp  var
+boot  dev   home  lib64  media       mnt   opt  root  selinux  sys  usr
+
+## ~ 表示用户家目录的意思, 比如 root 用户的家目录为 /root
+[root@localhost ~]# ls ~
+anaconda-ks.cfg  install.log  install.log.syslog
+
+## 查看其它目录
+[root@localhost ~]# ls /home/   #<== /home 默认为一般用户的家目录
+
+gkdaxue  lost+found
+
+## -a : 显示所有文件, 包含隐藏文件 ( .开头的文件叫做隐藏文件 )
+[root@localhost ~]# ls -a
+.   anaconda-ks.cfg  .bash_logout   .bashrc  .cshrc  install.log         .lesshst  .viminfo
+..  .bash_history    .bash_profile  .config  .gconf  install.log.syslog  .tcshrc
+
+## -A : 显示所有文件, 包含隐藏文件, 不包含( . 和 .. )
+[root@localhost ~]# ls -A
+anaconda-ks.cfg  .bash_logout   .bashrc  .cshrc  install.log         .lesshst  .viminfo
+.bash_history    .bash_profile  .config  .gconf  install.log.syslog  .tcshrc
+
+## -l : 长格式显示, 包含权限, 所有者, 所有组, 文件大小等信息
+[root@localhost ~]# ls -l
+total 72
+-rw-------. 1 root root  1638 Mar  3 11:42 anaconda-ks.cfg
+-rw-r--r--. 1 root root 50698 Mar  3 11:42 install.log
+-rw-r--r--. 1 root root 10031 Mar  3 11:39 install.log.syslog
+
+## -i : 显示 inode 节点信息, 如下面的 ( 7249, 18, 30 )等
+[root@localhost ~]# ls -il  #<== 短格式可以合并, 并保留一个 '-'
+
+total 72
+7249 -rw-------. 1 root root  1638 Mar  3 11:42 anaconda-ks.cfg
+  18 -rw-r--r--. 1 root root 50698 Mar  3 11:42 install.log
+  30 -rw-r--r--. 1 root root 10031 Mar  3 11:39 install.log.syslog
+
+## -h : 以人性化的方式显示文件大小, 如 1638 显示为 1.6k
+[root@localhost ~]# ls -ilh
+total 72K
+7249 -rw-------. 1 root root 1.6K Mar  3 11:42 anaconda-ks.cfg
+  18 -rw-r--r--. 1 root root  50K Mar  3 11:42 install.log
+  30 -rw-r--r--. 1 root root 9.8K Mar  3 11:39 install.log.syslog
+
+## 显示当前目录本身的信息, 而不是文件
+[root@localhost ~]# ls -ld
+dr-xr-x---. 4 root root 4096 Mar  8 14:56 .
+
+## -r : 按照文件名, 倒叙排列 ( z-a ), 默认为( a-z )
+[root@localhost ~]# ls -lr
+total 72
+-rw-r--r--. 1 root root 10031 Mar  3 11:39 install.log.syslog
+-rw-r--r--. 1 root root 50698 Mar  3 11:42 install.log
+-rw-------. 1 root root  1638 Mar  3 11:42 anaconda-ks.cfg
+
+## -S : 按照文件大小排序(从大 -> 小)
+[root@localhost ~]# ls -lSh
+total 72K
+-rw-r--r--. 1 root root  50K Mar  3 11:42 install.log
+-rw-r--r--. 1 root root 9.8K Mar  3 11:39 install.log.syslog
+-rw-------. 1 root root 1.6K Mar  3 11:42 anaconda-ks.cfg
+```
+
+## pwd命令
+
+### 描述
+
+     以 `绝对路径的方式( 讲解FHS时细说 )` 显示当前工作目录 ( print working directory ), 绝对路径现在只要知道是以 '/ ' 开头的路径即可.
+
+### 语法
+
+> pwd \[ options \]
+
+### 选项
+
+都是显示当前路径, 选项主要是针对链接文件显示的不同而已
+
+| 选项  | 含义                                                           |
+| --- | ------------------------------------------------------------ |
+| -L  | 有链接文件时，直接显示链接文件的路径，(不加参数时默认此方式)                              |
+| -p  | 有链接文件时，不使用链接路径，直接显示链接文件所指向的文件,<br>多层连接文件时，显示所有连接文件最终指向的文件全路径 |
+
+222
