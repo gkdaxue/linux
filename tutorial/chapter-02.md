@@ -592,15 +592,13 @@ anaconda-ks.cfg  .bash_logout   .bashrc  .cshrc  install.log         .lesshst  .
 
 ## -l : 长格式显示, 包含权限, 所有者, 所有组, 文件大小等信息
 [root@localhost ~]# ls -l  # <== 可以简写为 ll 因为 alias 别名的原因.
-
 total 72
 -rw-------. 1 root root  1638 Mar  3 11:42 anaconda-ks.cfg
 -rw-r--r--. 1 root root 50698 Mar  3 11:42 install.log
 -rw-r--r--. 1 root root 10031 Mar  3 11:39 install.log.syslog
 
 ## -i : 显示 inode 节点信息, 如下面的 ( 7249, 18, 30 )等
-[root@localhost ~]# ls -il  #<== 短格式可以合并, 并保留一个 '-'
-
+[root@localhost ~]# ls -il  # <== 短格式可以合并, 并保留一个 '-'
 total 72
 7249 -rw-------. 1 root root  1638 Mar  3 11:42 anaconda-ks.cfg
   18 -rw-r--r--. 1 root root 50698 Mar  3 11:42 install.log
@@ -675,6 +673,76 @@ lrwxrwxrwx. 1 root root 10 Mar  3 11:33 /var/mail -> spool/mail
 
 ## cd命令
 
+### 描述
 
+     用来切换工作目录至 DIR_NAME, DIR_NAME 可以使用绝对路径或者相对路径, 也可省略(表示跳转到登录用户的家目录, 家目录也就是用户登录成功之后所在的目录). 
 
+>  ` ~ ` :  变量表示当前登录用户的家目录
+> 
+>  ` ~USERNAME`  :  切换到 USERNAME 用户的家目录
+> 
+> ` . ` :  表示当前目录
+> 
+> ` .. ` : 表示上一级目录
+> 
+> ` - ` : 切换到上次所在的目录, 变量 ` OLDPWD` 变量所表示的内容
+> 
+> ` !$ ` : 把上个命令的参数作为 cd 参数使用
 
+### 语法
+
+> cd    \[ DIR_NAME \]
+
+### 实例
+
+```bash
+## 显示当前工作目录
+[root@localhost ~]# pwd
+/root
+
+## 跳转到根目录并显示当前路径
+[root@localhost ~]# cd /
+[root@localhost ~]# pwd
+/
+
+## 直接 cd 命令, 没有加上路径, 表示跳转到当前用户家目录
+[root@localhost /]# cd    # 等于  cd ~ 命令
+[root@localhost ~]# pwd
+/root    <== root 用户的家目录为 /root
+
+## - 返回到上一次所在的目录
+[root@localhost ~]# cd -
+/
+[root@localhost /]# pwd
+/
+
+## 跳转到当前用户家目录
+[root@localhost /]# cd ~
+[root@localhost ~]# pwd
+/root
+
+## 跳转到 /home 目录, 显示当前目录下文件
+[root@localhost ~]# cd /home
+[root@localhost home]# ls
+gkdaxue  lost+found
+
+## 注意 - 是动态变化的, 始终表示上一次所在的目录, 所以是 /root
+[root@localhost home]# cd -
+/root
+
+## !$ : 把上个命令的参数作为 cd 参数使用, 也就是 - 
+[root@localhost ~]# cd !$
+cd -
+/home
+[root@localhost home]# pwd
+/home
+
+## 先查看是否有 gkdaxue 这个用户, 确定有这个用户
+[root@localhost /]# useradd gkdaxue
+useradd: user 'gkdaxue' already exists   <== 说明这个用户已经存在,不存在则没有此行提示
+[root@localhost /]# cd ~gkdaxue
+[root@localhost gkdaxue]# pwd
+/home/gkdaxue
+```
+
+111
