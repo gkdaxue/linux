@@ -192,7 +192,7 @@ pwd                  (1)  - print name of current/working directory
 pwd [builtins]       (1)  - bash built-in commands, see bash(1)
 pwd.h [pwd]          (0p)  - password structure
 
-## 我们可以看出 pwd 有那么多的帮助文件信息
+## 我们可以看出 pwd 有那么多的帮助文件信息, 显示信息如下:
 命令(或文件)以及该命令的意义(数字) 以及 命令的简单说明
 ```
 
@@ -291,7 +291,6 @@ man [-fk] [section] name ...  <== 常用选项
 
 ## 选项的用法, 具体干什么的, 自己 man 对应的命令去查看
 -f     Equivalent to whatis. 列出该命令所有的系统说明文件(跟 man 命令有关的说明文件)
-
 -k     Equivalent to apropos. 系统说明中只要含有 man 相关的就列出来.
 
 [root@localhost ~]# man -f man
@@ -745,4 +744,4 @@ useradd: user 'gkdaxue' already exists   <== 说明这个用户已经存在,不�
 /home/gkdaxue
 ```
 
-111
+
