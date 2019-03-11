@@ -870,7 +870,6 @@ useradd: user 'gkdaxue' already exists   <== 说明这个用户已经存在,不�
 ## 今天时间为  2019-03-11 所以 3月11 应该是高亮显示的,但是有问题
 ## 显示当前月份
 [root@localhost ~]# cal    # <==  等于 cal -l 
-
      March 2019     
 Su Mo Tu We Th Fr Sa
                 1  2
@@ -924,7 +923,6 @@ Sun Mon Tue Wed Thu Fri Sat
 
 ## -y : 显示当前的日历
 [root@localhost ~]# cal 2019  # <== 等于 cal -y 2019
-
                                2019                               
 
        January               February                 March       
@@ -974,27 +972,28 @@ cal: illegal day value: use 1-28
 
 ```bash
 [root@localhost ~]# bc  # <== 会进入 bc 功能界面
-
 bc 1.06.95
 Copyright 1991-1994, 1997, 1998, 2000, 2004, 2006 Free Software Foundation, Inc.
 This is free software with ABSOLUTELY NO WARRANTY.
 For details type `warranty'. 
 1+2+3+4+5   # 光标会等待输入, 输入完成计算后, 继续等待用户输入
-
 15
+
 5-6+9
 8
-10/100   <== 为什么 10/100 结果是 0 而不是 0.1 呢
 
+10/100   <== 为什么 10/100 结果是 0 而不是 0.1 呢
 0
+
 10*20
 200
+
 2%5    % : 表示余数
-
 2
-2^3    ^ : 指数 2^3 = 8
 
+2^3    ^ : 指数 2^3 = 8
 8
+
 quit  <== 退出 bc 功能界面
 ```
 
@@ -1007,14 +1006,11 @@ Copyright 1991-1994, 1997, 1998, 2000, 2004, 2006 Free Software Foundation, Inc.
 This is free software with ABSOLUTELY NO WARRANTY.
 For details type `warranty'. 
 scale=3  <== 在此处定义
-
 10/100
 .100     <== 会发现如果为小数点前为0, 就会把0 省略掉, 保留3位小数, 也就是 .100
+
 10/3
 3.333
 
 quit     <== 退出
-
 ```
-
-
