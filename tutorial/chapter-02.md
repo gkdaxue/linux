@@ -95,6 +95,86 @@ command not found 出现的原因如下 :
 
      所以有的时候执行命令时, 遇到了问题, 会把一些错误信息显示出来, 然后我们就可以快速的根据这些错误进行排错.
 
+# Linux 目录讲解
+
+     在Linux系统中 “一切皆文件”, 那么我们又该如何来找到它们呢?  在 Windows 系统中, 先进入到该文件所在的磁盘分区( 如 E盘 ), 然后在逐步进入到该文件所在的目录, 最后找到文件, 但是在 Linux 中并没有  C / D / E / F 等盘符的概念, 那我们应该如何找到文件呢? 
+
+     在 Linux 系统中一切文件都是从` '根( / ) 目录' ` 开始的. 并按照 Filesystem Hierarchy Standard(文件系统层次化标准, FHS)  来存放文件, 以及定义了常见目录的用途,  让我们了解到应该在什么位置寻找和保存文件.事实上, FHS 针对 ` 目录树 (directory tree) ` 结构仅定义出三层目录下应该放什么内容. 分别为:
+
+- / ( 根目录 ) : 与开机系统有关
+
+- /usr ( Unix Software Resource ) : 与软件 安装/执行 有关
+
+- /var (Variable) : 与系统运行过程有关
+
+> FHS 只是一个标准, 具体遵守不遵守还是要看用户, 所以要在工作中灵活的使用.
+
+## 根目录 ( / )
+
+     根目录是整个系统中最重要的一个目录, 因为所有的目录都是从根目录衍生出来的, 并且根目录还与 开机/还原/系统修复 等操作有关. 所以建议根目录不要放在一个非常大的分区里面. 根据 FHS 建议应用软件安装目录最好不要和 根目录 放在同一个分区. 所以会在上面三层目录中定义了如下的子目录.
+
+> **根目录与开机有关, 开机过程中仅有根目录会被挂载, 其他的分区会在开机完成后才会持续进行挂载的操作.**
+
+| 目录          | 应放置文件的内容                                                       |
+| ----------- | -------------------------------------------------------------- |
+| /boot       | 开机所需文件—内核、开机菜单以及所需配置文件等                                        |
+| /dev        | 以文件形式存放任何设备与接口                                                 |
+| /etc        | 系统主要的配置文件目录                                                    |
+| /home       | 系统默认用户 家目录/主目录 ( home directory )                              |
+| /bin        | 存放单用户维护模式下还可以操作的命令                                             |
+| /lib        | 开机时用到的函数库，以及/bin与/sbin下面的命令要调用的函数                              |
+| /sbin       | 开机过程中需要的命令, 包含了 开机, 修复, 还原系统所需要的命令                             |
+| /media      | 用于挂载设备文件的目录                                                    |
+| /opt        | 放置第三方的软件                                                       |
+| /root       | 系统管理员的家目录                                                      |
+| /srv        | 一些网络服务的数据文件目录                                                  |
+| /tmp        | 任何人均可使用的“共享”临时目录                                               |
+| /proc       | 虚拟文件系统，例如系统内核、进程、外部设备及网络状态等<br >**所有数据都保存在内存中, 所以本身不占用任何磁盘空间** |
+| /usr/local  | 用户自行安装的软件                                                      |
+| /usr/sbin   | Linux系统开机时不会使用到的软件/命令/脚本                                       |
+| /usr/share  | 帮助与说明文件，也可放置共享文件                                               |
+| /var        | 主要存放经常变化的文件，如日志                                                |
+| /lost+found | 当文件系统发生错误时，将一些丢失的文件片段存放在这里                                     |
+
+## 目录树( Directory Tree)
+
+所有的文件与目录都由根目录开始, 然后在一个一个的子目录, 有点像树枝状, 所以我们称这种目录配置方式为 "目录树", 主要的特征如下 :
+
+- 目录树的起点为 根目录(/)
+
+- 每一个文件在目录数中的文件名(绝对路径)都是独一无二的
+
+```bash
+## 查看一下根目录下的文件内容
+[root@localhost ~]# ls -l /
+total 102
+dr-xr-xr-x.   2 root root  4096 Mar  3 12:27 bin
+dr-xr-xr-x.   5 root root  1024 Mar  3 11:41 boot
+drwxr-xr-x.   3 root root  4096 Mar  4 18:42 data
+drwxr-xr-x.  21 root root  3920 Mar  3 14:28 dev
+drwxr-xr-x. 118 root root 12288 Mar 11 03:12 etc
+drwxr-xr-x.   4 root root  4096 Mar  3 11:45 home
+dr-xr-xr-x.  11 root root  4096 Mar  3 11:37 lib
+dr-xr-xr-x.   9 root root 12288 Mar  3 12:27 lib64
+drwx------.   2 root root 16384 Mar  3 11:31 lost+found
+drwxr-xr-x.   3 root root  4096 Mar  3 19:00 media
+drwxr-xr-x.   2 root root     0 Mar  3 14:28 misc
+drwxr-xr-x.   2 root root  4096 Sep 23  2011 mnt
+drwxr-xr-x.   2 root root     0 Mar  3 14:28 net
+drwxr-xr-x.   3 root root  4096 Mar  3 11:40 opt
+dr-xr-xr-x. 172 root root     0 Mar  3 22:28 proc
+dr-xr-x---.   4 root root  4096 Mar  8 14:56 root
+dr-xr-xr-x.   2 root root 12288 Mar  3 12:27 sbin
+drwxr-xr-x.   7 root root     0 Mar  3 22:28 selinux
+drwxr-xr-x.   2 root root  4096 Sep 23  2011 srv
+drwxr-xr-x   13 root root     0 Mar  3 22:28 sys
+drwxrwxrwt.  16 root root  4096 Mar 11 03:12 tmp
+drwxr-xr-x.  14 root root  4096 Mar  3 11:33 usr
+drwxr-xr-x.  23 root root  4096 Mar  3 11:39 var
+```
+
+11
+
 # Linux 常用命令
 
 ## man(manual 操作说明) page
@@ -103,7 +183,6 @@ command not found 出现的原因如下 :
 
 ```bash
 [root@localhost ~]# man pwd   ## 输入此命令后, 会进入 man page 功能界面
-
 PWD(1)  <== 注意这个数字, 等会讲解         User Commands                          PWD(1)
 
 
@@ -743,5 +822,3 @@ useradd: user 'gkdaxue' already exists   <== 说明这个用户已经存在,不�
 [root@localhost gkdaxue]# pwd
 /home/gkdaxue
 ```
-
-
