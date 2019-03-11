@@ -173,7 +173,27 @@ drwxr-xr-x.  14 root root  4096 Mar  3 11:33 usr
 drwxr-xr-x.  23 root root  4096 Mar  3 11:39 var
 ```
 
-11
+我们将整个目录树以图示的方法来显示, 如下图所示(省略部分信息) :
+
+![FHS 文件标准](https://github.com/gkdaxue/linux/raw/master/image/chapter_A2_0001.png)
+
+## 绝对路径与相对路径
+
+> 绝对路径 : 由 根目录( / ) 开始写起的文件名或者目录名, 如 /etc/passwd
+> 
+> 相对路径 : 相对于 ` 目前路径 ` 的写法, 如  ./passwd ( 只要不是 / 开头的就是相对路径 )
+
+- **. : 代表当前路径  ( ./ 代表本目录的意思)**
+
+- **.. : 代表上一层目录, 也可以用 ../ 表示**
+
+比如我们当前在 /home 目录下, 如果我们想要进入到 /etc/ssh 目录, 有以下两种写法:
+
+1. cd /etc/ssh  : 绝对路径写法
+
+2. cd ../etc/ssh : 相对路径写法  ../ 
+
+以上两种写法都是正确的, 可以根据实际生活中的需要, 灵活的选用不同的方式.
 
 # Linux 常用命令
 
@@ -601,7 +621,7 @@ Fri Aug  8 08:12:28 CST 2008
 #### 其他应用
 
 ```bash
-## 编写一个 shell 脚本, 判断运行了多久, 代码如下(了解即可)
+## 编写一个 shell 脚本, 判断脚本运行了多久, 代码如下(了解即可)
 #!/bin/bash
 start_time=$(date +%s)
 .....
@@ -822,3 +842,179 @@ useradd: user 'gkdaxue' already exists   <== 说明这个用户已经存在,不�
 [root@localhost gkdaxue]# pwd
 /home/gkdaxue
 ```
+
+## cal 命令
+
+### 描述
+
+显示 当前/指定日期 的日历
+
+### 语法
+
+> cal  \[ options \]  \[ \[ \[ day \] month \] year \]
+
+### 选项
+
+| 选项               | 含义            |
+| ---------------- | ------------- |
+| 1( 数字1, 不是小写的L ) | 仅显示当前月份( 默认 ) |
+| -3               | 显示上一个,当前和下个月  |
+| -m               | 星期一作为一周的第一天   |
+| -s               | 星期日作为一周的第一天   |
+| -j               | 一年中的第几天       |
+| -y               | 显示当前年的日历      |
+
+### 实例
+
+```bash
+## 今天时间为  2019-03-11 所以 3月11 应该是高亮显示的,但是有问题
+## 显示当前月份
+[root@localhost ~]# cal    # <==  等于 cal -l 
+
+     March 2019     
+Su Mo Tu We Th Fr Sa
+                1  2
+ 3  4  5  6  7  8  9
+10 11 12 13 14 15 16
+17 18 19 20 21 22 23
+24 25 26 27 28 29 30
+31
+
+## -m : 星期一作为一周的第一天
+[root@localhost ~]# cal -m
+     March 2019     
+Mo Tu We Th Fr Sa Su
+             1  2  3
+ 4  5  6  7  8  9 10
+11 12 13 14 15 16 17
+18 19 20 21 22 23 24
+25 26 27 28 29 30 31
+
+## -s : 星期日作为一周的第一天
+[root@localhost ~]# cal -s
+     March 2019     
+Su Mo Tu We Th Fr Sa
+                1  2
+ 3  4  5  6  7  8  9
+10 11 12 13 14 15 16
+17 18 19 20 21 22 23
+24 25 26 27 28
+
+## -3 : 显示上个月 本月 和 下个月
+[root@localhost ~]# cal -3
+    February 2019          March 2019            April 2019     
+Su Mo Tu We Th Fr Sa  Su Mo Tu We Th Fr Sa  Su Mo Tu We Th Fr Sa
+                1  2                  1  2      1  2  3  4  5  6
+ 3  4  5  6  7  8  9   3  4  5  6  7  8  9   7  8  9 10 11 12 13
+10 11 12 13 14 15 16  10 11 12 13 14 15 16  14 15 16 17 18 19 20
+17 18 19 20 21 22 23  17 18 19 20 21 22 23  21 22 23 24 25 26 27
+24 25 26 27 28        24 25 26 27 28 29 30  28 29 30            
+                      31  
+
+## -j : 一年中的第几天
+[root@localhost ~]# cal -j
+         March 2019        
+Sun Mon Tue Wed Thu Fri Sat
+                     60  61
+ 62  63  64  65  66  67  68
+ 69  70  71  72  73  74  75
+ 76  77  78  79  80  81  82
+ 83  84  85  86  87  88  89
+ 90
+
+## -y : 显示当前的日历
+[root@localhost ~]# cal 2019  # <== 等于 cal -y 2019
+
+                               2019                               
+
+       January               February                 March       
+Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa
+       1  2  3  4  5                   1  2                   1  2
+ 6  7  8  9 10 11 12    3  4  5  6  7  8  9    3  4  5  6  7  8  9
+13 14 15 16 17 18 19   10 11 12 13 14 15 16   10 11 12 13 14 15 16
+20 21 22 23 24 25 26   17 18 19 20 21 22 23   17 18 19 20 21 22 23
+27 28 29 30 31         24 25 26 27 28         24 25 26 27 28 29 30
+                                              31
+        April                   May                   June        
+Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa
+    1  2  3  4  5  6             1  2  3  4                      1
+ 7  8  9 10 11 12 13    5  6  7  8  9 10 11    2  3  4  5  6  7  8
+14 15 16 17 18 19 20   12 13 14 15 16 17 18    9 10 11 12 13 14 15
+21 22 23 24 25 26 27   19 20 21 22 23 24 25   16 17 18 19 20 21 22
+28 29 30               26 27 28 29 30 31      23 24 25 26 27 28 29
+                                              30
+        July                  August                September     
+Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa
+    1  2  3  4  5  6                1  2  3    1  2  3  4  5  6  7
+ 7  8  9 10 11 12 13    4  5  6  7  8  9 10    8  9 10 11 12 13 14
+14 15 16 17 18 19 20   11 12 13 14 15 16 17   15 16 17 18 19 20 21
+21 22 23 24 25 26 27   18 19 20 21 22 23 24   22 23 24 25 26 27 28
+28 29 30 31            25 26 27 28 29 30 31   29 30
+
+       October               November               December      
+Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa
+       1  2  3  4  5                   1  2    1  2  3  4  5  6  7
+ 6  7  8  9 10 11 12    3  4  5  6  7  8  9    8  9 10 11 12 13 14
+13 14 15 16 17 18 19   10 11 12 13 14 15 16   15 16 17 18 19 20 21
+20 21 22 23 24 25 26   17 18 19 20 21 22 23   22 23 24 25 26 27 28
+27 28 29 30 31         24 25 26 27 28 29 30   29 30 31
+
+## 还能帮我们判断是否存在, 比如判断 2019 2 29 是否存在?
+[root@localhost ~]# cal 29 2 2019
+cal: illegal day value: use 1-28
+```
+
+## bc命令
+
+### 描述
+
+简单的计算器
+
+### 实例
+
+```bash
+[root@localhost ~]# bc  # <== 会进入 bc 功能界面
+
+bc 1.06.95
+Copyright 1991-1994, 1997, 1998, 2000, 2004, 2006 Free Software Foundation, Inc.
+This is free software with ABSOLUTELY NO WARRANTY.
+For details type `warranty'. 
+1+2+3+4+5   # 光标会等待输入, 输入完成计算后, 继续等待用户输入
+
+15
+5-6+9
+8
+10/100   <== 为什么 10/100 结果是 0 而不是 0.1 呢
+
+0
+10*20
+200
+2%5    % : 表示余数
+
+2
+2^3    ^ : 指数 2^3 = 8
+
+8
+quit  <== 退出 bc 功能界面
+```
+
+为啥 10/100 结果为 0 呢, 因为 bc 默认输出整数, 如果想要输出小数, 必须执行 `scale=number` , 其中 nunber 表示小数点后的位数. 实例如下所示 : 
+
+```bash
+[root@localhost ~]# bc
+bc 1.06.95
+Copyright 1991-1994, 1997, 1998, 2000, 2004, 2006 Free Software Foundation, Inc.
+This is free software with ABSOLUTELY NO WARRANTY.
+For details type `warranty'. 
+scale=3  <== 在此处定义
+
+10/100
+.100     <== 会发现如果为小数点前为0, 就会把0 省略掉, 保留3位小数, 也就是 .100
+10/3
+3.333
+
+quit     <== 退出
+
+```
+
+
