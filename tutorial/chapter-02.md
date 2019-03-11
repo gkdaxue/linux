@@ -1014,3 +1014,111 @@ scale=3  <== 在此处定义
 
 quit     <== 退出
 ```
+
+## sync命令
+
+所有的数据都要被读入内存后才能被 CPU 所处理, 但是数据又经常需要由内存写回到硬盘当中(比如存储数据), 但是硬盘的速度太慢(相当于内存), 所以如果频繁的让数据在内存和硬盘中来回操作, 会降低系统的性能. 
+因此在 Linu 中,为了加快数据的读取速度, 在默认的情况下, 某些已经加载在内存中的数据将不会被直接写回到硬盘, 而是暂存在内存中, 系统会不定时的把内存中的数据写入到硬盘中, 因此有些时候可以直接从内存中读取出来, 在速度上会提升很多. 但是也造成了一些困扰, 比如非正常关机, 可能就导致数据的更新不正常. 从而导致服务不能正常启动等等.
+
+### 描述
+
+强制将内存中的文件缓冲内容写到磁盘。
+
+> root  用户 : 更新整个系统中的缓存数据
+> 普通用户  : 更新自己的缓存数据 
+
+### 实例
+
+```bash
+[root@localhost ~]# sync ; sync; sync  ## 一般执行三次, 特别是在 关机 或 重启, 建议执行一下此命令.
+
+```
+
+## reboot命令
+
+reboot 命令用于重启系统, 格式为 ` reboot ` , 因为牵扯到硬件资源的管理权限,  所以默认只有 root 管理员来重启.
+
+```bash
+[root@localhost ~]# reoot
+```
+
+## poweroff命令
+
+poweroff 命令用于关闭操作系统, 语法为 ` poweroff`,  默认只有 root 管理员你可以关闭电脑
+
+```bash
+[root@localhost ~]# poweroff
+```
+
+## shutdown命令
+
+可以选择在什么时间  关闭/重启 操作系统 并且可以给出提示信息 
+
+### 语法
+
+> shutdown  \[ -t  秒  ]   \[ options \]  时间  \[  警告信息  ]
+
+### 选项
+
+| 选项       | 含义                                                                   |
+| -------- | -------------------------------------------------------------------- |
+| -t   sec | 过多少秒后关机                                                              |
+| -r       | 将系统服务关闭后就重启                                                          |
+| -h       | 将系统服务关闭后就关机                                                          |
+| -c       | 取消关机                                                                 |
+| 时间       | now : 立即操作<br >+Num : Num分钟之后进行操作 <br >Hours:Min : 在Hours小时Min分钟进行操作 |
+
+### 实例
+
+```bash
+## -h : 10 分钟之后关机并给出提示信息
+[root@localhost ~]# shutdown -h +10 'I will shutdown after 10 min'
+
+Broadcast message from root@localhost.localdomain
+	(/dev/pts/0) at 20:38 ...
+
+The system is going down for halt in 10 minutes!
+I will shutdown after 10 min   <== 自定义的提示信息
+
+## 如果想取消, 可以 按 Ctrl + c 键取消
+```
+
+## init命令
+
+### 运行等级(run level)
+
+Linux系统中, 默认存在7个 run level ( 可以通过查看 /etc/inittab 了解 ), 每个等级对应的信息如下所示 :
+
+| run level | 含义                                                                    |
+| --------- | --------------------------------------------------------------------- |
+| 0         | halt (Do NOT set initdefault to this)                                 |
+| 1         | Single user mode                                                      |
+| 2         | Multiuser, without NFS (The same as 3, if you do not have networking) |
+| 3         | 完全多用户模式( 字符界面 )                                                       |
+| 4         | 系统未使用，保留                                                              |
+| 5         | X11控制台，登陆后进入图形GUI模式                                                   |
+| 6         | reboot (Do NOT set initdefault to this)                               |
+
+### 实例
+
+```bash
+## 显示前一个运行级别(无则显示 N ), 当前运行级别
+[root@localhost ~]# runlevel
+5 3
+
+## 显示当前运行级别以及切换时间, 以及上一次的运行级别
+[root@localhost ~]# who -r  
+
+         run-level 3  2019-03-11 21:13                   last=5
+
+
+## 切换到字符界面
+[root@localhost ~]# init 3
+
+## 切换到图形化界面(必须提前安装好图形化软件)
+[root@localhost ~]# init 5
+```
+
+1
+
+
