@@ -1171,9 +1171,78 @@ Saving to: “chapter_A2_0001.png”
 chapter_A2_0001.png
 ```
 
+## DOS 与 Linux 的换行符
+
+DOS 与 Linux 换行符是不同的, 必须使用特殊的命令, 才能看到它们换行符的不同,比如 ( cat -A ) , 在
+
+```bash
+DOS   : CR 和 LF ( $ ) 两个符号, 为 ^M$ .
+Linux : 仅有 LF ( $ )这个符号, 为 $ .
+```
+
+在 Linux 中 命令开始执行时, 它的判断依据为 Enter , 而 Linux 的 Enter 为 LF 符号.但是 DOS 为 CRLF, 多了一个 ^M, 如果是在一个 Windows 下写的 shell 程序, 放到 Linux 上面执行, 将有可能出现 程序无法执行, 就是因为误判的原因导致的.这个时候我们就需要把 CRLF → LF .
+
+#### dos2unix 与 unix2dos 命令
+
+使用这两个命令之前, 你必须设置好 你的网络 和 yum 源信息, 可以使用如下命令进行安装. 初学者只要了解即可, 现在只是为了讲解内容, 涉及到的内容会以后讲解.
+
+> yum install -y dos2unix  unix2dos   wget
+
+##### 选项
+
+| 选项                       | 含义                                           |
+| ------------------------ | -------------------------------------------- |
+| -k                       | 不修改文件的 `mtime`                               |
+| -n   OLD_FILE   NEW_FILE | 保留原文件( OLD_FILE ), 并把转换的内容输出到新文件( NEW_FILE ) |
+
+##### 实例
+
+```bash
+## 下载我们需要转换的文件
+[root@localhost ~]# wget https://raw.githubusercontent.com/gkdaxue/linux/master/tutorial_document/unix_type.txt
+
+--2019-03-12 20:41:43--  https://raw.githubusercontent.com/gkdaxue/linux/master/tutorial_document/unix_type.txt
+Resolving raw.githubusercontent.com... 151.101.228.133
+Connecting to raw.githubusercontent.com|151.101.228.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 4617 (4.5K) [text/plain]
+Saving to: “unix_type.txt”
+
+100%[==================================================================>] 4,617       --.-K/s   in 0s      
+
+2019-03-12 20:41:44 (98.5 MB/s) - “unix_type.txt” saved [4617/4617]
+
+[root@localhost ~]# ls unix_type.txt 
+unix_type.txt
+
+## 查看文件类型, 稍后讲解, 这里只做演示
+[root@localhost ~]# file unix_type.txt 
+unix_type.txt: ASCII English text   <== 显示文件的编码格式  这说明他是一个 unix 类型的文件
+
+## 使用 -n 选项,
+[root@localhost ~]# unix2dos -n unix_type.txt dos_type.txt
+unix2dos: converting file unix_type.txt to file dos_type.txt in DOS format ...
+
+## 对比两个文件, 为下面讲解做铺垫
+[root@localhost ~]# file unix_type.txt dos_type.txt 
+unix_type.txt: ASCII English text
+dos_type.txt:  ASCII English text, with CRLF line terminators <== CRLF 说明这是 DOS 的换行类型
+
+```
+
 ## cat命令
 
+cat命令用于查看文本内容, 一般用于查看一些文件内容较少的文件, 因为文件过多会在屏幕上一闪而过, 无法正常查看.
 
+### 选项
+
+| 选项  | 含义  |
+| --- | --- |
+|     |     |
+|     |     |
+|     |     |
+|     |     |
+|     |     |
 
 # 简单文本编辑器:nano
 
