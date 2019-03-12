@@ -745,7 +745,7 @@ total 72K
 | 选项  | 含义                                                           |
 | --- | ------------------------------------------------------------ |
 | -L  | 有链接文件时，直接显示链接文件的路径，(不加参数时默认此方式)                              |
-| -p  | 有链接文件时，不使用链接路径，直接显示链接文件所指向的文件,<br>多层连接文件时，显示所有连接文件最终指向的文件全路径 |
+| -P  | 有链接文件时，不使用链接路径，直接显示链接文件所指向的文件,<br>多层连接文件时，显示所有连接文件最终指向的文件全路径 |
 
 ### 实例
 
@@ -800,7 +800,13 @@ lrwxrwxrwx. 1 root root 10 Mar  3 11:33 /var/mail -> spool/mail
 
 ## 跳转到根目录并显示当前路径
 [root@localhost ~]# cd /
-[root@localhost ~]# pwd
+[root@localhost /]# pwd
+/
+
+## 根目录的上一层目录还是根目录
+[root@localhost /]# cd ..
+
+[root@localhost /]# pwd
 /
 
 ## 直接 cd 命令, 没有加上路径, 表示跳转到当前用户家目录
@@ -1031,7 +1037,6 @@ quit     <== 退出
 
 ```bash
 [root@localhost ~]# sync ; sync; sync  ## 一般执行三次, 特别是在 关机 或 重启, 建议执行一下此命令.
-
 ```
 
 ## reboot命令
@@ -1062,11 +1067,11 @@ poweroff 命令用于关闭操作系统, 语法为 ` poweroff`,  默认只有 ro
 
 | 选项       | 含义                                                                   |
 | -------- | -------------------------------------------------------------------- |
-| -t   sec | 过多少秒后关机                                                              |
+| -t   sec | 过多少秒后关机                                                              |
 | -r       | 将系统服务关闭后就重启                                                          |
 | -h       | 将系统服务关闭后就关机                                                          |
 | -c       | 取消关机                                                                 |
-| 时间       | now : 立即操作<br >+Num : Num分钟之后进行操作 <br >Hours:Min : 在Hours小时Min分钟进行操作 |
+| 时间       | now : 立即操作<br >+Num : Num分钟之后进行操作 <br >Hours:Min : 在Hours小时Min分钟进行操作 |
 
 ### 实例
 
@@ -1075,7 +1080,7 @@ poweroff 命令用于关闭操作系统, 语法为 ` poweroff`,  默认只有 ro
 [root@localhost ~]# shutdown -h +10 'I will shutdown after 10 min'
 
 Broadcast message from root@localhost.localdomain
-	(/dev/pts/0) at 20:38 ...
+    (/dev/pts/0) at 20:38 ...
 
 The system is going down for halt in 10 minutes!
 I will shutdown after 10 min   <== 自定义的提示信息
@@ -1108,9 +1113,7 @@ Linux系统中, 默认存在7个 run level ( 可以通过查看 /etc/inittab 了
 
 ## 显示当前运行级别以及切换时间, 以及上一次的运行级别
 [root@localhost ~]# who -r  
-
          run-level 3  2019-03-11 21:13                   last=5
-
 
 ## 切换到字符界面
 [root@localhost ~]# init 3
@@ -1119,6 +1122,95 @@ Linux系统中, 默认存在7个 run level ( 可以通过查看 /etc/inittab 了
 [root@localhost ~]# init 5
 ```
 
+
+
+# 简单文本编辑器:nano
+
+` nano FILE_NAME ` 就可以打开或者新建一个文件,
+
+```bash
+[root@localhost ~]# nano gkdaxue.txt
+## | : 表示光标的意思
+## ^ : 此处表示为 Ctrl 按键
+## M : 表示 Alt 按键
+  GNU nano 2.0.9                File: gkdaxue.txt                                      
+|         <== 光标在此处等待输入, 比如我们输入 gkdaxue, 就会变成下面这样
+gkdaxue|  <== 我们输入内容后, 就变成这样
+
+
+
+
+                                     [ New File ]  <== 说明这是在新建文件并写入内容
+
+^G Get Help   ^O WriteOut   ^R Read File  ^Y Prev Page  ^K Cut Text   ^C Cur Pos
+^X Exit       ^J Justify    ^W Where Is   ^V Next Page  ^U UnCut Text ^T To Spell
+
+## 然后我们可以使用 Ctrl + X 退出, 会有如下提示(只有有内容才会提示,否则直接退出)
+  GNU nano 2.0.9               File: gkdaxue.txt                           Modified 
+
+gkdaxue
+
+
+Save modified buffer (ANSWERING "No" WILL DESTROY CHANGES) ?          
+ Y Yes
+ N No           ^C Cancel
+
+## 然后按下 Y 键, 变成如下内容
+  GNU nano 2.0.9               File: gkdaxue.txt                           Modified  
+
+gkdaxue
+
+
+
+File Name to Write: gkdaxue.txt |                                                      
+
+^G Get Help          ^T To Files          M-M Mac Format       M-P Prepend
+^C Cancel            M-D DOS Format      M-A Append           M-B Backup File
+
+## 直接敲 Enter 键即可保存内容并退出, 具体更多的功能自己可以根据帮助文档 Ctrl + G 来实验
+[root@localhost ~]# cat gkdaxue.txt 
+gkdaxue
+```
+
+# CentOS6 修改root密码
+
+有的时候刚设置好root密码, 结果就忘记密码了, 那么我们就可以使用 `单用户维护模式` 登录系统,  修改 root 密码即可.
+
+> 1. 在读秒界面按下任意键, 出现如下信息
+>    
+>    ```bash
+>    CentOS 6 (2.6.32-696.el6.x86_64)
+>    
+>    ## 然后下面还有一些操作的提示说明
+>    ```
+> 
+> 2. 然后根据菜单说明, 按 e 键, 出现如下菜单
+>    
+>    ```bash
+>    root (hd0, 0)
+>    kernel /vmlinuz-2.6.32-696.el6.x86_64 ro root=.........
+>    initrd /initramfs-2.6.32-696.el6.x86_64.img
+>    ```
+> 
+> 3. 根据菜单提示, 按下 下方向键( ↓ ), 选中 kernel 这行, 然后按 e 键
+> 
+> 4. 然后在最后追加输入 ` single`, 前边有一个空格不要忘记, 输入完成, 按 Enter 键
+> 
+> 5. 然后根据菜单提示 按 b 键 重新引导启动系统
+> 
+> 6. 等待一会, 出现如下界面:
+>    
+>    ```bash
+>    ## 我们现在是以root身份并且没有输入root密码
+>    [root@localhost /]# passwd ## <== 使用 passwd 命令修改密码即可.
+>    ...
+>    ```
+> 
+> 7. 然后输入 reboot 重新启动系统即可
+>    
+>    ```bash
+>    ## 重启系统
+>    [root@localhost /]# reboot
+>    ```
+
 1
-
-
