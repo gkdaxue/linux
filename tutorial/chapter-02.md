@@ -658,7 +658,7 @@ echo $difference seconds.
 
 ```bash
 ## 默认列出当前目录下的内容
-[root@localhost ~]# ls
+[root@localhost ~]# ls  # <== 默认不显示隐藏文件
 anaconda-ks.cfg  install.log  install.log.syslog
 
 ## . 的意思表示为当前目录  ls = ls .
@@ -1121,6 +1121,57 @@ Linux系统中, 默认存在7个 run level ( 可以通过查看 /etc/inittab 了
 ## 切换到图形化界面(必须提前安装好图形化软件)
 [root@localhost ~]# init 5
 ```
+
+## wget命令
+
+**wget命令用于下载网络文件, 前提是你必须安装好此软件才可以使用这个命令.**
+
+### 语法
+
+> wget  \[ options \]   下载链接地址
+
+### 选项
+
+| 选项  | 含义                 |
+| --- | ------------------ |
+| -b  | 后台下载模式             |
+| -P  | 下载到指定目录            |
+| -t  | 最大尝试次数             |
+| -c  | 断点续传               |
+| -p  | 下载页面内所有资源，包括图片、视频等 |
+| -r  | 递归下载               |
+
+### 实例
+
+```bash
+## 比如我们需要下载一个图片, 出现没有找到此命令, 说明没有安装 wget 软件, 现在只要了解即可
+[root@localhost ~]# wget https://github.com/gkdaxue/linux/raw/master/image/chapter_A2_0001.png
+-bash: wget: command not found
+
+## 等确定你安装了 wget 软件, 在执行一下操作
+[root@localhost ~]# wget https://github.com/gkdaxue/linux/raw/master/image/chapter_A2_0001.png
+--2019-03-12 12:14:30--  https://github.com/gkdaxue/linux/raw/master/image/chapter_A2_0001.png
+Resolving github.com... 52.74.223.119, 13.229.188.59, 13.250.177.223
+Connecting to github.com|52.74.223.119|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://raw.githubusercontent.com/gkdaxue/linux/master/image/chapter_A2_0001.png [following]
+--2019-03-12 12:14:33--  https://raw.githubusercontent.com/gkdaxue/linux/master/image/chapter_A2_0001.png
+Resolving raw.githubusercontent.com... 151.101.108.133
+Connecting to raw.githubusercontent.com|151.101.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 39200 (38K) [image/png]
+Saving to: “chapter_A2_0001.png”
+
+100%[=======================================================>] 39,200      54.4K/s   in 0.7s    
+
+2019-03-12 12:14:34 (54.4 KB/s) - “chapter_A2_0001.png” saved [39200/39200]  <== 此行说明成功下载并保存
+
+## 查看一下, 发现这个文件确实存在.
+[root@localhost ~]# ls chapter_A2_0001.png 
+chapter_A2_0001.png
+```
+
+## cat命令
 
 
 
