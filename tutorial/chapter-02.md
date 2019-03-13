@@ -1232,17 +1232,152 @@ dos_type.txt:  ASCII English text, with CRLF line terminators <== CRLF 说明这
 
 ## cat命令
 
-cat命令用于查看文本内容, 一般用于查看一些文件内容较少的文件, 因为文件过多会在屏幕上一闪而过, 无法正常查看.
+cat( concatenate, cat) 命令用于查看文本内容, 一般用于查看一些文件内容较少的文件, 因为文件过多会在屏幕上一闪而过, 无法正常查看.
 
 ### 选项
 
-| 选项  | 含义  |
-| --- | --- |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
-|     |     |
+| 选项  | 含义                    |
+| --- | --------------------- |
+| -b  | 针对非空白行编号              |
+| -E  | 讲行尾的断行字符 $ 显示出来       |
+| -n  | 打印行号( 所有行, 包括空白行)     |
+| -T  | 将 Tab 键以 ^I ( 大写的 i ) |
+| -v  | 列出一些看不出来的特殊字符         |
+| -A  | 相当于 -vET              |
+
+### 实例
+
+```bash
+## 不加选项参数, 查看
+[root@localhost ~]# cat /etc/issue
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+## -E 显示换行符 $
+[root@localhost ~]# cat -E /etc/issue
+CentOS release 6.9 (Final)$  <== 换行符 $ 
+Kernel \r on an \m$
+$
+
+## -b : 不对空白行编号
+[root@localhost ~]# cat -b /etc/issue
+     1	CentOS release 6.9 (Final)
+     2	Kernel \r on an \m
+                             <== 这是空白行, 不编号
+
+## -n : 对所有行编号
+[root@localhost ~]# cat -n /etc/issue
+     1	CentOS release 6.9 (Final)
+     2	Kernel \r on an \m
+     3	                     <== 空白行也进行了编号 
+
+## -T : 将 Tab 键以 ^I 显示出来
+## tail 以及 |(管道符) 的作用是显示最后 5 行, 稍后讲解
+
+[root@localhost ~]# cat -T unix_type.txt  | tail -n 5
+.bz2^I^I/usr/bin/bzip2 -c -d   <== 能看到很多 ^I
+.z^I^I
+.Z^I^I/bin/zcat
+.F^I^I
+.Y^I^I
+
+## 对比 DOS 和 Linux 的换行符显示结果,同样的内容, 转换之后换行符不同.
+[root@localhost ~]# cat -A unix_type.txt | tail -n 5
+.bz2^I^I/usr/bin/bzip2 -c -d$    <== 这是 $
+.z^I^I$ 
+.Z^I^I/bin/zcat$
+.F^I^I$
+.Y^I^I$
+[root@localhost ~]# cat -A dos_type.txt | tail -n 5
+.bz2^I^I/usr/bin/bzip2 -c -d^M$  <== 这是 ^M$
+.z^I^I^M$
+.Z^I^I/bin/zcat^M$
+.F^I^I^M$
+.Y^I^I^M$
+```
+
+### 其他使用方式
+
+1. **接受标准输入, 常用在脚本中提供菜单选项**
+
+   ```bash
+   [root@localhost ~]# cat <<EOF
+   > [1] Start
+   > [2] Restart
+   > [3] Shutdown
+   > [4] Exit
+   > EOF
+   [1] Start
+   [2] Restart
+   [3] Shutdown
+   [4] Exit
+   ```
+
+2. **将多个文件内容导入到一个文件中**
+
+   ```bash
+   ## 关于 >(标准覆盖输出重定向) 的用法 以后讲解
+   [root@localhost ~]# cat /etc/issue
+   CentOS release 6.9 (Final)
+   Kernel \r on an \m
+          <== 此处为自带空白行
+   [root@localhost ~]# cat /etc/issue /etc/issue > issue_new.txt
+   [root@localhost ~]# cat issue_new.txt 
+   CentOS release 6.9 (Final)
+   Kernel \r on an \m
+   
+   CentOS release 6.9 (Final)
+   Kernel \r on an \m
+   
+   ```
+
+3. **清空文件内容**
+
+   ```bash
+   [root@localhost ~]# cat issue_new.txt 
+   CentOS release 6.9 (Final)
+   Kernel \r on an \m
+   
+   CentOS release 6.9 (Final)
+   Kernel \r on an \m
+   
+   ## /dev/null 就是一个空文件
+   [root@localhost ~]# cat /dev/null > issue_new.txt 
+   [root@localhost ~]# cat issue_new.txt 
+   [root@localhost ~]# 
+   
+   ```
+
+4. **直接把内容存储到文件中**
+
+   ```bash
+   [root@localhost ~]# cat issue_new.txt 
+   
+   ## 先输入内容, 输入完成后按 Enter 键进入下一个新行, 然后按 Ctrl + d 结束输入即可
+   [root@localhost ~]# cat > issue_new.txt 
+   gkdaxue.com
+   [root@localhost ~]# cat issue_new.txt 
+   gkdaxue.com
+   ```
+
+   # 
+
+## tac命令
+
+看到这个命令, 大家是不是觉得就是 ` cat ` 命令反着来写吗, 所以它的功能就是` 从文件最后一行到第一行反向在屏幕上显示出来` . 其他选项和 ` cat ` 一致.
+
+### 实例
+
+```bash
+[root@localhost ~]# cat /etc/issue
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+[root@localhost ~]# tac /etc/issue
+
+Kernel \r on an \m
+CentOS release 6.9 (Final)
+```
 
 # 简单文本编辑器:nano
 
