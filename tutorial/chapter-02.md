@@ -1218,7 +1218,6 @@ ASCII English text    <== 只显示文件编码和格式, 不显示文件名
 
 [root@localhost ~]# file -i anaconda-ks.cfg 
 anaconda-ks.cfg: text/plain; charset=us-ascii  <== 显示 MIME 类型
-
 ```
 
 ## DOS 与 Linux 的换行符
@@ -1243,7 +1242,7 @@ Linux : 仅有 LF ( $ )这个符号, 为 $ .
 | 选项                       | 含义                                           |
 | ------------------------ | -------------------------------------------- |
 | -k                       | 不修改文件的 `mtime`                               |
-| -n   OLD_FILE   NEW_FILE | 保留原文件( OLD_FILE ), 并把转换的内容输出到新文件( NEW_FILE ) |
+| -n   OLD_FILE   NEW_FILE | 保留原文件( OLD_FILE ), 并把转换的内容输出到新文件( NEW_FILE ) |
 
 ##### 实例
 
@@ -1276,7 +1275,6 @@ unix2dos: converting file unix_type.txt to file dos_type.txt in DOS format ...
 [root@localhost ~]# file unix_type.txt dos_type.txt 
 unix_type.txt: ASCII English text
 dos_type.txt:  ASCII English text, with CRLF line terminators <== CRLF 说明这是 DOS 的换行类型
-
 ```
 
 ## cat命令
@@ -1310,15 +1308,15 @@ $
 
 ## -b : 不对空白行编号
 [root@localhost ~]# cat -b /etc/issue
-     1	CentOS release 6.9 (Final)
-     2	Kernel \r on an \m
+     1    CentOS release 6.9 (Final)
+     2    Kernel \r on an \m
                              <== 这是空白行, 不编号
 
 ## -n : 对所有行编号
 [root@localhost ~]# cat -n /etc/issue
-     1	CentOS release 6.9 (Final)
-     2	Kernel \r on an \m
-     3	                     <== 空白行也进行了编号 
+     1    CentOS release 6.9 (Final)
+     2    Kernel \r on an \m
+     3                         <== 空白行也进行了编号 
 
 ## -T : 将 Tab 键以 ^I 显示出来
 ## tail 以及 |(管道符) 的作用是显示最后 5 行, 稍后讲解
@@ -1377,7 +1375,6 @@ $
    
    CentOS release 6.9 (Final)
    Kernel \r on an \m
-   
    ```
 
 3. **清空文件内容**
@@ -1393,8 +1390,7 @@ $
    ## /dev/null 就是一个空文件
    [root@localhost ~]# cat /dev/null > issue_new.txt 
    [root@localhost ~]# cat issue_new.txt 
-   [root@localhost ~]# 
-   
+   [root@localhost ~]#
    ```
 
 4. **直接把内容存储到文件中**
@@ -1436,11 +1432,11 @@ CentOS release 6.9 (Final)
 
 | 选项     | 含义                          |
 | ------ | --------------------------- |
-| -b  a  | 给所有行编号(包含空白行) 类似于 cat -n 命令 |
-| -b  t  | 空白行不编号(默认值), 类似于 cat -b 命令  |
-| -n  ln | 在特定字段的最左方显示行号               |
-| -n  rn | 在特定字段的最右方显示且不加 0            |
-| -n  rz | 在特定字段的最右方显示且加 0             |
+| -b  a  | 给所有行编号(包含空白行) 类似于 cat -n 命令 |
+| -b  t  | 空白行不编号(默认值), 类似于 cat -b 命令  |
+| -n  ln | 在特定字段的最左方显示行号               |
+| -n  rn | 在特定字段的最右方显示且不加 0            |
+| -n  rz | 在特定字段的最右方显示且加 0             |
 | -w     | 行号字段占用的位数                   |
 
 ### 实例
@@ -1448,41 +1444,37 @@ CentOS release 6.9 (Final)
 ```bash
 ## 空白行不编号
 [root@localhost ~]# nl /etc/issue  # = nl -b t /etc/issue = cat -b /etc/issue
-     1	CentOS release 6.9 (Final)
-     2	Kernel \r on an \m
+     1    CentOS release 6.9 (Final)
+     2    Kernel \r on an \m
 
 ## 对所有行进行编号       
 [root@localhost ~]# nl -b a /etc/issue  # = cat -a /etc/issue
-     1	CentOS release 6.9 (Final)
-     2	Kernel \r on an \m
-     3	
+     1    CentOS release 6.9 (Final)
+     2    Kernel \r on an \m
+     3    
 
 ## 列出行号(默认行号占6位)
 [root@localhost ~]# nl -n ln /etc/issue
-1     	CentOS release 6.9 (Final)
-2     	Kernel \r on an \m
-       
-[root@localhost ~]# nl -n rn /etc/issue
-     1	CentOS release 6.9 (Final)
-     2	Kernel \r on an \m
-       
-[root@localhost ~]# nl -n rz /etc/issue
-000001	CentOS release 6.9 (Final)  <== 显示为 000001
+1         CentOS release 6.9 (Final)
+2         Kernel \r on an \m
 
-000002	Kernel \r on an \m
-       
+[root@localhost ~]# nl -n rn /etc/issue
+     1    CentOS release 6.9 (Final)
+     2    Kernel \r on an \m
+
+[root@localhost ~]# nl -n rz /etc/issue
+000001    CentOS release 6.9 (Final)  <== 显示为 000001
+
+000002    Kernel \r on an \m
+
 ## 指定行号所占用的位数       
 [root@localhost ~]# nl -n rz -w 3 /etc/issue
-001	CentOS release 6.9 (Final)  <== 显示为 001
+001    CentOS release 6.9 (Final)  <== 显示为 001
 
-002	Kernel \r on an \m
-    
-[root@localhost ~]# 
+002    Kernel \r on an \m
+
+[root@localhost ~]#
 ```
-
-## more命令
-
-
 
 # 简单文本编辑器:nano
 
@@ -1572,5 +1564,3 @@ gkdaxue
 >    ## 重启系统
 >    [root@localhost /]# reboot
 >    ```
-
-1
