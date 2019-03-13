@@ -1171,6 +1171,56 @@ Saving to: “chapter_A2_0001.png”
 chapter_A2_0001.png
 ```
 
+## file命令
+
+file 命令用于查看文件的类型, 因为` 在 Linux 中 一切皆文件(目录, 设备, 文本等等都是文件) ` ,  那我们怎么能知道这个文件到底是什么类型的文件?( Linux 不依靠后缀名区别文件, 后缀名只是给用户看的, 仅此而已).  所以就要用到 file 命令
+
+> file  \[ options \] 文件名
+
+### 选项
+
+| 选项  | 含义                 |
+| --- | ------------------ |
+| -b  | 只显示文件格式和编码, 不显示文件名 |
+| -i  | 显示 MIME 类型         |
+
+### MIME类型
+
+| text/plain         | 普通文本   |
+| ------------------ | ------ |
+| application/pdf    | PDF文档  |
+| application/msword | Word文档 |
+| image/png          | PNG图片  |
+| image/jpeg         | JPEG图片 |
+| application/x-tar  | TAR文件  |
+| application/x-gzip | GZIP文件 |
+
+### 实例
+
+```bash
+[root@localhost ~]# ls
+anaconda-ks.cfg  Documents  install.log         Music     Public     Videos
+Desktop          Downloads  install.log.syslog  Pictures  Templates
+
+[root@localhost ~]# file anaconda-ks.cfg  
+
+anaconda-ks.cfg: ASCII English text  <== 这是一个ASCII 的存文本文件
+
+[root@localhost ~]# file Desktop/
+Desktop/: directory   <== 这是一个目录
+
+[root@localhost ~]# file anaconda-ks.cfg 
+anaconda-ks.cfg: ASCII English text
+
+[root@localhost ~]# file -b anaconda-ks.cfg 
+ASCII English text    <== 只显示文件编码和格式, 不显示文件名
+
+
+[root@localhost ~]# file -i anaconda-ks.cfg 
+anaconda-ks.cfg: text/plain; charset=us-ascii  <== 显示 MIME 类型
+
+```
+
 ## DOS 与 Linux 的换行符
 
 DOS 与 Linux 换行符是不同的, 必须使用特殊的命令, 才能看到它们换行符的不同,比如 ( cat -A ) , 在
@@ -1215,7 +1265,6 @@ Saving to: “unix_type.txt”
 [root@localhost ~]# ls unix_type.txt 
 unix_type.txt
 
-## 查看文件类型, 稍后讲解, 这里只做演示
 [root@localhost ~]# file unix_type.txt 
 unix_type.txt: ASCII English text   <== 显示文件的编码格式  这说明他是一个 unix 类型的文件
 
@@ -1378,6 +1427,62 @@ Kernel \r on an \m
 Kernel \r on an \m
 CentOS release 6.9 (Final)
 ```
+
+## nl命令
+
+显示文件的行数
+
+### 选项
+
+| 选项     | 含义                          |
+| ------ | --------------------------- |
+| -b  a  | 给所有行编号(包含空白行) 类似于 cat -n 命令 |
+| -b  t  | 空白行不编号(默认值), 类似于 cat -b 命令  |
+| -n  ln | 在特定字段的最左方显示行号               |
+| -n  rn | 在特定字段的最右方显示且不加 0            |
+| -n  rz | 在特定字段的最右方显示且加 0             |
+| -w     | 行号字段占用的位数                   |
+
+### 实例
+
+```bash
+## 空白行不编号
+[root@localhost ~]# nl /etc/issue  # = nl -b t /etc/issue = cat -b /etc/issue
+     1	CentOS release 6.9 (Final)
+     2	Kernel \r on an \m
+
+## 对所有行进行编号       
+[root@localhost ~]# nl -b a /etc/issue  # = cat -a /etc/issue
+     1	CentOS release 6.9 (Final)
+     2	Kernel \r on an \m
+     3	
+
+## 列出行号(默认行号占6位)
+[root@localhost ~]# nl -n ln /etc/issue
+1     	CentOS release 6.9 (Final)
+2     	Kernel \r on an \m
+       
+[root@localhost ~]# nl -n rn /etc/issue
+     1	CentOS release 6.9 (Final)
+     2	Kernel \r on an \m
+       
+[root@localhost ~]# nl -n rz /etc/issue
+000001	CentOS release 6.9 (Final)  <== 显示为 000001
+
+000002	Kernel \r on an \m
+       
+## 指定行号所占用的位数       
+[root@localhost ~]# nl -n rz -w 3 /etc/issue
+001	CentOS release 6.9 (Final)  <== 显示为 001
+
+002	Kernel \r on an \m
+    
+[root@localhost ~]# 
+```
+
+## more命令
+
+
 
 # 简单文本编辑器:nano
 
