@@ -688,7 +688,7 @@ gkdaxue  lost+found
 anaconda-ks.cfg  .bash_logout   .bashrc  .cshrc  install.log         .lesshst  .viminfo
 .bash_history    .bash_profile  .config  .gconf  install.log.syslog  .tcshrc
 
-## -l : 长格式显示, 包含权限, 所有者, 所有组, 文件大小等信息
+## -l : 长格式显示, 包含文件类型(-),权限(rw-r--r--), 链接数(1), 所有者(root), 所有组(root), 文件大小(50698), mtime(Mar 3 11:42), 文件名等信息
 [root@localhost ~]# ls -l  # <== 可以简写为 ll 因为 alias 别名的原因.
 total 72
 -rw-------. 1 root root  1638 Mar  3 11:42 anaconda-ks.cfg
