@@ -469,6 +469,7 @@ Access: 2019-03-13 13:04:52.090147568 +0800   <== 以下是文件的 3 种时间
 Modify: 2019-03-03 11:42:06.168998405 +0800
 Change: 2019-03-03 11:42:22.232998400 +0800
 
+## 只查看文件系统信息
 [root@localhost ~]# stat -f anaconda-ks.cfg 
   File: "anaconda-ks.cfg"
     ID: c02549cbc78324f0 Namelen: 255     Type: ext2/ext3
