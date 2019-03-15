@@ -110,7 +110,6 @@ this is append content  <== 内容被成功追加进去
 [root@localhost ~]# echo 'www.gkdaxue.com' 2> home_dir_file 
 www.gkdaxue.com  <== 此行显示是因为没有错误, 2> 只能处理错误信息, 所以标准输出继续执行.也就是输出 echo 的内容
 [root@localhost ~]# cat home_dir_file   # <== 查看文件内容为空的, 因为没有错误并且是清空方式写入
-
 [root@localhost ~]# 
 
 ## 查看一个不存在的文件
