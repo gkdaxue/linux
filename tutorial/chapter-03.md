@@ -255,7 +255,6 @@ MANUAL SECTIONS
 ```bash
 ## nl -n rz -w 3 /etc/passwd : 在行数字段右边显示行数 长度为3且补0
 ## | : 也就是我们所说的管道符, 可以把前边的内容交给后边的命令继续处理
-
 ## head -n 15 : 显示前15行内容
 ## > : 也就是标准输出重定向, 把前15行的内容覆盖写入到  head_file.txt 文件中
 [root@localhost ~]# nl -n rz -w 3 /etc/passwd | head -n 15 > head_file.txt
@@ -278,7 +277,6 @@ MANUAL SECTIONS
 
 ## 如果直接 head 文件, 那么默认显示文件前 10 行
 [root@localhost ~]# head head_file.txt   # 等于 head -n 10 head_file.txt, 10 前边可以带 + 号
-
 001	root:x:0:0:root:/root:/bin/bash
 002	bin:x:1:1:bin:/bin:/sbin/nologin
 003	daemon:x:2:2:daemon:/sbin:/sbin/nologin
@@ -316,7 +314,6 @@ MANUAL SECTIONS
 005	lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
 
 ## 显示文件名, 多文件默认显示文件名
-
 [root@localhost ~]# head -n 5 head_file.txt head_file.txt # 等于  head -n 5 -v head_file.txt head_file.txt
 ==> head_file.txt <==
 001	root:x:0:0:root:/root:/bin/bash
@@ -382,7 +379,6 @@ tail 命令用户查看文件的后 N 行 或者 检测文件直到按下 Ctrl +
 
 ## 默认最后 10 行
 [root@localhost ~]# tail head_file.txt # 等于  tail -n [-]10 head_file.txt  []表示可省略的意思
-
 006	sync:x:5:0:sync:/sbin:/bin/sync
 007	shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
 008	halt:x:7:0:halt:/sbin:/sbin/halt
@@ -412,7 +408,6 @@ tail 命令用户查看文件的后 N 行 或者 检测文件直到按下 Ctrl +
 ## tty 用于查看当前终端
 [root@localhost ~]# tty
 /dev/pts/0   <== 我们叫它 0 号终端
-
 [root@localhost ~]# tail -f head_file.txt 
 006	sync:x:5:0:sync:/sbin:/bin/sync
 007	shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
@@ -429,7 +424,6 @@ tail 命令用户查看文件的后 N 行 或者 检测文件直到按下 Ctrl +
 ## 然后切换到 1 号终端, 并执行以下命令
 [root@localhost ~]# tty
 /dev/pts/1   <== 我们叫它 1 号终端
-
 [root@localhost ~]# echo 'www.gkdaxue.com' >> head_file.txt 
 
 ## 此时在切换到 0 号终端
@@ -445,7 +439,6 @@ tail 命令用户查看文件的后 N 行 或者 检测文件直到按下 Ctrl +
 014	ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
 015	nobody:x:99:99:Nobody:/:/sbin/nologin
 www.gkdaxue.com   <== 这是我们在 1 号终端添加的内容
-
    <== 光标又停在了这个地方, 等待继续监听变化, 如果想结束, 按 Ctrl + c 键         
 ```
 
@@ -474,7 +467,6 @@ Desktop          Downloads  head_file.txt  install.log.syslog  Pictures  Templat
 Device: 805h/2053d	Inode: 7249        Links: 1
 Access: (0600/-rw-------)  Uid: (    0/    root)   Gid: (    0/    root)
 Access: 2019-03-13 13:04:52.090147568 +0800   <== 以下是文件的 3 种时间, 以后讲解
-
 Modify: 2019-03-03 11:42:06.168998405 +0800
 Change: 2019-03-03 11:42:22.232998400 +0800
 
@@ -561,39 +553,29 @@ Change: 2019-03-14 18:24:08.712085238 +0800
 [root@localhost ~]# touch -t 200808082000 gkdaxue.txt
 [root@localhost ~]# stat gkdaxue.txt
 Access: 2008-08-08 20:00:00.000000000 +0800  <== 自动主动修改导致变化
-
 Modify: 2008-08-08 20:00:00.000000000 +0800  <== 自己主动修改导致变化
-
 Change: 2019-03-14 18:27:54.860082113 +0800  <== 因为时间属性发生变化, 所以被动发生变化
-
 
 ## -a : 只修改文件的 atime
 [root@localhost ~]# touch -a gkdaxue.txt
 [root@localhost ~]# stat gkdaxue.txt
 Access: 2019-03-14 18:29:52.435085253 +0800  <== 自己主动修改导致变化
-
 Modify: 2008-08-08 20:00:00.000000000 +0800
 Change: 2019-03-14 18:29:52.435085253 +0800  <== 因为时间属性发生变化, 所以被动发生变化
-
 
 ## -m : 只修改文件的 mtime
 [root@localhost ~]# touch -m gkdaxue.txt 
 [root@localhost ~]# stat gkdaxue.txt 
 Access: 2019-03-14 18:29:52.435085253 +0800
 Modify: 2019-03-14 18:32:05.889078008 +0800  <== 自己主动修改导致变化
-
 Change: 2019-03-14 18:32:05.889078008 +0800  <== 因为时间属性发生变化, 所以被动发生变化
-
 
 ## -d : 使用指定的时间, 而非现在的时间
 [root@localhost ~]# touch -d '2 days ago' gkdaxue.txt 
 [root@localhost ~]# stat gkdaxue.txt
 Access: 2019-03-12 18:33:50.283816901 +0800  <== 时间都发生变化
-
 Modify: 2019-03-12 18:33:50.283816901 +0800  <== 时间都发生变化
-
 Change: 2019-03-14 18:33:50.283086754 +0800  <== 时间都发生变化
-
 
 ## -c : 只修改文件的三种时间(当前系统时间), 不创建文件
 [root@localhost ~]# touch -c gkdaxue.txt 
@@ -630,7 +612,7 @@ mkdir: cannot create directory `gkdaxue': File exists
 ## 自定义权限来创建目录, 不使用默认权限
 [root@localhost ~]# mkdir -m 777 gkdaxue1 gkdaxue2  # 等于 mkdir -m 777 gkdaxue{1,2} , "1,2"中间没有空格
 
-[root@localhost ~]# ll -d gkdaxue*
+[root@localhost ~]# ll -d gkdaxue*   #  * 表示为一个通配符, 以后讲解
 drwxr-xr-x. 2 root root 4096 Mar 15 10:20 gkdaxue    <== drwxr-xr-x
 drwxrwxrwx. 2 root root 4096 Mar 15 10:24 gkdaxue1   <== drwxrwxrwx
 drwxrwxrwx. 2 root root 4096 Mar 15 10:24 gkdaxue2
@@ -646,7 +628,6 @@ mkdir: created directory `gkdaxue3/test1'
 mkdir: created directory `gkdaxue3/test1/test2'
 
 ## 此处需要自己安装 tree 软件, 前提是配置好网络和yum源,如果不会请忽略, 自己使用其他办法查看即可.
-
 [root@localhost ~]# tree gkdaxue3
 -bash: tree: command not found   <== 出现此条提示, 说明需要安装 tree 软件
 [root@localhost ~]# yum install -y tree
