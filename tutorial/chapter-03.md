@@ -452,4 +452,220 @@ www.gkdaxue.com   <== 这是我们在 1 号终端添加的内容
    <== 光标又停在了这个地方, 等待继续监听变化, 如果想结束, 按 Ctrl + c 键         
 ```
 
+## stat命令
 
+显示文件或文件系统状态等信息
+
+> stat  \[  options  \]  FILE....
+
+### 选项
+
+| 选项  | 含义                       |
+| --- | ------------------------ |
+| -f  | 不显示文件本身的信息，显示文件所在文件系统的信息 |
+
+### 实例
+
+```bash
+[root@localhost ~]# ls
+anaconda-ks.cfg  Documents  gkdaxue.txt    install.log         Music     Public     Videos
+Desktop          Downloads  head_file.txt  install.log.syslog  Pictures  Templates
+
+[root@localhost ~]# stat anaconda-ks.cfg 
+  File: `anaconda-ks.cfg'
+  Size: 1638      	Blocks: 8          IO Block: 4096   regular file
+Device: 805h/2053d	Inode: 7249        Links: 1
+Access: (0600/-rw-------)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2019-03-13 13:04:52.090147568 +0800   <== 以下是文件的 3 种时间, 以后讲解
+
+Modify: 2019-03-03 11:42:06.168998405 +0800
+Change: 2019-03-03 11:42:22.232998400 +0800
+
+[root@localhost ~]# stat -f anaconda-ks.cfg 
+  File: "anaconda-ks.cfg"
+    ID: c02549cbc78324f0 Namelen: 255     Type: ext2/ext3
+Block size: 4096       Fundamental block size: 4096
+Blocks: Total: 495764     Free: 418079     Available: 392479
+Inodes: Total: 128000     Free: 120580
+```
+
+## touch命令
+
+创建文件  或   修改文件/目录  的时间
+
+### 文件名的限制
+
+在 Linux 下创建文件时, 尽量避免使用一些特殊字符作为文件名, 比如 以 . 开头的文件, 在 Linux 中表示隐藏文件的含义,  例如下面这些 :
+
+> \*   ?   >   <   ;   !   \[  \]  |   '   "   `   ()  {}  等
+
+### 三种时间
+
+> Access(访问时间 atime) : 读取文件内容，就会更新(more、cat等)
+> 
+> Modify(修改时间 mtime) : 内容更新就会更改(ls -l 时间)
+> 
+> Change(更改时间 ctime) : 当文件的状态被修改时(**链接数，大小，权限，Blocks数, 时间属性等**)
+
+### 语法
+
+> touch  \[  options  \]  FILE....
+
+### 选项
+
+| 选项                                | 含义                          |
+| --------------------------------- | --------------------------- |
+| -t    \[\[CC\]YY\]MMDDhhmm\[.ss\] | 使用指定时间代替当前时间 (atime, mtime) |
+| -a                                | 只修改访问时间atime                |
+| -m                                | 只修改修改时间mtime                |
+| -d   <时间日期>                       | 使用指定的日期时间，而非现在的时间           |
+| -f                                | 此参数将忽略不予处理，仅负责解决兼容性问题       |
+| -r   <参考文件或目录>                    | 使用参考文件或目录的时间记录              |
+| -c                                | 仅修改文件的三个时间，不创建任何文件          |
+
+> CC    -  年份的前两位
+> 
+> YY     -  年份的后两位
+> 
+> MM  -  月份  \[01-12\]
+> 
+> DD    -  日期  \[01-31\]
+> 
+> hh     -  时  \[00-23\]
+> 
+> mm  -  分  \[00-59\]
+> 
+> SS     -  秒  \[00-61\]
+
+### 实例
+
+```bash
+## 查看一下 gkdaxue.txt, 发现没有这个文件
+[root@localhost ~]# ls gkdaxue.txt
+ls: cannot access gkdaxue.txt: No such file or directory
+
+## 创建 gkdaxue.txt 并查看文件信息
+## 省略部分信息, 只保留三种时间信息
+## 创建文件时,三个时间是一样的，创建的同时修改了它的内容，所以它的大小，Blocks也发生变化，也相当于一次访问
+[root@localhost ~]# touch gkdaxue.txt
+[root@localhost ~]# stat gkdaxue.txt 
+Access: 2019-03-14 18:21:49.033085524 +0800
+Modify: 2019-03-14 18:21:49.033085524 +0800
+Change: 2019-03-14 18:21:49.033085524 +0800
+
+## 修改文件的时间为当前系统时间, 发现三种时间都会改变
+[root@localhost ~]# touch gkdaxue.txt
+[root@localhost ~]# stat gkdaxue.txt 
+Access: 2019-03-14 18:24:08.712085238 +0800
+Modify: 2019-03-14 18:24:08.712085238 +0800
+Change: 2019-03-14 18:24:08.712085238 +0800
+
+## -t : 修改文件的 atime 以及 mtime, 因为时间属性变了, 所以 ctime 也会更改为系统当前时间
+[root@localhost ~]# touch -t 200808082000 gkdaxue.txt
+[root@localhost ~]# stat gkdaxue.txt
+Access: 2008-08-08 20:00:00.000000000 +0800  <== 自动主动修改导致变化
+
+Modify: 2008-08-08 20:00:00.000000000 +0800  <== 自己主动修改导致变化
+
+Change: 2019-03-14 18:27:54.860082113 +0800  <== 因为时间属性发生变化, 所以被动发生变化
+
+
+## -a : 只修改文件的 atime
+[root@localhost ~]# touch -a gkdaxue.txt
+[root@localhost ~]# stat gkdaxue.txt
+Access: 2019-03-14 18:29:52.435085253 +0800  <== 自己主动修改导致变化
+
+Modify: 2008-08-08 20:00:00.000000000 +0800
+Change: 2019-03-14 18:29:52.435085253 +0800  <== 因为时间属性发生变化, 所以被动发生变化
+
+
+## -m : 只修改文件的 mtime
+[root@localhost ~]# touch -m gkdaxue.txt 
+[root@localhost ~]# stat gkdaxue.txt 
+Access: 2019-03-14 18:29:52.435085253 +0800
+Modify: 2019-03-14 18:32:05.889078008 +0800  <== 自己主动修改导致变化
+
+Change: 2019-03-14 18:32:05.889078008 +0800  <== 因为时间属性发生变化, 所以被动发生变化
+
+
+## -d : 使用指定的时间, 而非现在的时间
+[root@localhost ~]# touch -d '2 days ago' gkdaxue.txt 
+[root@localhost ~]# stat gkdaxue.txt
+Access: 2019-03-12 18:33:50.283816901 +0800  <== 时间都发生变化
+
+Modify: 2019-03-12 18:33:50.283816901 +0800  <== 时间都发生变化
+
+Change: 2019-03-14 18:33:50.283086754 +0800  <== 时间都发生变化
+
+
+## -c : 只修改文件的三种时间(当前系统时间), 不创建文件
+[root@localhost ~]# touch -c gkdaxue.txt 
+[root@localhost ~]# stat gkdaxue.txt
+Access: 2019-03-14 18:35:25.721087878 +0800
+Modify: 2019-03-14 18:35:25.721087878 +0800
+Change: 2019-03-14 18:35:25.721087878 +0800
+```
+
+## mkdir命令
+
+用于创建目录, 格式为 :
+
+> mkdir  \[ options \]  Directory ....
+
+### 选项
+
+| 选项  | 含义         |
+| --- | ---------- |
+| -m  | 创建目录同时设置权限 |
+| -p  | 递归创建目录     |
+| -v  | 显示创建过程     |
+
+### 实例
+
+```bash
+## 使用默认权限创建一个目录
+[root@localhost ~]# mkdir gkdaxue
+
+## 再次创建同一个目录报错, 因为目录已经存在了
+[root@localhost ~]# mkdir gkdaxue
+mkdir: cannot create directory `gkdaxue': File exists
+
+## 自定义权限来创建目录, 不使用默认权限
+[root@localhost ~]# mkdir -m 777 gkdaxue1 gkdaxue2  # 等于 mkdir -m 777 gkdaxue{1,2} , "1,2"中间没有空格
+
+[root@localhost ~]# ll -d gkdaxue*
+drwxr-xr-x. 2 root root 4096 Mar 15 10:20 gkdaxue    <== drwxr-xr-x
+drwxrwxrwx. 2 root root 4096 Mar 15 10:24 gkdaxue1   <== drwxrwxrwx
+drwxrwxrwx. 2 root root 4096 Mar 15 10:24 gkdaxue2
+
+## 创建递归的目录, 但是不存在 gkdaxue3 这个目录, 所以创建失败
+[root@localhost ~]# mkdir gkdaxue3/test1/test2
+mkdir: cannot create directory `gkdaxue3/test1/test2': No such file or directory
+
+## -p : 递归创建目录, 即可以成功创建
+[root@localhost ~]# mkdir -p -v gkdaxue3/test1/test2
+mkdir: created directory `gkdaxue3'
+mkdir: created directory `gkdaxue3/test1'
+mkdir: created directory `gkdaxue3/test1/test2'
+
+## 此处需要自己安装 tree 软件, 前提是配置好网络和yum源,如果不会请忽略, 自己使用其他办法查看即可.
+
+[root@localhost ~]# tree gkdaxue3
+-bash: tree: command not found   <== 出现此条提示, 说明需要安装 tree 软件
+[root@localhost ~]# yum install -y tree
+Loaded plugins: fastestmirror, refresh-packagekit, security
+Setting up Install Process
+.....
+Installed:
+  tree.x86_64 0:1.5.3-3.el6                                                                           
+
+Complete!
+[root@localhost ~]# tree gkdaxue3
+gkdaxue3
+└── test1
+    └── test2
+
+2 directories, 0 files
+```
+
+11
