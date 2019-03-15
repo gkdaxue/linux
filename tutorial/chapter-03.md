@@ -108,16 +108,13 @@ this is append content  <== 内容被成功追加进去
 
 ## 使用 标准错误输出重定向  2>
 [root@localhost ~]# echo 'www.gkdaxue.com' 2> home_dir_file 
-
 www.gkdaxue.com  <== 此行显示是因为没有错误, 2> 只能处理错误信息, 所以标准输出继续执行.也就是输出 echo 的内容
-
 [root@localhost ~]# cat home_dir_file   # <== 查看文件内容为空的, 因为没有错误并且是清空方式写入
 
 [root@localhost ~]# 
 
 ## 查看一个不存在的文件
 [root@localhost ~]# cat  xxxxxxx  2> home_dir_file   # <== 发现没有错误信息输出
-
 [root@localhost ~]# cat home_dir_file 
 cat: xxxxxxx: No such file or directory   <== 错误信息被成功的写入到文件中, 同理还有 2>> 追加写入.
 ```
@@ -294,9 +291,7 @@ MANUAL SECTIONS
 010	uucp:x:10:14:uucp:/var/spool/uucp:/sbin/nologin
 
 ## -n 5 : 显示文件前 5 行, 可以带 + 号
-
 [root@localhost ~]# head -n 5 head_file.txt
-
 001	root:x:0:0:root:/root:/bin/bash
 002	bin:x:1:1:bin:/bin:/sbin/nologin
 003	daemon:x:2:2:daemon:/sbin:/sbin/nologin
@@ -319,7 +314,9 @@ MANUAL SECTIONS
 003	daemon:x:2:2:daemon:/sbin:/sbin/nologin
 004	adm:x:3:4:adm:/var/adm:/sbin/nologin
 005	lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
-##
+
+## 显示文件名, 多文件默认显示文件名
+
 [root@localhost ~]# head -n 5 head_file.txt head_file.txt # 等于  head -n 5 -v head_file.txt head_file.txt
 ==> head_file.txt <==
 001	root:x:0:0:root:/root:/bin/bash
