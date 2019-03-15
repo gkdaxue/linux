@@ -611,7 +611,6 @@ mkdir: cannot create directory `gkdaxue': File exists
 
 ## 自定义权限来创建目录, 不使用默认权限
 [root@localhost ~]# mkdir -m 777 gkdaxue1 gkdaxue2  # 等于 mkdir -m 777 gkdaxue{1,2} , "1,2"中间没有空格
-
 [root@localhost ~]# ll -d gkdaxue*   #  * 表示为一个通配符, 以后讲解
 drwxr-xr-x. 2 root root 4096 Mar 15 10:20 gkdaxue    <== drwxr-xr-x
 drwxrwxrwx. 2 root root 4096 Mar 15 10:24 gkdaxue1   <== drwxrwxrwx
