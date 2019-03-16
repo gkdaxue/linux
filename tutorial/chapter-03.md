@@ -492,7 +492,7 @@ Inodes: Total: 128000     Free: 120580
 
 > Access(访问时间 atime) : 读取文件内容，就会更新(more、cat等)
 > 
-> Modify(修改时间 mtime) : 内容更新就会更改(ls -l 时间)
+> Modify(修改时间 mtime) : 内容(文件的内容, 而不是文件的属性或权限) 更新就会更改(ls -l 显示的时间)
 > 
 > Change(更改时间 ctime) : 当文件的状态被修改时(**链接数，大小，权限，Blocks数, 时间属性等**)
 
@@ -602,14 +602,14 @@ Change: 2019-03-14 18:35:25.721087878 +0800
 ### 实例
 
 ```bash
-## 使用默认权限创建一个目录
+## 使用 '默认权限' 创建一个目录
 [root@localhost ~]# mkdir gkdaxue
 
 ## 再次创建同一个目录报错, 因为目录已经存在了
 [root@localhost ~]# mkdir gkdaxue
 mkdir: cannot create directory `gkdaxue': File exists
 
-## 自定义权限来创建目录, 不使用默认权限
+## '自定义权限' 来创建目录, 不使用默认权限
 [root@localhost ~]# mkdir -m 777 gkdaxue1 gkdaxue2  # 等于 mkdir -m 777 gkdaxue{1,2} , "1,2"中间没有空格
 [root@localhost ~]# ll -d gkdaxue*   #  * 表示为一个通配符, 以后讲解
 drwxr-xr-x. 2 root root 4096 Mar 15 10:20 gkdaxue    <== drwxr-xr-x
@@ -644,5 +644,157 @@ gkdaxue3
 
 2 directories, 0 files
 ```
+## rmdir命令
+删除 `空的` 目录, 如果目录中有文件(在Linux中一切皆文件, 所以不是单纯的指代文件), 则不能删除(使用较少)
+### 选项
+| 选项  | 含义         |
+| --- | ---------- |
+| -p  | 连同上层 空目录 一起删除     |
+| -v  | 显示删除过程     |
+### 实例
+```bash
+[root@localhost ~]# ls
+anaconda-ks.cfg  Documents  install.log         Music     Public     Videos
+Desktop          Downloads  install.log.syslog  Pictures  Templates
 
-11
+## 想一下 为什么要加 -p 参数
+[root@localhost ~]# mkdir -p rm_dir/test1/test2
+
+## 创建一个测试文件 rm_test.txt
+[root@localhost ~]# touch rm_dir/test1/test2/rm_test.txt
+
+## 查看一下 rm_dir 内容
+[root@localhost ~]# ls -R rm_dir/
+rm_dir/:   <== 表示目录
+test1      <== 表示目录下的文件
+
+rm_dir/test1:   
+test2
+
+rm_dir/test1/test2:
+rm_test.txt   <== 此文件已经被创建
+
+## 尝试删除 test2 目录报错, 提示非空
+[root@localhost ~]# rmdir rm_dir/test1/test2
+rmdir: failed to remove `rm_dir/test1/test2': Directory not empty
+
+## 先使用 rm 命令删除一下文件, 稍后讲解
+[root@localhost ~]# rm rm_dir/test1/test2/rm_test.txt 
+rm: remove regular empty file `rm_dir/test1/test2/rm_test.txt'? y  <== 此 y 是我们确认删除添加的
+
+## 确认一下, 发现确实被删除了
+[root@localhost ~]# ls -R rm_dir
+rm_dir:
+test1
+
+rm_dir/test1:
+test2
+
+rm_dir/test1/test2:   <== 此目录下没有内容
+
+## 尝试删除 rm_dir 目录, 报错提示非空
+[root@localhost ~]# rmdir -vp rm_dir
+rmdir: removing directory, `rm_dir'
+rmdir: failed to remove `rm_dir': Directory not empty
+
+## -p : 连同上级空目录一起删除
+## -v : 显示删除过程
+[root@localhost ~]# rmdir -vp rm_dir/test1/test2/
+rmdir: removing directory, `rm_dir/test1/test2/'
+rmdir: removing directory, `rm_dir/test1'
+rmdir: removing directory, `rm_dir'
+
+## 查看一下, 发现被成功删除
+[root@localhost ~]# ls
+anaconda-ks.cfg  Documents  install.log         Music     Public     Videos
+Desktop          Downloads  install.log.syslog  Pictures  Templates
+```
+## cp命令
+复制文件或目录
+### 语法 
+
+> cp [ options ] 源文件(source)  目标文件(destination)
+> cp [ options ] source1 source2 ......  directory
+
+### 选项
+| 选项  | 含义         |
+| --- | ---------- |
+| -p  | 保留源文件或目录的属性     |
+| -d  | 当源文件为符号链接(软链接)时，目标文件也为符号链接，指向与源文件指向相同     |
+| -f  | 强行复制文件或目录，不论目标文件或目录是否已存在(不与 -i 连用, 连用无效)     |
+| -i  | 覆盖已经存在的文件之前先询问用户是否覆盖     |
+| -r  | 归处理，将指定目录下的所有文件与子目录一并处理     |
+| -a  | 相当于 -pdr 的意思(常用)     |
+```bash
+## 创建实验所需要的目录和文件
+[root@localhost ~]# mkdir -p cp_dir/test1/test2
+[root@localhost ~]# touch cp_dir/test1/test2/cp_test.txt
+[root@localhost ~]# ls -R cp_dir/
+cp_dir/:
+test1
+
+cp_dir/test1:
+test2
+
+cp_dir/test1/test2:
+cp_test.txt
+
+## -r : 递归复制, 如果不递归复制, 文件夹中含有其他目录会导致失败 
+[root@localhost ~]# cp cp_dir/test1 .    # <== . 表示当前目录, 之前讲过, 没有指定文件名, 则使用复制文件的文件名
+cp: omitting directory `cp_dir/test1'      <== 如果不递归复制,会导致复制失败
+[root@localhost ~]# ls -R test1
+ls: cannot access test1: No such file or directory   <== 说明复制失败了
+[root@localhost ~]# cp -r cp_dir/test1 .  
+[root@localhost ~]# ls -R test1/
+test1/:
+test2
+
+test1/test2:
+cp_test.txt
+
+## -i : 覆盖已存在的文件之前, 先询问用户是否覆盖
+[root@localhost ~]# touch cp_i_test.txt   
+[root@localhost ~]# cp -i cp_i_test.txt  cp_i_test.txt2    # <== 第一次没有出现提示, 是因为不存在这个文件, 所以不会提示
+[root@localhost ~]# echo 'www.gkdaxue.com' > cp_i_test.txt2
+[root@localhost ~]# cat cp_i_test.txt      # <== cp_i_test.txt 无内容
+[root@localhost ~]# cat cp_i_test.txt2     # <== 我们写入了内容
+www.gkdaxue.com
+[root@localhost ~]# cp -i cp_i_test.txt  cp_i_test.txt2    # <== cp_i_test.txt2 文件已经存在, 使用会询问是否覆盖
+cp: overwrite `cp_i_test.txt2'? y    <== 你可以输入 y(es) 或 n(o) 来选择是否进行覆盖, 我们选择了 yes
+[root@localhost ~]# cat cp_i_test.txt2     # <== 查看无内容, 说明我们确实已经覆盖了
+[root@localhost ~]#    
+
+## 查看并取消别名, 避免影响以下实验
+[root@localhost ~]# alias cp  # <== alias 别名的意思, 说明我们使用了 cp 命令相当于使用 cp -i 命令
+alias cp='cp -i'
+## 临时取消别名, 以后讲解
+[root@localhost ~]# alias cp="cp"
+[root@localhost ~]# alias cp
+alias cp='cp'
+
+## -f : 强制覆盖, 不进行提醒工作
+[root@localhost ~]# echo 'www.gkdaxue.com' > cp_i_test.txt2
+[root@localhost ~]# cp -f cp_i_test.txt cp_i_test.txt2  # <== 没有提示输出操作
+[root@localhost ~]# 
+
+
+## -p : 保留源文件或者目录的属性
+## 案例 1
+[root@localhost ~]# ls -l cp_i_test.txt*
+-rw-r--r--. 1 root root 0 Mar 16 14:36 cp_i_test.txt
+-rw-r--r--. 1 root root 0 Mar 16 16:14 cp_i_test.txt2    <== 未更改之前日期
+[root@localhost ~]# cp -p cp_i_test.txt cp_i_test.txt2
+[root@localhost ~]# ls -l cp_i_test.txt*
+-rw-r--r--. 1 root root 0 Mar 16 14:36 cp_i_test.txt
+-rw-r--r--. 1 root root 0 Mar 16 14:36 cp_i_test.txt2    <== 和 源文件日期一致
+## 案例 2
+[root@localhost ~]# cp /var/log/wtmp .   
+[root@localhost ~]# cp -p /var/log/wtmp ./wtmp2   # <== 复制到当前目录, 并且文件名为 wtmp2
+[root@localhost ~]# ls -lU /var/log/wtmp wtmp2 wtmp
+-rw-rw-r--. 1 root utmp 24960 Mar 16 12:28 /var/log/wtmp  <== 源文件
+-rw-rw-r--. 1 root utmp 24960 Mar 16 12:28 wtmp2          <== 保留之后的属性, 可以看到不同点
+-rw-r--r--. 1 root root 24960 Mar 16 16:19 wtmp           <== 不保留源文件的属性, 比如 mtime, 所有者/所有组 权限等
+```
+
+
+
