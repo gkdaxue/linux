@@ -653,6 +653,7 @@ echo $difference seconds.
 | -t          | 用文件和目录的更改时间排序                   |
 | -S          | 以文件大小排序                         |
 | -r          | 将文件以相反次序显示(原定依英文字母次序)           |
+| -R          | 递归列出子目录           |
 
 ### 实例
 
@@ -677,6 +678,32 @@ anaconda-ks.cfg  install.log  install.log.syslog
 ## 查看其它目录
 [root@localhost ~]# ls /home/   #<== /home 默认为一般用户的家目录
 gkdaxue  lost+found
+
+## -R : 递归列出子目录的内容
+[root@localhost ~]# ls -R /home
+/home:                  <== 目录
+gkdaxue  lost+found     <== 目录的内容
+
+/home/gkdaxue:          <== 目录
+Desktop  Documents  Downloads  Music  Pictures  Public  Templates  Videos
+
+/home/gkdaxue/Desktop:
+
+/home/gkdaxue/Documents:
+
+/home/gkdaxue/Downloads:
+
+/home/gkdaxue/Music:
+
+/home/gkdaxue/Pictures:
+
+/home/gkdaxue/Public:
+
+/home/gkdaxue/Templates:
+
+/home/gkdaxue/Videos:
+
+/home/lost+found:
 
 ## -a : 显示所有文件, 包含隐藏文件 ( .开头的文件叫做隐藏文件 )
 [root@localhost ~]# ls -a
