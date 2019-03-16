@@ -711,6 +711,14 @@ Desktop          Downloads  install.log.syslog  Pictures  Templates
 ```
 ## cp命令
 复制文件或目录
+> 一般来说 目标文件的所有者通常都是命令操作者本身, 所以在复制有些特殊权限的文件(/etc/shadow)等, 就必须添加 -a 或者 -p 参数, 复制完整的权限信息. (了解即可, 以后讲解权限) 还有复制给其他用户的文件也要给予合理的权限, 让别的用户来进行相应的操作.
+
+
+有如下三种情况 : 
+> 1. 如果目标文件是目录，则会把源文件复制到该目录中
+> 2. 如果目标文件也是普通文件，则会询问是否要覆盖它
+> 3. 如果目标文件不存在，则执行正常的复制操作
+
 ### 语法 
 
 > cp [ options ] 源文件(source)  目标文件(destination)
@@ -725,6 +733,8 @@ Desktop          Downloads  install.log.syslog  Pictures  Templates
 | -i  | 覆盖已经存在的文件之前先询问用户是否覆盖     |
 | -r  | 归处理，将指定目录下的所有文件与子目录一并处理     |
 | -a  | 相当于 -pdr 的意思(常用)     |
+| -s  | 创建符号链接而不是复制 | 
+|-l  | 创建硬链接而不是复制文件本身说|
 ```bash
 ## 创建实验所需要的目录和文件
 [root@localhost ~]# mkdir -p cp_dir/test1/test2
@@ -794,6 +804,35 @@ alias cp='cp'
 -rw-rw-r--. 1 root utmp 24960 Mar 16 12:28 /var/log/wtmp  <== 源文件
 -rw-rw-r--. 1 root utmp 24960 Mar 16 12:28 wtmp2          <== 保留之后的属性, 可以看到不同点
 -rw-r--r--. 1 root root 24960 Mar 16 16:19 wtmp           <== 不保留源文件的属性, 比如 mtime, 所有者/所有组 权限等
+
+## -s : 创建软链接
+[root@localhost ~]# ls -l anaconda-ks.cfg*
+-rw-------. 1 root root 1638 Mar  3 11:42 anaconda-ks.cfg
+[root@localhost ~]# cp -s anaconda-ks.cfg anaconda-ks.cfg.soft
+[root@localhost ~]# ls -l anaconda-ks.cfg*
+-rw-------. 1 root root 1638 Mar  3 11:42 anaconda-ks.cfg
+lrwxrwxrwx. 1 root root   15 Mar 16 16:59 anaconda-ks.cfg.soft -> anaconda-ks.cfg  <== 带上-> 就是软链接的意思, 以后讲解
+
+## -d : 当源文件为符号链接(软链接)时，目标文件也为符号链接，指向与源文件指向相同
+[root@localhost ~]# cp -d anaconda-ks.cfg.soft anaconda-ks.cfg.soft2
+[root@localhost ~]# ls -l anaconda-ks.cfg*
+-rw-------. 1 root root 1638 Mar  3 11:42 anaconda-ks.cfg
+lrwxrwxrwx. 1 root root   15 Mar 16 16:59 anaconda-ks.cfg.soft -> anaconda-ks.cfg
+lrwxrwxrwx. 1 root root   15 Mar 16 17:01 anaconda-ks.cfg.soft2 -> anaconda-ks.cfg
+
+## -l : 创建硬链接文件, 而非复制文件本身
+[root@localhost ~]# cp -l anaconda-ks.cfg anaconda-ks.cfg.hard
+[root@localhost ~]# ls -l anaconda-ks.cfg*
+-rw-------. 2 root root 1638 Mar  3 11:42 anaconda-ks.cfg  <== 细心的同学肯定会发现, 第二列从数字 1 -> 2, 原因以后讲解.
+-rw-------. 2 root root 1638 Mar  3 11:42 anaconda-ks.cfg.hard
+lrwxrwxrwx. 1 root root   15 Mar 16 16:59 anaconda-ks.cfg.soft -> anaconda-ks.cfg
+lrwxrwxrwx. 1 root root   15 Mar 16 17:01 anaconda-ks.cfg.soft2 -> anaconda-ks.cfg
+
+## 复制多个文件到同一个目录
+[root@localhost ~]# mkdir cp_more_file_dir
+[root@localhost ~]# cp wtmp wtmp2  cp_more_file_dir/
+[root@localhost ~]# ls cp_more_file_dir/
+wtmp  wtmp2
 ```
 
 
