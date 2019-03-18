@@ -731,7 +731,7 @@ Desktop          Downloads  install.log.syslog  Pictures  Templates
 | -d  | 当源文件为符号链接(软链接)时，目标文件也为符号链接，指向与源文件指向相同     |
 | -f  | 强行复制文件或目录，不论目标文件或目录是否已存在(不与 -i 连用, 连用无效)     |
 | -i  | 覆盖已经存在的文件之前先询问用户是否覆盖     |
-| -r  | 归处理，将指定目录下的所有文件与子目录一并处理     |
+| -r  | 递归处理，将指定目录下的所有文件与子目录一并处理     |
 | -a  | 相当于 -pdr 的意思(常用)     |
 | -s  | 创建符号链接而不是复制 | 
 |-l  | 创建硬链接而不是复制文件本身说|
@@ -833,6 +833,99 @@ lrwxrwxrwx. 1 root root   15 Mar 16 17:01 anaconda-ks.cfg.soft2 -> anaconda-ks.c
 [root@localhost ~]# cp wtmp wtmp2  cp_more_file_dir/
 [root@localhost ~]# ls cp_more_file_dir/
 wtmp  wtmp2
+
+## 清空实验数据, rm 命令稍后讲解
+[root@localhost ~]# rm -rf anaconda-ks.cfg.* cp_dir cp_i* wtmp* cp_more_test_dir cp_more_file_dir 
+[root@localhost ~]# ls
+anaconda-ks.cfg  Documents  install.log         Music     Public     Videos
+Desktop          Downloads  install.log.syslog  Pictures  Templates
+```
+## mv命令
+移动/重命名  文件/目录
+### 语法
+> mv [ options ] 原文件(source) 目标文件(destination)
+> mv [ options ] source1 source2 .....  directory
+
+### 选项
+| 选项  | 含义         |
+| --- | ---------- |
+| -f  | 目标文件存在, 强制覆盖不提示    |
+| -i  | 覆盖已经存在的文件之前先询问用户是否覆盖     |
+
+### 实例
+```bash
+
+[root@localhost ~]# mkdir mv_dir
+[root@localhost ~]# cd mv_dir
+
+## 取消设置的别名
+[root@localhost mv_dir]# alias mv='mv'
+
+
+## 创建实验目录和文件
+[root@localhost mv_dir]# mkdir mv_dir_{1,2}
+[root@localhost mv_dir]# touch mv_file_{1,2}
+[root@localhost mv_dir]# ls
+mv_dir_1  mv_dir_2  mv_file_1  mv_file_2
+
+## 对文件重命名的操作
+[root@localhost mv_dir]# mv mv_file_1 mv_file_3  # <== 在同一个目录中就是重命名操作
+[root@localhost mv_dir]# ls
+mv_dir_1  mv_dir_2  mv_file_2  mv_file_3
+
+##  移动文件至目录的操作
+[root@localhost mv_dir]# mv mv_file_2 mv_dir_1    # <== 如果只是输入了目标目录, 没有输入文件名, 则保持原文件名
+[root@localhost mv_dir]# ls -R .
+.:
+mv_dir_1  mv_dir_2  mv_file_3
+
+./mv_dir_1:
+mv_file_2
+
+./mv_dir_2:
+
+## 移动文件到目录中, 并给与一个新的文件名
+[root@localhost mv_dir]# mv mv_file_3 mv_dir_1/mv_file_4  # <== 把 mv_file_3  -> mv_file_4 并移动到 mv_dir_1 下面
+[root@localhost mv_dir]# ls -R 
+.:
+mv_dir_1  mv_dir_2
+
+./mv_dir_1:
+mv_file_2  mv_file_4
+
+./mv_dir_2:
+
+## -i : 当目标目录下存在同名文件时, 询问是否覆盖
+[root@localhost mv_dir]# touch mv_file_{2,4}
+[root@localhost mv_dir]# mv mv_file_2 mv_dir_1      # <== 虽然已经存在了同名文件, 直接覆盖没有提示( -f )
+[root@localhost mv_dir]# mv -i mv_file_4 mv_dir_1   # <== -i, 提示是否覆盖
+mv: overwrite `mv_dir_1/mv_file_4'? y  <== y 或 n 是否覆盖
+
+## 把目录移动到 目录中
+[root@localhost mv_dir]# ls
+mv_dir_1  mv_dir_2
+[root@localhost mv_dir]# mv mv_dir_1 mv_dir_2
+[root@localhost mv_dir]# ls -R
+.:
+mv_dir_2
+
+./mv_dir_2:
+mv_dir_1
+
+./mv_dir_2/mv_dir_1:
+mv_file_2  mv_file_4
+```
+## basename命令
+```base
+## 取得文件名
+[root@localhost ~]# basename /etc/sysconfig/network-scripts/ifcfg-eth0 
+ifcfg-eth0
+```
+## dirname命令
+```base
+## 取得完整目录名
+[root@localhost ~]# dirname /etc/sysconfig/network-scripts/ifcfg-eth0 
+/etc/sysconfig/network-scripts
 ```
 
 
