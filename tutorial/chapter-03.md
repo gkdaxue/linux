@@ -927,6 +927,69 @@ ifcfg-eth0
 [root@localhost ~]# dirname /etc/sysconfig/network-scripts/ifcfg-eth0 
 /etc/sysconfig/network-scripts
 ```
+## rm命令
+删除文件或者目录
+### 语法
+> rm [ options ] FILE ....
+
+### 选项
+| 选项  | 含义         |
+| --- | ---------- |
+| -f  | 强制删除不提示(即使不存在,也不提示)    |
+| -i  | 在删除前会询问使用者是否执行删除动作     |
+| -r | 递归删除, 最常用在目录的删除 (这是非常危险的选项！！！) |
+
+### 实例
+```bash
+## 取消 rm 别名 或者 \rm 也可以
+[root@localhost ~]# alias rm
+alias rm='rm -i'
+
+[root@localhost ~]# mkdir rm_dir
+[root@localhost ~]# cd rm_dir
+[root@localhost rm_dir]# touch test_{1,2,3,4,5,6}
+[root@localhost rm_dir]# ls
+test_1  test_2  test_3  test_4  test_5  test_6
 
 
+## \rm 屏蔽 alias的作用, -i 询问是否执行操作
+[root@localhost rm_dir]# rm test_1  # <== 默认执行 rm = rm -i, 因为有alias的作用
+rm: remove regular empty file `test_1'? n
+[root@localhost rm_dir]# \rm test_1 # <== 这样就可以直接删除, 不需要询问 
+[root@localhost rm_dir]# ls
+test_2  test_3  test_4  test_5  test_6
 
+## -f : 强制删除, 不询问, 即使文件不存在, 也不报错
+[root@localhost rm_dir]# rm -if test_2
+[root@localhost rm_dir]# ls
+test_3  test_4  test_5  test_6
+[root@localhost rm_dir]# rm -rf test_7
+[root@localhost rm_dir]#
+
+## 创建了一个错误文件, 如何删除, - 是一个特殊符号
+[root@localhost rm_dir]# touch ./-test7.txt
+[root@localhost rm_dir]# ls
+test_3  test_4  test_5  test_6  -test7.txt
+[root@localhost rm_dir]# \rm -test7.txt  # <== 不能删除
+rm: invalid option -- 't'
+Try `rm ./-test7.txt' to remove the file `-test7.txt'.
+Try `rm --help' for more information.
+[root@localhost rm_dir]# \rm ./-test7.txt # <== 可以, 所以特殊符号的文件名,都可以使用此方式
+[root@localhost rm_dir]# ls
+test_3  test_4  test_5  test_6
+
+## -r : 递归删除
+[root@localhost rm_dir]# cd ..
+[root@localhost ~]# rm rm_dir  # <== 直接删除一个目录, 不允许  
+rm: cannot remove `rm_dir': Is a directory
+[root@localhost ~]# rm -r rm_dir # <== 因为没有取消别名,会询问是否删除
+rm: descend into directory `rm_dir'? y
+rm: remove regular empty file `rm_dir/test_3'? y
+rm: remove regular empty file `rm_dir/test_4'? y
+rm: remove regular empty file `rm_dir/test_6'? y
+rm: remove regular empty file `rm_dir/test_5'? y
+rm: remove directory `rm_dir'? y
+
+## rm -rf /* 是一个非常危险的命令, 表示是删除根目录下所有的文件 
+## 这会导致它会把系统也删除, 出现大问题, 所以使用 rm 命令一定要谨慎.
+```
