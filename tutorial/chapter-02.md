@@ -304,6 +304,71 @@ builtin hash -p /bin/cat cat
 [root@localhost ~]# hash
 hash: hash table empty
 ```
+## 命令执行的步骤
+> 1. 判断用户是否以绝对路径或相对路径的方式输入命令（如/bin/ls），如果是的话则直接执行, 不执行后续操作
+> 2. Linux系统检查用户输入的命令是否为“别名命令”(alias)
+> 3. Bash解释器判断用户输入的是内部命令还是外部命令, 内部命令会被直接执行
+> 4. 系统在 PATH 变量中查找用户输入的命令文件，(PATH 作用是告诉Bash解释器待执行的命令可能存放的位置)
+
+```bash
+## 我们发现 PATH 变量定义的都是一些目录(以 : 分割), 然后 Bash 解释器就会乖乖地在这些位置中逐个查找(从左到右)可执行文件
+## `从左至右` : 即使一个可执行文件, 在 PATH 定义的两个目录中, 那么只会找到位置在前边的那一个, 找到就结束.
+[root@localhost bin]# echo $PATH
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+```
+
+### 注意事项
+> 1. shell 程序搜索可执行文件的路径被定义在 PATH 变量中, 所以有的时候我们会导致我们已经确定的知道我们系统中存在某个命令在某个位置, 但是系统就是提示无法找到, 可能就是 PATH 变量的原因. 因为对于不同的用户, 他的 PATH 变量的值不同.
+> 2. 命令是按照顺序从上到下的顺序符合条件就执行, 所以可以看出只有外部命令会被缓存下来(也就是第四步骤)
+> 2. **只有在第四步骤时**, shell搜索到的外部命令的路径结果会缓存到kv(key-value)存储中, 可以使用 hash 命令查看,这样做,有利有弊, 假如我们已经执行了一个在hash命令中存在的记录, 然后我们把该命令移动一下位置, 则会提示找不到的错误, 就需要我们进行hash 清空的操作(hash -r) 
+
+
+### 实例
+```bash
+## 本实验只是为了演示说明, 命令以后会讲解
+## 先进行清空操作, 避免影响实验结果
+[root@localhost ~]# hash -r
+
+## 往gkdaxue.txt 写入内容 gkdaxue.com, 并查看hash
+[root@localhost ~]# echo 'www.gkdaxue.com' > gkdaxue.txt
+[root@localhost ~]# hash
+hash: hash table empty   <== hash为啥是空的, 因为 hash 只会缓存外部命令
+[root@localhost ~]# type echo
+echo is a shell builtin
+
+## 查看文件 gkdaxue.txt后, 查看 hash 命令, 正常显示
+[root@localhost ~]# cat gkdaxue.txt 
+www.gkdaxue.com
+[root@localhost ~]# hash
+hits	command
+   1	/bin/cat
+
+## 查看 PATH 变量 (以 : 分割的目录)
+[root@localhost ~]# echo $PATH
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+
+## 移动 cat 命令的位置, 并查看 gkdaxue.txt 文件
+[root@localhost ~]# mv /bin/cat /usr/local/sbin/
+[root@localhost ~]# cat gkdaxue.txt 
+-bash: /bin/cat: No such file or directory  <== 却发现无法查看,因为 cat路径已经被缓存为 /bin/cat
+
+## 清空操作, 再次查看文件, 正常访问
+[root@localhost ~]# hash -r
+[root@localhost ~]# cat gkdaxue.txt 
+www.gkdaxue.com
+[root@localhost ~]# hash
+hits	command
+   1	/usr/local/sbin/cat  <== 已经被缓存为我们之后修改的路径
+
+## 还原位置 清空 hash , 避免影响下次操作 
+[root@localhost ~]# mv /usr/local/sbin/cat /bin/cat
+[root@localhost ~]# hash -r
+[root@localhost ~]# cat gkdaxue.txt 
+www.gkdaxue.com
+[root@localhost ~]# hash
+hits	command
+   1	/bin/cat
+```
 
 ## help命令
 我们之前说过, 命令分为另种形式 `内部命令` 和 `外部命令`, 而 help 就是针对于查看内部命令的帮助信息, 因为如果使用接下来讲解的 man 命令, 并不能获取到正确的帮助信息
