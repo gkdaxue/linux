@@ -39,7 +39,7 @@
 
 ### 输入命令, 回车
 > 提请 shell 程序找到键入命令所对应的可执行程序或代码, 并由其分析后提交给内核分配资源将其运行起来, 表现为一个或多个进程.
-> 命令分为 `内部命令` 和 `外部命令` 两种形式(以后讲解)
+> 
 
 ```bash
 ## 找到 pwd 命令的路径, 也就是在 /bin 目录下, 所以相当于 /bin/pwd
@@ -50,6 +50,32 @@
 /root
 [root@localhost ~]# /bin/pwd   
 /root
+```
+## 命令的分类
+命令分为 `内部命令(内建命令)` 和 `外部命令` 两种形式.
+> 内部命令 : 由 shell 自带的, 而且通过某命令形式提供
+>
+> 外部命令 : 在当前系统的某个路径下有对应的可执行文件
+
+### type命令
+type 命令用来区分内部和外部命令.
+> type 命令(command)
+
+### 实例
+```bash
+## 内部命令
+[root@localhost ~]# type type
+type is a shell builtin
+[root@localhost ~]# type cd
+cd is a shell builtin
+
+## 外部命令
+[root@localhost ~]# type head
+head is /usr/bin/head
+
+## 查看外部命令所在的位置
+[root@localhost ~]# which head
+/usr/bin/head
 ```
 
 ## 重要的热键
@@ -212,10 +238,42 @@ drwxr-xr-x.  23 root root  4096 Mar  3 11:39 var
 以上两种写法都是正确的, 可以根据实际生活中的需要, 灵活的选用不同的方式.
 
 # Linux 常用命令
+## help命令
+我们之前说过, 命令分为另种形式 `内部命令` 和 `外部命令`, 而 help 就是针对于查看内部命令的帮助信息, 因为如果使用接下来讲解的 man 命令, 并不能获取到正确的帮助信息
+> help 命令(command)
 
+### 实例
+```bash
+[root@localhost ~]# help cd
+cd: cd [-L|-P] [dir]
+    Change the shell working directory.
+    
+    Change the current directory to DIR.  The default DIR is the value of the
+    HOME shell variable.
+    
+    The variable CDPATH defines the search path for the directory containing
+    DIR.  Alternative directory names in CDPATH are separated by a colon (:).
+    A null directory name is the same as the current directory.  If DIR begins
+    with a slash (/), then CDPATH is not used.
+    
+    If the directory is not found, and the shell option `cdable_vars' is set,
+    the word is assumed to be  a variable name.  If that variable has a value,
+    its value is used for DIR.
+    
+    Options:
+        -L	force symbolic links to be followed
+        -P	use the physical directory structure without following symbolic
+    	links
+    
+    The default is to follow symbolic links, as if `-L' were specified.
+    
+    Exit Status:
+    Returns 0 if the directory is changed; non-zero otherwise.
+
+```
 ## man(manual 操作说明) page
 
-     Linux系统中有那么多命令，某个命令是干嘛用的？ 以及在日常工作中遇到了一个不熟悉的Linux命令，又如何才能知道它有哪些可用参数？只要执行 `man command` 即可, 我们使用 `pwd` 来实验
+     Linux系统中有那么多命令，某个命令是干嘛用的？ 以及在日常工作中遇到了一个不熟悉的Linux命令，又如何才能知道它有哪些可用参数？只要执行 `man command` 即可, 我们使用 `pwd` 来实验(**主要针对外部命令**)
 
 ```bash
 [root@localhost ~]# man pwd   ## 输入此命令后, 会进入 man page 功能界面
