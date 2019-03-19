@@ -52,31 +52,10 @@
 /root
 ```
 ## 命令的分类
-命令分为 `内部命令(内建命令)` 和 `外部命令` 两种形式.
+命令分为 `内部命令(内建命令)` 和 `外部命令` 两种形式.(可使用 type 命令区分, 稍后讲解)
 > 内部命令 : 由 shell 自带的, 而且通过某命令形式提供
 >
 > 外部命令 : 在当前系统的某个路径下有对应的可执行文件
-
-### type命令
-type 命令用来区分内部和外部命令.
-> type 命令(command)
-
-### 实例
-```bash
-## 内部命令
-[root@localhost ~]# type type
-type is a shell builtin
-[root@localhost ~]# type cd
-cd is a shell builtin
-
-## 外部命令
-[root@localhost ~]# type head
-head is /usr/bin/head
-
-## 查看外部命令所在的位置
-[root@localhost ~]# which head
-/usr/bin/head
-```
 
 ## 重要的热键
 
@@ -238,6 +217,94 @@ drwxr-xr-x.  23 root root  4096 Mar  3 11:39 var
 以上两种写法都是正确的, 可以根据实际生活中的需要, 灵活的选用不同的方式.
 
 # Linux 常用命令
+
+## type命令
+用来区分内部和外部命令.
+> type 命令(command)
+
+### 实例
+```bash
+## 内部命令
+[root@localhost ~]# type type
+type is a shell builtin
+[root@localhost ~]# type cd
+cd is a shell builtin
+[root@localhost ~]# type hash
+hash is a shell builtin
+
+## 外部命令
+[root@localhost ~]# type head
+head is /usr/bin/head
+
+## 查看外部命令所在的位置
+[root@localhost ~]# which head
+/usr/bin/head
+```
+## hash命令
+记录或显示命令(外部命令)的完整路径名
+### 语法
+> hash [-lr] [-p pathname name] [-dt name ...]
+
+### 选项
+| 选项          | 含义                                                       |
+| ----------- | -------------------------------------------------------------- |
+| -r       | 清空所有 hash 表记录                                      |
+| -d       | 删除对应 name 的 hash 值                                                |
+| -t       | 显示对应 name 的 完整命令路径值                               |
+|-l| 既可以看到 hash 表命令的路径, 也可以看到 name|
+### 实例
+```bash
+## 先清空 hash 表的值
+[root@localhost ~]# hash -r
+[root@localhost ~]# hash
+hash: hash table empty
+
+## 使用一个 `内部命令` 看看会不会被缓存, 结果发现不会
+[root@localhost ~]# type pwd
+pwd is a shell builtin
+[root@localhost ~]# pwd
+/root
+[root@localhost ~]# hash
+hash: hash table empty
+
+## cat 是 `外部命令`, 但是使用绝对路径来执行命令
+[root@localhost ~]# /bin/cat /etc/issue
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+[root@localhost ~]# hash
+hash: hash table empty  <== 如果是以路径来执行的命令并不会缓存(这牵扯到命令的执行步骤, 稍后讲解)
+
+## cat 是 `外部命令`, 并且使用了命令的形式, 所以会被缓存下来
+[root@localhost ~]# type cat
+cat is /bin/cat          <== 显示为一个外部命令.
+[root@localhost ~]# cat /etc/issue
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+[root@localhost ~]# hash
+hits	command
+   1	/bin/cat
+
+## 再次查看 cat
+[root@localhost ~]# type cat
+cat is hashed (/bin/cat)  <== 显示被 hashed 了
+
+
+## 显示 hash 表命令的路径以及 name
+[root@localhost ~]# hash -l
+builtin hash -p /bin/cat cat
+
+## -t :显示对应 name 完整的命令路径值 
+[root@localhost ~]# hash -t cat
+/bin/cat
+
+## -d : 删除对应 name 的 hash 值, 所以再次查看为空了
+[root@localhost ~]# hash -d cat
+[root@localhost ~]# hash
+hash: hash table empty
+```
+
 ## help命令
 我们之前说过, 命令分为另种形式 `内部命令` 和 `外部命令`, 而 help 就是针对于查看内部命令的帮助信息, 因为如果使用接下来讲解的 man 命令, 并不能获取到正确的帮助信息
 > help 命令(command)
