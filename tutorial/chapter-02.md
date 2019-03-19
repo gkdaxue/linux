@@ -36,6 +36,20 @@
 > 
 > 9. `命令对象` 一般是指要处理的 文件, 目录 用户等等
 
+### 输入命令, 回车
+> 提请 shell 程序找到键入命令所对应的可执行程序或代码, 并由其分析后提交给内核分配资源将其运行起来, 表现为一个或多个进程.
+
+```bash
+## 找到 pwd 命令的路径, 也就是在 /bin 目录下, 所以相当于 /bin/pwd
+[root@localhost ~]# which pwd
+/bin/pwd
+
+[root@localhost ~]# pwd
+/root
+[root@localhost ~]# /bin/pwd   
+/root
+```
+
 ## 重要的热键
 
 ### `[Tab]`
