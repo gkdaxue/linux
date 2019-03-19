@@ -42,6 +42,7 @@ daemon:x:2:2:daemon:/sbin:/sbin/nologin
 
 ### 命令和文件名补全功能
 > 跟在不完全的命令后面, 补全命令
+> 
 > 跟在不完全的文件名后面, 补全文件名
 
 
@@ -52,5 +53,5 @@ daemon:x:2:2:daemon:/sbin:/sbin/nologin
 alias rm='rm -i'
 ```
 
- 4. 作业控制 前后台控制功能
- 5. 程序脚本
+### 作业控制 前后台控制功能
+### 程序脚本
