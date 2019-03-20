@@ -799,8 +799,12 @@ echo 命令用于输出字符串或者变量值
 [root@localhost ~]# echo 'www.gkdaxue.com'   # <== 输出字符串
 www.gkdaxue.com
 
-[root@localhost ~]# echo $SHELL   # <== 输出变量, 变量前有 $ 符号.以后讲解变量内容
+[root@localhost ~]# echo $SHELL    # <== 输出变量, 变量前有 $ 符号.以后讲解变量内容
 /bin/bash
+[root@localhost ~]# echo "$SHELL"  # <== 带上双引号, 也可以正确显示变量值
+/bin/bash
+[root@localhost ~]# echo '$SHELL'  # <== 带上单引号, 却不能正确显示变量值,以后讲解原因
+$SHELL
 
 ## ";" 表示连续执行多个命令时使用, echo 输出完成会自动换一行
 [root@localhost ~]# echo 'www.gkdaxue.com' ; echo 'www.gkdaxue.com'
@@ -1596,7 +1600,6 @@ anaconda-ks.cfg  Documents  install.log         Music     Public     Videos
 Desktop          Downloads  install.log.syslog  Pictures  Templates
 
 [root@localhost ~]# file anaconda-ks.cfg  
-
 anaconda-ks.cfg: ASCII English text  <== 这是一个ASCII 的存文本文件
 
 [root@localhost ~]# file Desktop/
@@ -1607,7 +1610,6 @@ anaconda-ks.cfg: ASCII English text
 
 [root@localhost ~]# file -b anaconda-ks.cfg 
 ASCII English text    <== 只显示文件编码和格式, 不显示文件名
-
 
 [root@localhost ~]# file -i anaconda-ks.cfg 
 anaconda-ks.cfg: text/plain; charset=us-ascii  <== 显示 MIME 类型
