@@ -284,7 +284,7 @@ Kernel \r on an \m
 
 [root@localhost ~]# hash
 hits	command
-   1	/bin/cat
+   1	/bin/cat    <== 前边的 1 表示缓存命中的次数
 
 ## 再次查看 cat
 [root@localhost ~]# type cat
@@ -615,6 +615,164 @@ alsactl_init         (7)  - alsa control management - initialization
 ```
 
      经过我们上面的实验. 我们已经初步会使用了man 这个命令来查询命令, 操作都是一样的, 所以以后会省略很多这些方面的内容. 直接开始进行讲解.
+
+## history命令
+用来管理历史命令的功能, 登录 shell 时, 会读取历史命令文件(~/.bash_history)中记录的命令, 本次执行的命令会被记录在内存中, 当用户退出时, 才会追加到历史文件中.
+
+### 相关环境变量
+每个人的环境变量以及值都不同, 这样就方便了进行调用, 以后讲解变量的知识. 输出变量的方式为 ` $变量名 `
+```bash
+## HISTSIZE : 历史命令记录的条数
+[root@localhost ~]# echo $HISTSIZE
+1000
+
+## HISTFILE : 记录历史命令的文件
+[root@localhost ~]# echo $HISTFILE
+/root/.bash_history
+
+## HISTFILESIZE : 命令历史文件记录历史的条数
+[root@localhost ~]# echo $HISTFILESIZE
+1000
+
+## HISTCONTROL : 控制命令历史的记录方式
+[root@localhost ~]# echo $HISTCONTROL
+ignoredups
+```
+
+### 语法
+> history [ options ]
+
+### 选项
+| 选项  | 含义        |
+| --- | --------- |
+| -a  | 立即追加本次会话执行的命令到历史文件中 |
+| -c  | 清空历史文件    |
+| -d offset | 删除指定序号的历史命令|
+| num | 显示最后 num 条历史记录 |
+| !num | 调用历史命令列表中的第 num 条命令|
+| !! | 调用上一条命令 |
+| !string | 调用历史命令中最近一个以 string 开头的命令 |
+
+
+### 实例
+```bash
+## 查看 history 是外部还是内部命令
+[root@localhost ~]# type history
+history is a shell builtin  <== 由于是内部命令, 所以我们只能使用 help, 而不是使用 man帮助信息
+
+## 显示所有的 history 命令
+[root@localhost ~]# history
+    1  ifconfig
+    2  ifup eth0
+    3  ifconfig
+	...
+  667  q
+  668  type history
+  669  man history
+  670  help history
+  671  history
+
+## 显示最后 5 条 history 命令, 包含刚才执行的 history
+[root@localhost ~]# history 5  
+  668  type history
+  669  man history
+  670  help history
+  671  history
+  672  history 5
+
+## 清空历史命令, 但是并不影响历史文件
+[root@localhost ~]# history -c
+[root@localhost ~]# history
+    1  history
+
+## 删除指定序号的历史命令
+[root@localhost ~]# history -d 1
+[root@localhost ~]# history
+    1  history -d 1
+    2  history   
+
+## 查看文件内容, 以后讲解
+[root@localhost ~]# cat /etc/issue
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+[root@localhost ~]# history
+    1  history -d 1
+    2  history
+    3  cat /etc/issue  
+    4  history
+
+## 执行 3 号记录命令 !3
+[root@localhost ~]# !3
+cat /etc/issue     <== 指明了命令的内容
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+## 执行上次命令, 可以用 !!
+[root@localhost ~]# !!
+cat /etc/issue 
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+## 不知道心细的朋友, 看到下面的结果有没有一个疑问.
+[root@localhost ~]# history
+    1  history -d 1
+    2  history
+    3  cat /etc/issue
+    4  history
+    5  cat /etc/issue   <== 我们在之前执行了两次cat, 一个 !3, 一个!!, 为啥只有一条记录,稍后讲解
+    6  history          <== 这是我们此次执行的命令
+
+## !string 演示
+[root@localhost ~]# !cat
+cat /etc/issue
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+[root@localhost ~]# 
+```
+### 控制命令历史的记录方式
+> ignoredups  : 忽略连续且相同的命令, 只保留一条(**连续且相同, 如果同一个命令但是参数或者选项不一样, 也是不同的记录**)
+> 
+> ignorespace : 忽略所有以空白开头的命令
+> 
+> ignoreboth  : 以上两者都用
+
+```bash
+[root@localhost ~]# echo $HISTCONTROL
+ignoredups  <== 忽略连续且相同的命令, 只保留一条
+
+## 查看最后 5 条记录
+[root@localhost ~]# history 5
+   10  echo $HISTFILESIZE
+   11  echo $HISTCONTROL
+   12  history
+   13  pwd
+   14  history 5  <== 到 14 条记录
+
+## 执行了 3 遍 pwd(显示当前工作目录), 按理来说应该到了 17条记录
+[root@localhost ~]# pwd
+/root
+[root@localhost ~]# pwd
+/root
+[root@localhost ~]# pwd
+/root
+
+[root@localhost ~]# history 5
+   12  history
+   13  pwd
+   14  history 5
+   15  pwd        <== 发现只有这一条记录
+   16  history 5  <== 这是刚才执行的命令
+
+## 我这是 history 6, 不同上面 history 5 所以也记录
+[root@localhost ~]# history 6
+   12  history
+   13  pwd
+   14  history 5
+   15  pwd
+   16  history 5
+   17  history 6
+```
 
 ## echo命令
 
