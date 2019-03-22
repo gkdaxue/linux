@@ -90,4 +90,112 @@ bin:x:1:1:bin:/bin:/sbin/nologin
 ```
 ![变量](https://github.com/gkdaxue/linux/raw/master/image/chapter_A4_0001.png)
 ### 影响 bash 环境操作的变量
-有些变量会影响到 bash 的环境, 比如我们之前所说的 PATH 变量,  为什么它能影响到 bash 环境变量呢?
+有些变量会影响到 bash 的环境, 比如我们之前所说的 PATH 变量,  为什么它能影响到 bash 环境变量呢? 因为对于不同的用户, 同样的变量值可能会不同, 从而进一步会影响到 bash 的环境.(因为在 PATH 中搜索命令从左到右)
+```bash
+[root@localhost ~]# echo $PATH
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+
+[gkdaxue@localhost ~]$ echo $PATH
+/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/gkdaxue/bin
+```
+## 变量的显示, 设置, 修改和销毁
+### echo命令
+我们如何想知道变量的值, 就需要我们使用 echo 命令来进行输出操作
+> **在变量的前边加上 $ 符号**, 比如 echo $PATH 或 echo ${PATH}
+
+```bash
+[root@localhost ~]# echo $PATH
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@localhost ~]# echo ${PATH}
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+```
+### 变量的设置和修改规则
+用一个 "=" 号来连接变量名和它的值就好了, 当一个变量未被设置时, 默认的值是 '空' 的. 所以在设置时, 还是需要符合某些规定, 否则会导致设置失败.
+> 1. 变量名只能是英文字母或数字, 但是不能以数字开头
+> 2. 变量名和变量值以一个 '=' 连接, 并且 '=' 号不能有空格
+> 3. 变量值若含有空格符, 可以使用 '' 或 "" 将变量内容包含起来(使用'' 或 "" 会有区别, 稍后讲解)
+> 4. 可以使用转义字符 '\' (如 $, \, !)来变成一般字符
+> 5. 通过反单引号 \`\` (键盘上方数字1的左边那个按键) 或 **` $(命令) `** 来使用其他命令提供的信息
+> 6. 如果变量需要在 `子进程` 中使用, 需要使用 **`export 变量名`** 来使变量变成环境变量(稍后讲解)
+> 7. 自己设置的变量建议使用小写字母表示, 因为默认系统的变量全部使用大写字母.
+
+```bash
+## 等号两边不能有空格, 否则报错
+[root@localhost ~]# myname = gkdaxue
+-bash: myname: command not found
+
+## 不能以数字开头
+[root@localhost ~]# 2myanme=test
+-bash: 2myanme=test: command not found
+
+## 正常使用
+[root@localhost ~]# myname=test
+[root@localhost ~]# echo $myname
+test
+
+## 如果变量值中有空格, 建议使用 '' 或 "" 包含起来
+[root@localhost ~]# myname=www gkdaxue com
+-bash: gkdaxue: command not found
+
+## 接下来我们就看一下 '' 和 "" 包含起来的区别, 我想输出为金额为 $5
+[root@localhost ~]# price=5
+[root@localhost ~]# echo $${price}
+33577{price}  <== 这个输出的是什么鬼, 其实表示当前Shell进程的ID，即pid
+[root@localhost ~]# echo \$${price}
+$5                 <== 所以我们可以使用转义符号 \ 来转义一下, 也可以使用我们说的 '' 或 ""
+[root@localhost ~]# echo "$price"
+5                  <== 使用 "", 其中的变量会自动解析为变量值, 保持原有的特性
+[root@localhost ~]# echo '$price'
+$price             <== 仅为一般字符, 不会转换为变量值.
+## 那么如果变量值中有 ' 或 ", 那么我们又该如何处理呢? 请自己搜索解决方案.(转义字符或其他方案)
+
+## 使用反单引号 `` 或 $() , 来使用其他命令提供的变量值
+[root@localhost ~]# uname -r
+2.6.32-696.el6.x86_64
+[root@localhost ~]# version=$(uname -r)
+[root@localhost ~]# echo ${version}
+2.6.32-696.el6.x86_64
+
+## 如果我们想增加变量值的内容应该怎么操作?
+[root@localhost ~]# echo $myname
+test
+[root@localhost ~]# myname="${myname}_test2"
+[root@localhost ~]# echo $myname
+test_test2
+
+## 然后我们来讲解一下 `export 变量名`的用法, 变量名前没有 $
+[root@localhost ~]# myname="${myname}_test2"
+[root@localhost ~]# echo $myname
+test_test2
+[root@localhost ~]# bash            # <== 打开一个子进程
+[root@localhost ~]# echo ${myname}
+                                    # <== 发现值为空的
+[root@localhost ~]# exit            # <== 退出子进程
+exit
+[root@localhost ~]# export myname   # <== export 一下
+[root@localhost ~]# bash 
+[root@localhost ~]# echo ${myname}  
+test_test2                          # <== 子进程中可以使用
+```
+> 子进程就是在当前 shell (父进程) 中去打开一个新的 shell, 新的 shell 也就是子进程, **在一般状态下. 父进程中的自定义变量无法在子进程中使用**, 但是经过 export 将变量变成 **`环境变量`** 后, 就可以在子进程中使用.
+
+```bash
+[root@localhost ~]# version=$(uname -r)
+[root@localhost ~]# echo ${version}
+2.6.32-696.el6.x86_64
+```
+可以看成做了两次操作 :
+1. 先执行命令 uname -r 得到内核信息, 也就是 2.6.32-696.el6.x86_64
+2. 把得到的内核值赋值给 version 变量, 所以我们输出的变量 也就是 2.6.32-696.el6.x86_64
+
+### unset取消设置的变量
+```bash
+[root@localhost ~]# echo ${version}
+2.6.32-696.el6.x86_64
+[root@localhost ~]# unset version
+[root@localhost ~]# echo ${version}
+
+[root@localhost ~]# 
+```
+
