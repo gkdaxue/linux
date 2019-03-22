@@ -646,7 +646,7 @@ ignoredups
 | 选项  | 含义        |
 | --- | --------- |
 | -w  | 立即追加本次会话执行的命令到历史文件中 |
-| -c  | 清空历史文件    |
+| -c  | 清空历史命令列表    |
 | -d offset | 删除指定序号的历史命令|
 | num | 显示最后 num 条历史记录 |
 | !num | 调用历史命令列表中的第 num 条命令|
@@ -773,6 +773,23 @@ ignoredups  <== 忽略连续且相同的命令, 只保留一条
    16  history 5
    17  history 6
 ```
+### 调用上一个命令的最后一个参数
+```bash
+## 参数为 /etc/issue
+[root@localhost ~]# cat /etc/issue
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+## ls -l 的意思是查看当前文件的详细信息
+[root@localhost ~]# ls -l !$
+ls -l /etc/issue   <== 自动补全了上一次命令的最后一个参数
+-rw-r--r--. 1 root root 47 Mar 28  2017 /etc/issue
+
+## 先输入 ls -l 然后, 再按一下 ESC, 然后在按一下 . 号即可自动填充参数
+[root@localhost ~]# ls -l /etc/issue
+-rw-r--r--. 1 root root 47 Mar 28  2017 /etc/issue
+```
+
 ## echo命令
 
 ### 描述
