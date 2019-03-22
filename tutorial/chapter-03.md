@@ -1090,3 +1090,151 @@ rm: remove directory `rm_dir'? y
 ## rm -rf /* 是一个非常危险的命令, 表示是删除根目录下所有的文件 
 ## 这会导致它会把系统也删除, 出现大问题, 所以使用 rm 命令一定要谨慎.
 ```
+## who命令
+显示谁登陆了系统, 可以查看用户登录的IP, 时间终端,PID等信息
+> who [ options ]
+
+### 选项
+| 选项  | 含义         |
+| --- | ---------- |
+| -s  | 仅列出名字、tty和时间。(默认) who = who -s    |
+|-m | 仅显示关于当前终端的信息。who -m = who am i = who am I|
+|-q	| 所有登录名和登录用户数|
+|-b	| 最近系统启动的时间|
+|-r	| 显示当前运行级别|
+|-T	| 添加一个字符，指示终端的状态|
+|-l	| 打印系统登录进程|
+|-H | 打印列标题行|
+|-u | 显示每个当前用户的用户名、tty、登录时间、IDLE和进程标识(PID)|
+|-a	| -b -d -l -p -r -t -T -u|
+
+### 实例
+```bash
+[root@localhost ~]# who   # 等于 who -s 命令
+root     tty1         2019-03-21 12:55
+root     pts/0        2019-03-21 12:37 (192.168.1.11)
+
+## -m : 仅显示当前终端信息
+[root@localhost ~]# who -m
+root     pts/0        2019-03-21 12:37 (192.168.1.11)
+
+## -q : 显示所有登录名和登录用户数(因为一个终端算一个用户, 所以并不是严格意义上的用户)
+[root@localhost ~]# who -q
+root root
+# users=2
+
+## -b : 显示最近系统启动时间
+[root@localhost ~]# who -b
+         system boot  2019-03-15 10:03
+
+## 显示当前运行级别, 以及上次运行级别
+[root@localhost ~]# who -r
+         run-level 3  2019-03-20 21:07                   last=5
+
+## -T : 指示终端的状态
+## "+" : 终端是可写的 
+## "-" 或 "? " : 终端不是可写的        
+[root@localhost ~]# who -T
+root     + tty1         2019-03-21 12:55
+root     + pts/0        2019-03-21 12:37 (192.168.1.11)
+
+## -l : 打印系统登录进程
+[root@localhost ~]# who -l
+LOGIN    tty3         2019-03-15 10:03              2210 id=3
+LOGIN    tty4         2019-03-15 10:03              2212 id=4
+LOGIN    tty2         2019-03-15 10:03              2208 id=2
+LOGIN    tty5         2019-03-15 10:03              2214 id=5
+LOGIN    tty6         2019-03-15 10:03              2216 id=6
+
+## -H : 打印列标题行
+[root@localhost ~]# who -H
+NAME     LINE         TIME             COMMENT
+root     tty1         2019-03-21 12:55
+root     pts/0        2019-03-21 12:37 (192.168.1.11)
+
+## -u : 显示每个当前用户的用户名、tty、登录时间、IDLE和进程标识(PID)
+[root@localhost ~]# who -Hu
+NAME     LINE         TIME             IDLE          PID COMMENT
+root     tty1         2019-03-21 12:55 23:52       29106
+root     pts/0        2019-03-21 12:37   .         28982 (192.168.1.11)
+
+NAME : 登录用户名
+LINE : 登录的终端
+TIME : 登录的时间
+IDLE : 空闲时间 包含了最近最后一次活动以来消逝的时间. 
+	   01:05   	: 用户root那么久没执行过命令了
+	   . 符号	: 是指该终端过去的一分钟有过活动
+       old    	: 该用户已超过24小时没有任何动作
+PID  : 用户shell程序的进程ID号
+```
+## whoami命令
+显示当前有效用户, 本指令相当于执行"id -un"指令
+```bash
+[root@localhost ~]# whoami
+root
+[root@localhost ~]# id -un
+root
+```
+## w命令
+显示系统当前所有的登录会话以及进行的操作.
+> w [ options ] [ USER_NAME ]
+
+### 选项
+| 选项  | 含义         |
+| --- | ---------- |
+| -r  | 显示用户从何处登入系统    |
+|-h | 不显示标题信息列|
+|-s	| 使用简洁格式列表|
+
+### 实例
+```bash
+## 默认显示所有用户
+[root@localhost ~]# w
+ 13:45:08 up 7 days,  3:41,  3 users,  load average: 0.00, 0.00, 0.00
+USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+gkdaxue  pts/1    192.168.1.11     13:45    2.00s  0.02s  0.02s -bash
+root     tty1     -                Thu12   24:49m  0.02s  0.02s -bash
+root     pts/0    192.168.1.11     Thu12    0.00s  0.31s  0.10s w
+
+## 只显示指定用户, 牵扯到后边的知识 了解即可
+[root@localhost ~]# w gkdaxue
+ 13:45:39 up 7 days,  3:42,  3 users,  load average: 0.00, 0.00, 0.00
+USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+gkdaxue  pts/1    192.168.1.11     13:45   33.00s  0.02s  0.02s -bash
+
+## -f : 显示用户从何处登录系统
+[root@localhost ~]# w -f
+ 13:45:59 up 7 days,  3:42,  3 users,  load average: 0.00, 0.00, 0.00
+USER     TTY        LOGIN@   IDLE   JCPU   PCPU WHAT
+gkdaxue  pts/1     13:45   53.00s  0.02s  0.02s -bash
+root     tty1      Thu12   24:50m  0.02s  0.02s -bash
+root     pts/0     Thu12    0.00s  0.22s  0.00s w -f
+
+## 信息讲解
+ 13:45:59 		 : 系统当前时间
+up 7 days,  3:42 : 系统运行时间
+3 users 		 : 当前系统登陆的终端数(一个用户可以通过多个终端登录系统)
+0.00, 0.00, 0.00 : 系统在过去1，5，10分钟内的负载程度,数值越小系统负载越轻
+USER   : 显示登陆用户帐号名。用户重复登陆，该帐号也会重复出现。
+TTY    : 用户登陆所用的终端。
+FROM   : 显示用户在何处登陆系统。
+LOGIN@ : 是LOGIN AT的意思，表示登陆进入系统的时间。
+IDLE   : 用户空闲时间，从用户上一次任务结束后，开始记时。
+JCPU   : 在这段时间内, 所有与该终端相关的进程任务所耗费的CPU时间(终端代号区分)
+PCPU   : 指WHAT域的任务执行后耗费的CPU时间。
+WHAT   : 表示当前执行的任务。
+
+## -h : 不显示标题信息列
+[root@localhost ~]# w -h
+gkdaxue  pts/1    192.168.1.11     13:45    4:25   0.02s  0.02s -bash
+root     tty1     -                Thu12   24:53m  0.02s  0.02s -bash
+root     pts/0    192.168.1.11     Thu12    0.00s  0.22s  0.00s w -h
+
+## -s : 使用简洁模式
+[root@localhost ~]# w -s
+ 13:49:34 up 7 days,  3:46,  3 users,  load average: 0.00, 0.00, 0.00
+USER     TTY      FROM               IDLE WHAT
+gkdaxue  pts/1    192.168.1.11      4:28  -bash
+root     tty1     -                24:53m -bash
+root     pts/0    192.168.1.11      0.00s w -s
+```
