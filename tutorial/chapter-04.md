@@ -175,7 +175,7 @@ test_test2
 exit
 [root@localhost ~]# export myname   # <== export 一下
 [root@localhost ~]# bash 
-[root@localhost ~]# echo ${myname}  
+[root@localhost ~]# echo ${myname}   
 test_test2                          # <== 子进程中可以使用
 ```
 > 子进程就是在当前 shell (父进程) 中去打开一个新的 shell, 新的 shell 也就是子进程, **在一般状态下. 父进程中的自定义变量无法在子进程中使用**, 但是经过 export 将变量变成 **`环境变量`** 后, 就可以在子进程中使用.
@@ -197,5 +197,156 @@ test_test2                          # <== 子进程中可以使用
 [root@localhost ~]# echo ${version}
 
 [root@localhost ~]# 
+```
+## 环境变量的作用
+### env命令:查看环境变量
+env(environment) 列出了所有的环境变量. 注意是环境变量, 不是变量. 因为自定义变量没有被 export 过, 就不会再这里显示出来.
+```bash
+[root@localhost ~]# env
+HOSTNAME=localhost.localdomain    <== 主机名
+SELINUX_ROLE_REQUESTED=
+TERM=xterm                        <== 终端机使用的环境类型
+SHELL=/bin/bash                   <== 使用的 shell, 之前见过
+HISTSIZE=1000                     <== 记录命令的条数
+SSH_CLIENT=192.168.1.11 1766 22   <== 因为我使用的是 ssh 连接, 所以会出现IP地址和端口
+SELINUX_USE_CURRENT_RANGE=
+QTDIR=/usr/lib64/qt-3.3
+QTINC=/usr/lib64/qt-3.3/include
+SSH_TTY=/dev/pts/0                <== ssh 所使用的终端类型
+USER=root                         <== 当前用户
+LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.tbz=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=01;36:*.au=01;36:*.flac=01;36:*.mid=01;36:*.midi=01;36:*.mka=01;36:*.mp3=01;36:*.mpc=01;36:*.ogg=01;36:*.ra=01;36:*.wav=01;36:*.axa=01;36:*.oga=01;36:*.spx=01;36:*.xspf=01;36:
+MAIL=/var/spool/mail/root         <== 用户的邮箱地址
+PATH=/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin  <== PATH 变量
+PWD=/root                         <== 当前路径, 随目录的变化而变化
+LANG=en_US.UTF-8                  <== 语言
+SELINUX_LEVEL_REQUESTED=
+myname=test_test2                 <== 自定义的变量,被 export 设置过
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+HISTCONTROL=ignoredups            <== 历史命令的控制
+SHLVL=1
+HOME=/root                        <== 家目录
+LOGNAME=root
+QTLIB=/usr/lib64/qt-3.3/lib
+CVS_RSH=ssh
+SSH_CONNECTION=192.168.1.11 1766 192.168.1.206 22
+LESSOPEN=||/usr/bin/lesspipe.sh %s
+G_BROKEN_FILENAMES=1
+_=/bin/env
+
+## 我们可以看到很多我们之前讲过的一些变量, 接下来我们会对一些常见的变量进行系统的梳理一下
+```
+### set命令查看所有变量(包含自定义变量和环境变量)
+```bash
+[root@localhost ~]# set
+BASH=/bin/bash                     <== 使用的 bash
+BASHOPTS=checkwinsize:cmdhist:expand_aliases:extquote:force_fignore:hostcomplete:interactive_comments:login_shell:progcomp:promptvars:sourcepath
+BASH_ALIASES=()
+BASH_ARGC=()
+BASH_ARGV=()
+BASH_CMDS=()
+BASH_LINENO=()
+BASH_SOURCE=()
+BASH_VERSINFO=([0]="4" [1]="1" [2]="2" [3]="2" [4]="release" [5]="x86_64-redhat-linux-gnu")
+BASH_VERSION='4.1.2(2)-release'    <== bash 的版本
+COLORS=/etc/DIR_COLORS
+COLUMNS=93
+CVS_RSH=ssh
+DIRSTACK=()
+EUID=0
+GROUPS=()
+G_BROKEN_FILENAMES=1
+HISTCONTROL=ignoredups            <== 历史命令的控制方式
+HISTFILE=/root/.bash_history      <== 存放历史命令的文件(隐藏文件, 以 点 开头)
+HISTFILESIZE=1000                 <== 保存文件命令的最大记录条数
+HISTSIZE=1000                     <== 当前环境下可记录的最大命令数
+HOME=/root                        <== 家目录
+HOSTNAME=localhost.localdomain    <== 主机名
+HOSTTYPE=x86_64                   <== 主机类型
+ID=0
+IFS=$' \t\n'                      <== 默认的分割符
+LANG=en_US.UTF-8
+LESSOPEN='||/usr/bin/lesspipe.sh %s'
+LINES=41
+LOGNAME=root                      <== 登录的用户
+LS_COLORS='rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.tbz=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=01;36:*.au=01;36:*.flac=01;36:*.mid=01;36:*.midi=01;36:*.mka=01;36:*.mp3=01;36:*.mpc=01;36:*.ogg=01;36:*.ra=01;36:*.wav=01;36:*.axa=01;36:*.oga=01;36:*.spx=01;36:*.xspf=01;36:'
+MACHTYPE=x86_64-redhat-linux-gnu
+MAIL=/var/spool/mail/root         <== 邮箱地址
+MAILCHECK=60               
+OLDPWD=/root                      <== 使用 cd - , 跳转到上次所在目录使用的变量
+OPTERR=1
+OPTIND=1
+OSTYPE=linux-gnu                  <== 操作系统的类型
+PATH=/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+PIPESTATUS=([0]="0")
+PPID=33573
+PROMPT_COMMAND='printf "\033]0;%s@%s:%s\007" "${USER}" "${HOSTNAME%%.*}" "${PWD/#$HOME/~}"'
+PS1='[\u@\h \W]\$ '               <== 命令提示符, 之前讲过
+PS2='> '                          <== 如果使用转义字符(\), 第二行的提示符
+PS4='+ '
+PWD=/root                         <== 当前所在工作目录 
+QTDIR=/usr/lib64/qt-3.3
+QTINC=/usr/lib64/qt-3.3/include
+QTLIB=/usr/lib64/qt-3.3/lib
+RANDOM=3184
+SELINUX_LEVEL_REQUESTED=
+SELINUX_ROLE_REQUESTED=
+SELINUX_USE_CURRENT_RANGE=
+SHELL=/bin/bash                   <== 使用的 shell
+SHELLOPTS=braceexpand:emacs:hashall:histexpand:history:interactive-comments:monitor
+SHLVL=1
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+SSH_CLIENT='192.168.1.11 1766 22'
+SSH_CONNECTION='192.168.1.11 1766 192.168.1.206 22'
+SSH_TTY=/dev/pts/0
+TERM=xterm
+UID=0
+USER=root
+_=0
+colors=/etc/DIR_COLORS
+myname=test_test2      <== 这些都是我们自定义的变量, 并且 export, 可以查看
+number=0               <== 这些都是我们自定义的变量, 并且没有 export, 也可以查看
+price=5
+......
+```
+
+### HOME环境变量
+代表用户的家目录, 我们使用 ` cd ~ ` 或者 ` cd ` 命令就可以跳转到自己的家目录, 就是使用了这个变量.
+> root 用户的家目录为 /root
+>
+> 一般用户的默认(因为家目录可以自己设置, 以后讲解)家目录为 /home/USERNAME
+
+```bash
+[root@localhost ~]# echo $HOME
+/root
+```
+### SHELL环境变量
+可以告诉我们当前环境使用的 shell 是哪个应用程序, **Linux 默认的 shell 为 /bin/bash**
+
+### HISTSIZE环境变量
+记录历史命令的条数, 就由此变量控制
+
+### PATH环境变量
+执行命令查找的路径, 目录和目录之间用 ":" 分隔, 因为是按照 PATH 定义的顺序从左到右查询, 所以目录的顺序是非常重要的, 一般不要随意更改. 并且对于不同的用户它们 PATH 变量的值可能不同, 所以导致执行有些命令会出现 command not found 的提示信息. 我们也可以使用 ` 绝对路径 ` 来执行命令, 但是一定要保证有执行的权限才可以.
+
+> 不同用户默认 PATH 不同, 所以默认能够执行的命令也不同
+> PATH 变量是可以修改的, 但是不建议修改
+> 使用绝对路径或相对路径来执行, 会比使用 PATH 更准确(需要由执行权限)
+> 自己源码安装的软件, 命令应该放置在正确的目录中, 执行才会比较方便
+
+### RANDOM环境变量
+在环境变量中, RANDOM 变量的值内容介于 0 - 32767 之间
+```bash
+[root@localhost ~]# echo $RANDOM
+29126
+
+// 如果我们想要得到 0-9 之间的数字, 可以使用 declare 
+[root@localhost ~]# declare -i number=$RANDOM*10/32768; echo $number
+0
+[root@localhost ~]# declare -i number=$RANDOM*10/32768; echo $number
+4
+[root@localhost ~]# declare -i number=$RANDOM*10/32768; echo $number
+6
+[root@localhost ~]# declare -i number=$RANDOM*10/32768; echo $number
+1
 ```
 
