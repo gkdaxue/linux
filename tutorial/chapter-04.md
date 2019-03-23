@@ -349,4 +349,74 @@ price=5
 [root@localhost ~]# declare -i number=$RANDOM*10/32768; echo $number
 1
 ```
+### $ 变量
+其实 $ 也是一个变量, 所以我们如果想要输出 $ 字符, 就需要使用转义字符来操作. $ 代表目前这个 shell 的进程ID, 也就是 PID(Process ID). 
+```bash
+[root@localhost ~]# echo $$
+33577
+```
+### ? 变量
+" ? " 也是一个特殊的变量, 它表示的是 **上一个执行的命令所回传的值**, 这句话是什么意思呢, 当我们执行某个命令时, 这些命令都会回传一个执行后的代码. 一般来说 :
+> 如果成功执行该命令, 则会返回 0 
+> 如果执行过程中发生错误, 则会返回 非0
+
+```bash
+[root@localhost ~]# echo $SHELL
+/bin/bash
+[root@localhost ~]# echo $?
+0   <== 上一条命令执行的没有问题, 所以返回 0 
+[root@localhost ~]# cat xxxxxxxxxxxxx
+cat: xxxxxxxxxxxxx: No such file or directory
+[root@localhost ~]# echo $?
+1   <== 上一条命令有问题报错, 所以返回为 非0(有些Linux是1, 有些是2,所以只能说是 非0)
+[root@localhost ~]# echo $?
+0   <== 这个为啥又是 0 了呢? 因为 echo $? 成功执行了, 所以肯定也是 0 啊
+
+## 所以切记是 上一条命令的返回值
+```
+
+### export命令
+将自定义变量转换为环境变量 或者 显示所有的环境变量, 从 env 和 set 命令, 我们就知道有 **自定义变量** 和 **环境变量**, 那么这两者有啥区别呢? 最主要的区别就是 **"能否被子进程所使用"**, 那么什么是 子进程 什么是父进程呢? 我们来讲解一下.
+> 当我们登录系统之后, 会取得一个 bash, 然后这个 bash 就是一个独立的进程, 被称为父进程. 那么我们在这个 bash 下面执行的任何命令都是由这个 bash 衍生出来的, 所以被执行的命令就被称为子进程.
+
+![父进程&子进程](https://github.com/gkdaxue/linux/raw/master/image/chapter_A4_0002.png)
+
+我们在 bash 下面又执行了另一个 bash, 然后就开启了一个子进程, 那么父进程会进入暂停的状态(sleep), 若要进入到父进程中, 就需要将子进程结束掉(exit 或 logout) 才可以.
+> **子进程仅会继承父进程的环境变量, 而不会继承自定义变量**, 如果你在父进程中定义的自定义变量没有 export 时, 进入到子进程中, 这些变量就会消失不见, 所以你也就无法使用这些变量, 一直到你退出子进程, 这些变量才可以被使用.
+
+```bash
+[root@localhost ~]# export
+declare -x CVS_RSH="ssh"
+declare -x G_BROKEN_FILENAMES="1"
+declare -x HISTCONTROL="ignoredups"
+declare -x HISTSIZE="1000"
+declare -x HOME="/root"
+declare -x HOSTNAME="localhost.localdomain"
+declare -x LANG="en_US.UTF-8"
+declare -x LESSOPEN="||/usr/bin/lesspipe.sh %s"
+declare -x LOGNAME="root"
+declare -x LS_COLORS="rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.tbz=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=01;36:*.au=01;36:*.flac=01;36:*.mid=01;36:*.midi=01;36:*.mka=01;36:*.mp3=01;36:*.mpc=01;36:*.ogg=01;36:*.ra=01;36:*.wav=01;36:*.axa=01;36:*.oga=01;36:*.spx=01;36:*.xspf=01;36:"
+declare -x MAIL="/var/spool/mail/root"
+declare -x OLDPWD="/root"
+declare -x PATH="/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin"
+declare -x PWD="/root"
+declare -x QTDIR="/usr/lib64/qt-3.3"
+declare -x QTINC="/usr/lib64/qt-3.3/include"
+declare -x QTLIB="/usr/lib64/qt-3.3/lib"
+declare -x SELINUX_LEVEL_REQUESTED=""
+declare -x SELINUX_ROLE_REQUESTED=""
+declare -x SELINUX_USE_CURRENT_RANGE=""
+declare -x SHELL="/bin/bash"
+declare -x SHLVL="1"
+declare -x SSH_ASKPASS="/usr/libexec/openssh/gnome-ssh-askpass"
+declare -x SSH_CLIENT="192.168.1.11 1766 22"
+declare -x SSH_CONNECTION="192.168.1.11 1766 192.168.1.206 22"
+declare -x SSH_TTY="/dev/pts/0"
+declare -x TERM="xterm"
+declare -x USER="root"
+declare -x myname="test_test2"   <== 我们自己设置的环境变量
+```
+## 变量的有效范围
+被 export 设置过的变量, 在父进程或者子进程中都可以访问, 我们称它为 ` 环境变量(全局变量) `, 其他的自定义变量则称为 ` 自定义变量(局部变量) `, 不可在子进程中访问.
+
 
