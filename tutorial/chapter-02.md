@@ -1141,6 +1141,44 @@ total 72K
 -rw-r--r--. 1 root root 9.8K Mar  3 11:39 install.log.syslog
 -rw-------. 1 root root 1.6K Mar  3 11:42 anaconda-ks.cfg
 ```
+### ls -l 信息讲解
+```bash
+[root@localhost ~]# ls -l install.log
+-rw-r--r--. 1 root root 50698 Mar  3 11:42 install.log
+```
+![ls-l](https://github.com/gkdaxue/linux/raw/master/image/chapter_A2_0002.png)
+#### 文件类型和权限( -rw-r--r--. )
+```bash
+-   : 文件类型
+rw- : 所有者权限
+r-- : 所有组权限
+r-- : 其他人权限
+.   : ACL(Access Control List)访问控制权限
+
+## 在中间9位权限表示中, 会用 r(read), w(write), x(execute) 表示, 如果出现 - , 表示没有此权限.
+```
+**Linux文件类型(Linux中一切皆文件,如何区分是什么文件类型呢)**
+
+```bash
+- : 普通文件, 如纯文本文件(Ascll), 二进制文件(binary), 数据格式文件(data)等
+d : 目录文件, Directory
+l : 符号链接文件(小写的L), 也就是我们 Windows 中所说的快捷方式文件 
+b : 块设备文件, 就是一些存储数据, 以提供系统随机访问的接口设备, 如硬盘, 软盘等
+c : 字符设备文件, 也就是一些串行端口的接口设备, 如键盘, 鼠标等
+s : 套接字文件(socket), 被称为数据接口文件, 通常被用作网络上的数据连接
+p : 管道文件
+
+## 在 Linux 中没有后缀名的概念, 我们给文件添加后缀名仅仅只是为了给我们来区分, 仅此而已
+```
+主要最重要的就是第一列信息, 其他的我们来综合来写.
+```bash
+第二列(1)           : 表示有多少文件链接到此inode节点(以后讲解)
+第三列(root)        : 表示此文件的所有者(在Linux中一切皆文件)
+第四列(root)        : 表示此文件的所有组
+第五列(50698)       : 表示文件的大小, 默认单位为 B
+第六列(Mar 3 11:42) : 文件创建日期或者最后的修改时间
+第七列(install.log) : 文件名(以 . 开头的文件表示隐藏文件)
+```
 
 ## pwd命令
 
