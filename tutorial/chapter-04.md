@@ -50,8 +50,31 @@ daemon:x:2:2:daemon:/sbin:/sbin/nologin
 alias rm='rm -i'
 ```
 
-### 作业控制 前后台控制功能
-我们可以把执行时间比较长的命令丢到后台去, 然后我们可以继续我们的任务, 这就是多任务的使用.
+### 变量功能
+针对不同的用户, 同一个变量的值可能会不同, 体现了灵活的特性.
+
+### 命令行展开
+```bash
+~         : 展开为用户家目录
+~USERNAME : 展开为指定用户的家目录
+{}        : 可承载一个一个以逗号分割的列表(中间不能有空格), 并将其展开为多个路径
+            /tmp/{a,b} 就相当于 /tmp/a   /tmp/b
+            /tmp/{rose,jack}/hi 相当于 /tmp/rose/hi    /tmp/jack/hi
+			那么, 尝试分析 /tmp/x/{y1,y2}/{a,b} 是什么情况
+			/tmp/{bin,sbin,usr/{bin/sbin}} 又是什么情况
+```
+### 上一条命令的执行结果状态
+如果命令执行成功没有错误, 则返回 0, 执行失败有错误, 则返回 非0, **使用 ? 变量表示**. 以后有案例.
+```bash
+[root@localhost ~]# pwd
+/root 
+[root@localhost ~]# echo $?
+0   <== 命令执行成功, 所以返回 0  
+[root@localhost ~]# cat xxxxxxxxxxxxxxxxx
+cat: xxxxxxxxxxxxxxxxx: No such file or directory
+[root@localhost ~]# echo $?
+1   <== 因为文件并不存在, 所以返回 非0
+```
 
 ### 程序脚本
 我们可以把很多命令写到一个文件中, 然后我们就可以通过执行这个脚本, 来简化我们的操作(自动化运行).
@@ -418,5 +441,23 @@ declare -x myname="test_test2"   <== 我们自己设置的环境变量
 ```
 ## 变量的有效范围
 被 export 设置过的变量, 在父进程或者子进程中都可以访问, 我们称它为 ` 环境变量(全局变量) `, 其他的自定义变量则称为 ` 自定义变量(局部变量) `, 不可在子进程中访问.
+```bash
+[root@localhost ~]# myname="test_test2"
+[root@localhost ~]# echo $myname
+test_test2
+[root@localhost ~]# bash            # <== 打开一个子进程
+[root@localhost ~]# echo ${myname}
+                                    # <== 发现值为空的
+[root@localhost ~]# exit            # <== 退出子进程
+exit
+[root@localhost ~]# export myname   # <== export 一下
+[root@localhost ~]# bash 
+[root@localhost ~]# echo ${myname}   
+test_test2                          # <== 子进程中可以使用
+```
+## 变量内容的删除﹑替换和删除
 
 
+
+# Linux 基本命令(3)
+## read命令
