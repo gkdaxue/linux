@@ -809,8 +809,7 @@ anaconda-ks.cfg  Documents  install.log         Music     Public     Videos
 Desktop          Downloads  install.log.syslog  Pictures  Templates
 ```
 ## cp命令
-复制文件或目录
-> 一般来说 目标文件的所有者通常都是命令操作者本身, 所以在复制有些特殊权限的文件(/etc/shadow)等, 就必须添加 -a 或者 -p 参数, 复制完整的权限信息. (了解即可, 以后讲解权限) 还有复制给其他用户的文件也要给予合理的权限, 让别的用户来进行相应的操作.
+复制文件或目录, 一般来说 目标文件的所有者通常都是命令操作者本身, 所以在复制有些特殊权限的文件(/etc/shadow)等, 就必须添加 -a 或者 -p 参数, 复制完整的权限信息. (了解即可, 以后讲解权限) 还有复制给其他用户的文件也要给予合理的权限, 让别的用户来进行相应的操作.
 
 
 有如下三种情况 : 
@@ -819,8 +818,8 @@ Desktop          Downloads  install.log.syslog  Pictures  Templates
 > 3. 如果目标文件不存在，则执行正常的复制操作
 
 ### 语法 
-
 > cp [ options ] 源文件(source)  目标文件(destination)
+> 
 > cp [ options ] source1 source2 ......  directory
 
 ### 选项
@@ -1238,4 +1237,69 @@ USER     TTY      FROM               IDLE WHAT
 gkdaxue  pts/1    192.168.1.11      4:28  -bash
 root     tty1     -                24:53m -bash
 root     pts/0    192.168.1.11      0.00s w -s
+```
+
+## alias命令
+定义或者显示别名操作, 比如一个名字太长了, 我们就可以为它自己定义一个简短的名字, 只是临时生效, 退出后在登录无效, 如果想要永久生效, 需要定义在配置文件中. 如果还想要当前 shell 也生效, 就需要重新加载配置文件.
+> **alias [name[='value'] ...]**
+
+#### 实例
+```bash
+## 发现 alias 是内核自带的命令
+[root@localhost ~]# type alias
+alias is a shell builtin
+
+## 尝试使用 cdnet 命令, 发现系统中没有这个命令
+[root@localhost ~]# cdnet
+-bash: cdnet: command not found
+
+## 先查询是否已经定义, 发现没有定义
+[root@localhost ~]# alias cdnet
+-bash: alias: cdnet: not found
+
+## 自定义一个 cdnet 别名命令, 跳转到对应目录
+[root@localhost ~]# alias cdnet='cd /etc/sysconfig/network-scripts'
+[root@localhost ~]# alias cdnet
+alias cdnet='cd /etc/sysconfig/network-scripts'
+
+## 使用 cdnet 命令, 发现成功跳转(如何判断成功跳转的? 请自己分析)
+[root@localhost ~]# cdnet
+[root@localhost network-scripts]# cd
+[root@localhost ~]# 
+```
+如果别名和原命令名称一致, 比如 ` cp='cp -i' `, 那么我如果使用 cp 命令时, 遇到同名的文件会提示我是否覆盖, 但是我不想要提示怎么办, 我们就可以使用 ` \COMMAND ` 命令的形式来避免别名的影响.
+
+## unalias命令
+移除定义的别名, 这里的移除只是暂时的移除, 等重新登录 shell 时依然会有这些定义的别名, 如果需要彻底移除, 就需要修改配置文件并重新加载配置文件, 使当前 shell 生效.
+> unalias [-a] name [name ....]
+
+### 选项
+| 选项  | 含义         |
+| --- | ---------- |
+| -a  | 移除所有定义的别名(临时)    |
+
+### 实例
+```bash
+## 先查看别名
+[root@localhost ~]# alias cdnet
+alias cdnet='cd /etc/sysconfig/network-scripts'
+
+## 删除别名在查看
+[root@localhost ~]# unalias cdnet
+[root@localhost ~]# alias cdnet
+-bash: alias: cdnet: not found
+
+
+[root@localhost ~]# alias
+alias cp='cp -i'
+alias l.='ls -d .* --color=auto'
+alias ll='ls -l --color=auto'
+alias ls='ls --color=auto'
+alias mv='mv -i'
+alias rm='rm -i'
+alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'
+
+## 删除所有别名记录
+[root@localhost ~]# unalias -a
+[root@localhost ~]# alias
 ```
