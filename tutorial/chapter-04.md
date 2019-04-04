@@ -48,6 +48,16 @@ daemon:x:2:2:daemon:/sbin:/sbin/nologin
 ## 比如把 rm 命令定义为 rm -i, 可以帮助我们在一定程度上防止误删文件. 会在删除之前要求我们确认
 [root@localhost ~]# alias rm
 alias rm='rm -i'
+
+## 如果 alias 不带任何选项和参数, 将显示所有定义的别名
+[root@localhost ~]# alias
+alias cp='cp -i'
+alias l.='ls -d .* --color=auto'
+alias ll='ls -l --color=auto'
+alias ls='ls --color=auto'
+alias mv='mv -i'
+alias rm='rm -i'
+alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'
 ```
 
 ### 变量功能
@@ -461,3 +471,4 @@ test_test2                          # <== 子进程中可以使用
 
 # Linux 基本命令(3)
 ## read命令
+## grep命令

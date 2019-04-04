@@ -942,6 +942,7 @@ Desktop          Downloads  install.log.syslog  Pictures  Templates
 移动/重命名  文件/目录
 ### 语法
 > mv [ options ] 原文件(source) 目标文件(destination)
+> 
 > mv [ options ] source1 source2 .....  directory
 
 ### 选项
