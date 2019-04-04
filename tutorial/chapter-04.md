@@ -44,6 +44,16 @@ daemon:x:2:2:daemon:/sbin:/sbin/nologin
 > 跟在不完全的文件名后面, 补全文件名 ( 比如 cat  /root/anacond[Tab][Tab] )
 
 ### 命令别名功能 (alias)
+> **在命令行中定音的别名, 仅对当前 shell 进程有效, 如果想永久有效, 需要在配置文件中定义**
+>
+> 对当前用户有效 : ~/.bashrc
+>
+> 对所有用户有效 : /etc/bashrc
+
+但是我们修改了配置文件, 默认当前进程是不生效的, 所以我们有以下两种方式来时配置文件生效
+1. source  CONFIG_FILE
+2. **.** CONFIG_FILE (前边有个点, 表示当前目录的意思) 
+
 ```bash
 ## 比如把 rm 命令定义为 rm -i, 可以帮助我们在一定程度上防止误删文件. 会在删除之前要求我们确认
 [root@localhost ~]# alias rm
@@ -58,6 +68,16 @@ alias ls='ls --color=auto'
 alias mv='mv -i'
 alias rm='rm -i'
 alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'
+
+## 定义一个别名并查看
+[root@localhost ~]# alias cp='cp'
+[root@localhost ~]# alias cp
+alias cp='cp'
+
+## 还原别名的设置
+[root@localhost ~]# alias cp='cp -i'
+[root@localhost ~]# alias cp
+alias cp='cp -i'
 ```
 
 ### 变量功能
@@ -89,7 +109,7 @@ cat: xxxxxxxxxxxxxxxxx: No such file or directory
 ### 程序脚本
 我们可以把很多命令写到一个文件中, 然后我们就可以通过执行这个脚本, 来简化我们的操作(自动化运行).
 
-### 通配符
+### 通配符(glob)
 bash 还支持许多的通配符, 可以帮助用户查询和命令的执行, 能够加速用户的操作.
 
 ## bash的变量功能
