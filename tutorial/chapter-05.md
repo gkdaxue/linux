@@ -661,4 +661,63 @@ drwxrwxrwt. 14 root root 4096 Apr  2 03:50 /tmp
 -rwsr-xr-x. 1 root root 30768 Nov 24  2015 /usr/bin/passwd
 ```
 
+在复杂多变的生产环境中, 仅仅只靠文件的 rwx 权限有的时候无法满足我们的需求, 所有就有了 SUID、SGID 和 SBIT 的特殊权限位, 用来弥补一般权限不能实现的功能.
+
 #### SUID
+SUID 可以让二进制程序的执行这临时拥有属主的权限(注意看注意事项), 所有用户都可以执行 passwd 命令来修改自己的密码, 但是密码信息是被保存在 /etc/shadow 文件中, 这个文件的权限为 000, 只有 root 可以操作, 但是就是因为我们对 passwd 命令设置了 SUID 特殊权限位, 让执行者临时拥有了属主的权限, 所以他就可以执行这个命令了.
+```bash
+## 查看 passwd 命令所在的路径
+[root@localhost ~]# which passwd
+/usr/bin/passwd
+
+## 查看 passwd 命令和 /etc/shadow 文件的权限
+[root@localhost ~]# ls -l /usr/bin/passwd ; ls -l /etc/shadow
+-rwsr-xr-x. 1 root root 30768 Nov 24  2015 /usr/bin/passwd  <== 注意属主的 x -> s
+----------. 1 root root 1055 Apr  5 09:04 /etc/shadow
+```
+
+注意事项:
+> 1. SUID 仅对 **二进制程序** 有效
+> 2. **执行者对于该程序需要具备 x 的可执行权限**
+> 3. 本权限只是在** 执行该程序的过程中** 有效
+> 4. **执行者具有该程序所有者的权限**
+> 5. 如果程序属主者有 x 权限, 那么会显示为 s, 没有执行权限则会显示为 S .
+> 6. 不可针对 shell script 以及目录设置.
+
+##### 实例
+```bash
+## 切换到 gkdaxue 用户并设置新密码, 注意查看是否有该用户以及执行命令时的用户
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ passwd
+Changing password for user gkdaxue.
+Changing password for gkdaxue.
+(current) UNIX password:  <== 输入当前用户密码, 不可见
+New password: 		    <== 输入新的密码
+Retype new password: 	 <== 在输一遍新密码
+passwd: all authentication tokens updated successfully.  <== 成功设置新密码
+[gkdaxue@localhost ~]$ exit
+logout
+
+## 取消 其他人的执行权限          
+[root@localhost ~]# chmod o-x /usr/bin/passwd 
+[root@localhost ~]# ls -l /usr/bin/passwd 
+-rwsr-xr--. 1 root root 30768 Nov 24  2015 /usr/bin/passwd
+
+## 切换 gkdaxue 用户, 尝试设置密码, 报错
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ passwd
+-bash: /usr/bin/passwd: Permission denied
+[gkdaxue@localhost ~]$ exit
+logout
+
+## 还原实验环境
+[root@localhost ~]# chmod o+x /usr/bin/passwd 
+[root@localhost ~]# ls -l /usr/bin/passwd 
+-rwsr-xr-x. 1 root root 30768 Nov 24  2015 /usr/bin/passwd
+```
+
+#### SGID
+
+
+
+#### SBIT
