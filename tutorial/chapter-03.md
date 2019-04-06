@@ -1266,7 +1266,18 @@ alias cdnet='cd /etc/sysconfig/network-scripts'
 [root@localhost ~]# cdnet
 [root@localhost network-scripts]# cd
 [root@localhost ~]# 
+
+## 查看系统中所有的别名信息
+[root@localhost ~]# alias
+alias cp='cp -i'
+alias l.='ls -d .* --color=auto'
+alias ll='ls -l --color=auto'
+alias ls='ls --color=auto'
+alias mv='mv -i'
+alias rm='rm -i'
+alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'
 ```
+
 如果别名和原命令名称一致, 比如 ` cp='cp -i' `, 那么我如果使用 cp 命令时, 遇到同名的文件会提示我是否覆盖, 但是我不想要提示怎么办, 我们就可以使用 ` \COMMAND ` 命令的形式来避免别名的影响.
 
 ## unalias命令
