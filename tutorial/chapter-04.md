@@ -691,9 +691,87 @@ str2
 | \[\:space\:\] | 空格                                 |
 | \[\:punct\:\] | 标点符号                               |
 
+#### 实例
+```bash
+## 找到 /etc 下以 cron 开头的文件名
+[root@localhost ~]# ll -d /etc/cron*
+drwxr-xr-x. 2 root root 4096 Mar  3 11:38 /etc/cron.d
+drwxr-xr-x. 2 root root 4096 Mar  3 11:39 /etc/cron.daily
+...
 
+## 找到 /etc 下文件名刚好为五个字符的文件名
+[root@localhost ~]# ll -d /etc/?????
+drwxr-x---. 3 root root 4096 Mar  3 11:39 /etc/audit
+drwxr-xr-x. 2 root root 4096 Mar  3 11:35 /etc/avahi
+...
 
+## 找到 /etc 下文件名包含数字的文件名
+[root@localhost ~]# ll -d /etc/*[0-9]*
+drwxr-xr-x. 4 root root 4096 Mar  3 11:35 /etc/dbus-1
+-rw-r--r--. 1 root root 5139 Feb  7  2017 /etc/DIR_COLORS.256color
+...
 
+## 找到 /etc 下文件名开头不是小写
+[root@localhost ~]# ll -d /etc/[^[:lower:]]*
+drwxr-xr-x. 5 root root 4096 Mar  3 11:35 /etc/ConsoleKit
+-rw-r--r--. 1 root root 4439 Feb  7  2017 /etc/DIR_COLORS
+...
+
+## 显示 /var 下以  l(小写L) 开头, 以一个小写字母结尾且中间至少出现一位数字的文件名
+[root@localhost ~]# ls -d /var/l*[0-9]*[[:lower:]]
+ls: cannot access /var/l*[0-9]*[[:lower:]]: No such file or directory
+[root@localhost ~]# touch /var/lable2364l
+[root@localhost ~]# ls -d /var/l*[0-9]*[[:lower:]]
+/var/lable2364l
+
+## 显示 /etc 下, 以任意一位数字开头且以非数字结尾的文件名
+[root@localhost ~]# ll -d /var/[[:digit:]]*[^[:digit:]]
+
+## 显示 /etc 下, 以非字母开头, 后面跟了一个字母及其他任意长度任意字符的文件名
+[root@localhost ~]# ll -d /etc/[^[:alpha:]][a-z]*
+ls: cannot access /etc/[^[:alpha:]][a-z]*: No such file or directory
+
+## 显示 /etc 下, 所有以m开头, 以非数字结尾的文件名
+[root@localhost ~]# ll -d /etc/m*[^0-9]
+-rw-r--r--. 1 root root   111 May 11  2016 /etc/magic
+-rw-r--r--. 1 root root   272 Nov 18  2009 /etc/mailcap
+...
+
+## 显示 /etc 下, 所有以 .d 结尾的文件或目录
+[root@localhost ~]# ll -d /etc/*.d
+drwxr-xr-x.  2 root root 4096 Mar  3 11:40 /etc/bash_completion.d
+drwxr-xr-x.  2 root root 4096 May 11  2016 /etc/chkconfig.d
+...
+
+## 显示 /etc 下, 以 .conf 结尾, 且以m,n,r,p 开头的文件名
+[root@localhost ~]# ll -d /etc/[mnrp]*.conf
+-rw-r--r--. 1 root root  827 Mar 23  2017 /etc/mke2fs.conf
+-rw-r--r--. 1 root root 2620 Aug 17  2010 /etc/mtools.conf
+...
+```
+
+### 特殊符号
+
+| 符号    | 含义                                    |
+| :-----: | ------------------------------------- |
+| #     | shell script 第一行表示声明, 其余表示注释, 其后数据不执行 |
+| \     | 转义符号, 将特殊字符或者通配符转义为一般字符               |
+| \|     | 管道符号(pipe), 分割两个管道命令的界定               |
+| ;     | 连续命令执行的分隔符                            |
+| ~     | 用户的家目录                                |
+| $     | 变量的前导符                                |
+| &     | 作业控制(job control), 在后台执行命令            |
+| !     | 逻辑运算符 "非" 的意思                         |
+| /     | 目录分隔符                                 |
+| >, >> | 标准输出重定向                               |
+| <, << | 标准输入重定向                               |
+| ' '   | 单引号, 其中的变量不置换                         |
+| " "   | 双引号, 其中的变量会置换                         |
+| \` \` | 反引号, 中间是可先执行的命令, 也可使用 $()             |
+| ( )   | 中间为子shell的开始与结束                       |
+| {}    | 中间为命令块的组合                             |
+
+> **所以以后在文件命名中, 尽量不要使用到上面这些符号**
 
 # Bash Shell 的操作环境
 
