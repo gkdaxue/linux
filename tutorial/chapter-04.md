@@ -486,9 +486,188 @@ exit
 test_test2                          # <== 子进程中可以使用
 ```
 ## 变量内容的删除﹑替换和删除
+变量除了直接设置来修改原本的内容之外, 也可以通过一些操作来对变量的内容就行删除与替换.
+
+### 变量内容的删除与替换
+| 设置方式             | 说明                               |
+| ---------------- | -------------------------------- |
+| ${变量#关键字}        | 若变量内容从头开始的数据符合"关键字", 则将符合的最短数据删除 |
+| ${变量##关键字}       | 若变量内容从头开始的数据符合"关键字", 则将符合的最长数据删除 |
+| ${变量%关键字}        | 若变量内容从尾向前的数据符合"关键字", 则将符合的最短数据删除 |
+| ${变量%%关键字}       | 若变量内容从尾向前的数据符合"关键字", 则将符合的最长数据删除 |
+| ${变量/旧字符串/新字符串}  | 若变量内容符合"旧字符串", 则第一个旧字符串会被新字符串替换  |
+| ${变量//旧字符串/新字符串} | 若变量内容符合"旧字符串", 则全部的旧字符串会被新字符串替换  |
+
+#### 实例
+```bash
+[root@localhost ~]# echo $path
+
+[root@localhost ~]# path=${PATH}
+[root@localhost ~]# echo $path
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+
+## ${变量#关键字}   * 表示通配符匹配任意长度字符
+[root@localhost ~]# echo ${path#/*bin:}
+/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~]# echo ${path#/*:}
+/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+
+## ${变量##关键字} 
+[root@localhost ~]# echo $path
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~]# echo ${path##/*:}
+/root/bin
+
+## ${变量%关键字}
+[root@localhost ~]# echo $path
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~]# echo ${path%:*bin}
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+${变量%%关键字}
+[root@localhost ~]# echo $path
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~]# echo ${path%%:*bin}
+/usr/lib64/qt-3.3/bin
+
+## 测试一
+[root@localhost ~]# echo ${MAIL}
+/var/spool/mail/root
+[root@localhost ~]# echo ${MAIL##/*/}
+root
+
+## 测试二
+[root@localhost ~]# echo ${MAIL}
+/var/spool/mail/root
+[root@localhost ~]# echo ${MAIL%/*}
+/var/spool/mail
+
+## ${变量/旧字符串/新字符串}   ${变量//旧字符串/新字符串}
+[root@localhost ~]# echo ${PATH}
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~]# echo ${PATH/sbin/SBIN}
+/usr/lib64/qt-3.3/bin:/usr/local/SBIN:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~]# echo ${PATH//sbin/SBIN}
+/usr/lib64/qt-3.3/bin:/usr/local/SBIN:/usr/local/bin:/SBIN:/bin:/usr/SBIN:/usr/bin:/root/bin
+```
+
+### 变量的测试与内容替换
+在某些时刻, 我们需要判断一个变量的值是否存在, 存在就输出变量的值, 不存在则给予一个默认值.
+
+| 设置方式 | str为空字符串 | str已设置且非空字符串 | str没有设置 | 
+| ---------------- | -------------------- | -------------------- | ------------------ |
+| var=${str-expr}  | var=              | var=$str           | var=expr             | 
+| var=${str:-expr} | var=expr          | var=$str           | var=expr             |
+| var=${str+expr}  | var=expr          | var=expr           | var=                 |
+| var=${str:+expr} | var=              | var=expr           | var=                 |
+| var=${str=expr}  | str不变<br>var=    | str不变<br>var=$str  | str=expr<br>var=expr |
+| var=${str:=expr} | str=expr<br>var=expr | str不变<br >var=$str | str=expr<br>var=expr |
+| var=${str?expr}  | var=              | var=$str            | expr 输出至 stderr      |
+| var=${str:?expr} | expr 输出至 stderr | var=$str      | expr 输出至 stderr      |
+
+```bash
+## 我们只是设置了 str1 为空字符串, str2 得值为 str2 没有设置 str3 变量
+[root@localhost ~]# str1=
+[root@localhost ~]# str2='str2'
+[root@localhost ~]# echo ${str1} ; echo ${str2} ; echo ${str3}
+
+str2
+
+[root@localhost ~]# set | grep str[123]
+str1=
+str2=str2
+[root@localhost ~]# 
+
+## ${str-expr}
+[root@localhost ~]# echo ${str1-str11} ; echo ${str2-str22} ; echo ${str3-str33}
+
+str2
+str33
+
+## var=${str:-expr}
+[root@localhost ~]# echo ${str1:-str11} ; echo ${str2:-str22} ; echo ${str3:-str33}
+str11
+str2
+str33
+
+## var=${str+expr}
+[root@localhost ~]# echo ${str1+str11} ; echo ${str2+str22} ; echo ${str3+str33}
+str11
+str22
+
+## var=${str:+expr}
+[root@localhost ~]# echo ${str1:+str11} ; echo ${str2:+str22} ; echo ${str3:+str33}
+
+str22
+
+## var=${str=expr}
+[root@localhost ~]# echo ${str1} ; echo ${str1=str11} ; echo ${str1}
 
 
+
+[root@localhost ~]# echo ${str2} ; echo ${str2=str22} ; echo ${str2}
+str2
+str2
+str2
+[root@localhost ~]# echo ${str3} ; echo ${str3=str33} ; echo ${str3}
+
+str33
+str33
+
+## 还原默认情况
+[root@localhost ~]# echo ${str1} ; echo ${str2} ; echo ${str3}
+
+str2
+str33
+[root@localhost ~]# unset str3
+[root@localhost ~]# echo ${str1} ; echo ${str2} ; echo ${str3}
+
+str2
+
+## var=${str:=expr}
+[root@localhost ~]# echo ${str1} ; echo ${str1:=str11} ; echo ${str1}
+
+str11
+str11
+[root@localhost ~]# echo ${str2} ; echo ${str2:=str22} ; echo ${str2}
+str2
+str2
+str2
+[root@localhost ~]# echo ${str3} ; echo ${str3:=str33} ; echo ${str3}
+str33
+str33
+str33
+
+## 还原设置
+[root@localhost ~]# echo ${str1} ; echo ${str2} ; echo ${str3}
+str11
+str2
+str33
+[root@localhost ~]# str1=
+[root@localhost ~]# unset str3
+[root@localhost ~]# echo ${str1} ; echo ${str2} ; echo ${str3}
+
+str2
+
+## var=${str?expr}
+[root@localhost ~]# echo ${str1?str11} 
+
+[root@localhost ~]# echo ${str2?str22} 
+str2
+[root@localhost ~]# echo ${str3?str33}
+-bash: str3: str33
+
+## var=${str:?expr}
+[root@localhost ~]# echo ${str1:?str11}
+-bash: str1: str11
+[root@localhost ~]# echo ${str2:?str22}
+str2
+[root@localhost ~]# echo ${str3:?str33}
+-bash: str3: str33
+```
 
 # Linux 基本命令(3)
 ## read命令
 ## grep命令
+# 用户用户组管理
+## passwd命令
