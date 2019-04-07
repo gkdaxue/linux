@@ -540,7 +540,7 @@ u=rwx,g=rx,o=rx   <== 使用字符显示出来
 ```
 **但是 umask 的含义是默认权限应该中应该取消的权限. umask 后三位对应的分别是 u(-0) g(-2) o(-2) 应该减去的权限, 所以我们可以得出文件的实际权限为 :**
 
-| <br> | u (user) | g (group) | o (other) | <br> | |u (user) | g (group) | o (other) |
+| <br> | u (user) | g (group) | o (other) | <br> |u (user) | g (group) | o (other) |
 | :--------: |:-----: |:------: | :------:  | :--------:| :-------: |:-------:|:-------:|
 | 文件 | rw- | rw-	| rw- | 目录 | rwx | rwx | rwx |
 |umask值 | \-\-\- | -w- | -w- | <br> | \-\-\- | -w- | -w- |
