@@ -10,7 +10,7 @@
 
 ![数据流重定向](https://github.com/gkdaxue/linux/raw/master/image/chapter_A3_0001.png)
 
-当我们执行一个命令的时候, 这个命令可能会由文件读入数据, 经过处理之后, 再讲数据输出到屏幕上. 然后就有两种输出 **"标准输出"**  和 **"标准错误输出"** 这两种形式.
+当我们执行一个命令的时候, 这个命令可能会由文件读入数据, 经过处理之后, 再将数据输出到屏幕上. 然后就有两种输出 **"标准输出"**  和 **"标准错误输出"** 这两种形式.
 
 > 标准输出 : 命令执行回传的正确的信息
 > 
@@ -42,6 +42,24 @@ ls: cannot access xxxx: No such file or directory   <== 标准错误输出, 因�
 | command <<  分界符     | 从标准输入中读入，直到遇见分界符才停止      |
 | command < 文件1 > 文件2 | 将文件1作为命令的标准输入并将标准输出到文件2中 |
 
+### 实例
+```bash
+## 演示一下由键盘输入
+[root@localhost ~]# cat > cat_file
+testing
+cat file test
+<== 将光标移动到下一行, 然后按 ctrl + d 离开
+[root@localhost ~]# cat cat_file 
+testing
+cat file test
+
+## 用某个文件的内容来代替键盘输入
+[root@localhost ~]# cat > catfile < ~/.bashrc
+[root@localhost ~]# ll catfile ~/.bashrc
+-rw-r--r--. 1 root root 176 Apr  6 19:45 catfile
+-rw-r--r--. 1 root root 176 Sep 23  2004 /root/.bashrc
+```
+
 ## 输出重定向
 
 | 符号                                            | 作用                             |
@@ -60,7 +78,7 @@ ls: cannot access xxxx: No such file or directory   <== 标准错误输出, 因�
 > 
 > \>\>  :  表示追加写入的方式(附加在原有文件内容之后)
 
-## 输出重定向演示
+### 输出重定向演示
 
 ```bash
 ## 查看当前
@@ -140,7 +158,7 @@ home_dir_file 文件的处理方式为 :
 > 
 > 2>> : 以追加的方式将 `错误的数据` 输出到指定的文件或者设备上
 
-## 其他情况
+### 其他情况
 
 ```bash
 ## 将 stdout 和 stderr 写入到不同的文件中
@@ -154,6 +172,18 @@ command > stdout_file  2> &1   <== stdout 和 stderr 信息都会被写入到文
 ## /dev/null 是一个黑洞文件, 可以把任何无用的信息导入到此文件
 ## 只保留 stderr 信息, 不保留 stdout 文件( 一般日志的处理方式 )
 command  > /dev/null 2> stdout_err_file
+```
+
+### 总结
+我们为什么要使用输出重定向呢?
+> 1. 输出的信息很重要, 我们需要保存下来
+> 2. 在后台执行中的程序, 不希望它打扰屏幕结果的正常输出
+> 3. 对于一些错误命令, 我们不想他们显示出来
+
+## /dev/null 
+可以想象是一个黑洞设备, 它可以吃掉任何导向这个设备的信息并且不占用磁盘空间.
+```bash
+[root@localhost ~]# cat xxxxx 2> /dev/null
 ```
 
 # 管道命令(pipe)
@@ -1313,4 +1343,64 @@ alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-ti
 ## 删除所有别名记录
 [root@localhost ~]# unalias -a
 [root@localhost ~]# alias
+```
+
+## which命令
+which会在 ` PATH变量 ` 里查找命令是否存在以及命令的存放位置(绝对路径)并返回第一个搜索到的结果
+>  which [options] programname [...]
+
+### 选项
+| 选项  | 含义         |
+| --- | ---------- |
+| -a  | 打印 PATH 中所有匹配的可执行文件，而不仅仅是第一个    |
+| --skip-alis | 不显示别名 |
+
+### 实例
+```bash
+## 显示 rm 别名
+[root@localhost ~]# alias rm
+alias rm='rm -i'
+
+## 查找 rm 命令, 默认会显示别名
+[root@localhost ~]# which rm
+alias rm='rm -i'
+	/bin/rm
+
+## 查找 rm 命令并且不显示别名
+[root@localhost ~]# which --skip-alias rm
+/bin/rm
+
+## 查找 shell 自带的命令发现没有
+[root@localhost ~]# type cd
+cd is a shell builtin
+[root@localhost ~]# which cd
+/usr/bin/which: no cd in (/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin)
+
+## 验证只查询 PATH 变量定义的目录
+[root@localhost ~]# which --skip-alias cp
+/bin/cp
+[root@localhost ~]# cp $(which --skip-alias cp ) .
+[root@localhost ~]# ll cp
+-rwxr-xr-x. 1 root root 122896 Apr  7 14:05 cp
+[root@localhost ~]# which --skip-alias cp
+/bin/cp      <== 还是只显示 PATH 变量下的内容
+[root@localhost ~]# echo $PATH
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~]# PATH="${PATH}:/root"
+[root@localhost ~]# echo $PATH
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/root
+[root@localhost ~]# which --skip-alias cp
+/bin/cp 
+[root@localhost ~]# which -a --skip-alias cp
+/bin/cp
+/root/cp  <== 如果想要查询所有 就要使用 -a 选项
+
+## 还原环境
+[root@localhost ~]# PATH=${PATH%:/root}
+[root@localhost ~]# echo $PATH
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+[root@localhost ~]# rm -rf cp
+
+[root@localhost ~]# which -a --skip-alias cp
+/bin/cp   <== 说明已经成功还原环境
 ```
