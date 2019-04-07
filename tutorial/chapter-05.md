@@ -751,3 +751,69 @@ SGID 既可以针对文件也可以针对目录来设置, 这是与 SUID 不同�
 ```
 
 #### SBIT
+SBIT 只针对目录有效, 当用户对目录有 wx 权限时, 即写入的权限时, 如果此目录被设置了 SBIT 权限, 那么只有该用户以及 root 可以删除该文件, 即使其他人有足够的权限, 也无法执行删除操作. 
+**当目录被设置 SBIT 特殊权限位后，文件的其他人权限部分的 x 执行权限就会被替换成 t 或者 T ，原本有 x 执行权限则会写成 t，原本没有 x 执行权限则会被写成 T。**
+
+```bash
+## 查看一下 /tmp 的权限, 然后创建一个文件, 给与满权限也就是 777
+[gkdaxue@localhost ~]$ ll -d /tmp
+drwxrwxrwt. 11 root root 4096 Apr  7 03:09 /tmp    <== 注意其他人的权限为 rwt  
+[gkdaxue@localhost ~]$ touch /tmp/gkdaxue_file.txt
+[gkdaxue@localhost ~]$ chmod 777 /tmp/gkdaxue_file.txt 
+[gkdaxue@localhost ~]$ ll /tmp/gkdaxue_file.txt 
+-rwxrwxrwx. 1 gkdaxue gkdaxue 0 Apr  7 10:43 /tmp/gkdaxue_file.txt
+
+## 使用另外一个用户来尝试删除目录, useradd rm_test 命令用于添加一个用户 rm_test
+## su - rm_test 用于切换到 rm_test 用户
+[root@localhost ~]# useradd rm_test
+[root@localhost ~]# su - rm_test
+[rm_test@localhost ~]$ cd /tmp
+[rm_test@localhost tmp]$ ll gkdaxue_file.txt 
+-rwxrwxrwx. 1 gkdaxue gkdaxue 0 Apr  7 10:43 gkdaxue_file.txt
+[rm_test@localhost tmp]$ rm -rf gkdaxue_file.txt 
+rm: cannot remove `gkdaxue_file.txt': Operation not permitted  <== 即使满权限, 也无法删除该文件
+[rm_test@localhost tmp]$ exit
+logout
+
+## 然后给与 SUID 尝试删除
+[root@localhost ~]# chmod u+s /tmp/gkdaxue_file.txt 
+[root@localhost ~]# ll /tmp/gkdaxue_file.txt 
+-rwsrwxrwx. 1 gkdaxue gkdaxue 0 Apr  7 10:43 /tmp/gkdaxue_file.txt
+[root@localhost ~]# su - rm_test
+[rm_test@localhost ~]$ rm -rf /tmp/gkdaxue_file.txt 
+rm: cannot remove `/tmp/gkdaxue_file.txt': Operation not permitted  <== 也无法删除
+```
+
+#### 总结
+我们前边介绍了 SUID, SGID, SBIT 三种特殊权限, 然后那么我们如何配置他们呢?
+> SUID : 用 s 或 S 表示 也可以用数字 4 表示 (出现在所有者 x 位置上)
+>
+> SGID : 用 s 或 S 表示 也可以用数字 2 表示 (出现在所有组 x 位置上)
+>
+> SBIT : 用 t 或 T 表示 也可以用数字 1 表示 (出现在其他人 x 位置上)
+
+所以我们就可以用 chmod 4755 filename 来设置文件的一般权限以及特殊权限(4 SUID), 也就是 ` chmod [特殊权限]一般权限 FILE `
+
+#### 实例
+```bash
+[root@localhost ~]# cd /tmp
+[root@localhost tmp]# touch permission_test
+[root@localhost tmp]# ll permission_test 
+-rw-r--r--. 1 root root 0 Apr  7 11:09 permission_test  <== 去掉 umask 之后的默认权限
+
+[root@localhost tmp]# ll permission_test ; chmod 4755 permission_test ; ll permission_test 
+-rw-r--r--. 1 root root 0 Apr  7 11:09 permission_test
+-rwsr-xr-x. 1 root root 0 Apr  7 11:09 permission_test
+
+[root@localhost tmp]# ll permission_test ; chmod 6755 permission_test ; ll permission_test 
+-rwsr-xr-x. 1 root root 0 Apr  7 11:09 permission_test
+-rwsr-sr-x. 1 root root 0 Apr  7 11:09 permission_test
+
+[root@localhost tmp]# ll permission_test ; chmod 7666 permission_test ; ll permission_test 
+-rwsr-sr-x. 1 root root 0 Apr  7 11:09 permission_test
+-rwSrwSrwT. 1 root root 0 Apr  7 11:09 permission_test
+
+[root@localhost tmp]# ll permission_test ; chmod u=rwxs,go=x permission_test ; ll permission_test 
+-rwSrwSrwT. 1 root root 0 Apr  7 11:09 permission_test
+-rws--x--x. 1 root root 0 Apr  7 11:09 permission_test
+```
