@@ -1404,3 +1404,68 @@ cd is a shell builtin
 [root@localhost ~]# which -a --skip-alias cp
 /bin/cp   <== 说明已经成功还原环境
 ```
+
+## whereis命令
+找到命令的二进制文件、源文件和帮助页文件, whereis 和 locate 都是利用数据库来查找的数据, 所以速度比较快, 因为没有实际去硬盘上查询.
+>  whereis [ options ] filename...
+
+### 选项
+| 选项 | 含义   |
+| --- | ---------------- |
+| -b  | 只查找二进制文件         |
+| -m  | 只查找帮助文件          |
+| -s  | 源代码文件            |
+
+### 实例
+```bash
+## 默认显示搜索到的所有数据
+[root@localhost ~]# whereis ls
+ls: /bin/ls /usr/share/man/man1p/ls.1p.gz /usr/share/man/man1/ls.1.gz
+
+## -b 只显示二进制文件
+[root@localhost ~]# whereis -b ls
+ls: /bin/ls
+
+## -m 只显示帮助文件
+[root@localhost ~]# whereis -m ls
+ls: /usr/share/man/man1p/ls.1p.gz /usr/share/man/man1/ls.1.gz
+
+## -s 只显示源代码文件
+[root@localhost ~]# whereis -s ls
+ls:
+```
+
+## locate命令
+按照名称查找文件
+> locate [OPTION]... PATTERN...
+
+### 选项
+|   选项  |    含义 |
+| --- | ---------------- |
+| -i  | 忽略大小写         |
+
+### 实例
+```bash
+[root@localhost ~]# locate passwd | head -n 3
+/etc/passwd
+/etc/passwd-
+/etc/pam.d/passwd
+```
+
+### 注意事项
+locate 是从 /var/lib/mlocate 里面的数据找到所需要的数据, 所以查找速度很快, 不需要从硬盘上来查找, 但是也有一定的弊端, 就是这个数据库不是实时更新的(按照系统配置自动更新), 当你新建文件时, 然后使用 locate 命令可能会存在找不到的情况, 所以这个时候就需要我们手动更新数据库, 使用 **updatedb** 命令.
+
+```bash
+[root@localhost ~]# touch gkdaxue_file.txt
+[root@localhost ~]# locate gkdaxue_file.txt
+[root@localhost ~]#   <== 查找不到文件
+
+## 手动更新一下数据库 
+[root@localhost ~]# updatedb
+[root@localhost ~]# locate gkdaxue_file.txt 
+/root/gkdaxue_file.txt
+
+## updatedb 会去读取 /etc/updatedb.conf 的配置, 然后去更新 /var/lib/mlocate 内的数据库文件
+```
+
+## find命令
