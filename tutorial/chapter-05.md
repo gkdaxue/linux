@@ -730,10 +730,24 @@ cat: /etc/shadow: Permission denied
 
 ## 由此说明, 我们的 SUID 权限不能随便设置, 否则有可能会导致密码泄露
 ```
-
+![SUID_Permission](https://github.com/gkdaxue/linux/raw/master/image/chapter_A5_0002.png)
 
 #### SGID
+SGID 既可以针对文件也可以针对目录来设置, 这是与 SUID 不同的地方, 主要实现以下两种功能:
+> 让执行者临时(运行时)拥有属组的权限(对拥有执行权限的二进制程序进行设置, 参考 SUID )
+>
+> 让某个目录中创建的文件自动继承该目录的所有组(只可以对目录设置, 不用再单独设置属组信息)
 
+```bash
+## locate 命令中 gkdaxue 属于其他人但是有 x 权限, 并且 属组上面有 s, 说明有 SGID, 所以就可以执行此命令 
+[gkdaxue@localhost ~]$ ll $(which locate)
+-rwx--s--x. 1 root slocate 38464 Mar 12  2015 /usr/bin/locate
+[gkdaxue@localhost ~]$ locate man | head -n 2
+/etc/man.config
+/etc/alternatives/cdda2wav-cdda2wavman
 
+## 自动设置属组信息, 主要用在项目开发中, 所有成员都归属到一个用户组, 这样用户组的每个成员都拥有权限操作,
+## 而不用在单独设置每个成员所创建文件的属组信息. 稍后有案例.
+```
 
 #### SBIT
