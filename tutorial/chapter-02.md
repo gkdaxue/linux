@@ -1162,6 +1162,10 @@ total 72K
 -rw-r--r--. 1 root root 9.8K Mar  3 11:39 install.log.syslog
 -rw-------. 1 root root 1.6K Mar  3 11:42 anaconda-ks.cfg
 ```
+
+### 隐藏文件(.开头的文件)
+以 . 开头的文件, 我们叫做隐藏文件, 但是 "." 也是一个文件名的一部分, 比如有一个文件叫做 ` .bash_history `, 那么他就叫做 ` .bash_history ` 而不是 ` bash_history `
+
 ### ls -l 信息讲解
 ```bash
 [root@localhost ~]# ls -l install.log
