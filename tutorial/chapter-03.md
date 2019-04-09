@@ -1353,7 +1353,7 @@ which会在 ` PATH变量 ` 里查找命令是否存在以及命令的存放位�
 | 选项  | 含义         |
 | --- | ---------- |
 | -a  | 打印 PATH 中所有匹配的可执行文件，而不仅仅是第一个    |
-| --skip-alis | 不显示别名 |
+| --skip-alias | 不显示别名 |
 
 ### 实例
 ```bash
@@ -1447,6 +1447,17 @@ ls:
 ### 实例
 ```bash
 [root@localhost ~]# locate passwd | head -n 3
+/etc/passwd
+/etc/passwd-
+/etc/pam.d/passwd
+
+[root@localhost ~]# locate Passwd
+/usr/share/system-config-network/netconfpkg/conf/ConfPasswd.py
+/usr/share/system-config-network/netconfpkg/conf/ConfPasswd.pyc
+/usr/share/system-config-network/netconfpkg/conf/ConfPasswd.pyo
+
+## -i 忽略大小写
+[root@localhost ~]# locate -i Passwd | head -n 3
 /etc/passwd
 /etc/passwd-
 /etc/pam.d/passwd
