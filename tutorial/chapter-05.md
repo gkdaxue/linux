@@ -168,7 +168,46 @@ gkdaxue:$6$6AgOxuJn$bC7f(密码太长, 省略一些):14299:5:60:7:5:14419:
 > 管理员  : 进入到系统维护模式, 设置密码, 重新启动系统  
 
 ### /etc/group 文件讲解
+记录了 GID 与 组名 的对应关系, 每行代表一个用户组, 以 ":" 来作为字段的分隔符共有四列
+```bash
+[root@localhost ~]# head -n 4 /etc/group
+root:x:0:root
+bin:x:1:bin,daemon
+daemon:x:2:bin,daemon
+sys:x:3:bin,adm
 
+## 我们使用第一行 root 来解释
+root:x:0:root
+root : 用户组名称
+x    : 组密码占位符, 密码已经被移动到 /etc/gshadow 中, 通常给用户组管理员使用
+0    : 用户组的 GID 
+root : 一个账号可以有多个用户组(用,分割,中间无空格), 本字段可以为空；如果字段为空表示用户组为GID的用户名
+```
+
+### /etc/gshadow 文件讲解
+```bash
+[root@localhost ~]# head -n 4 /etc/gshadow
+root:::root
+bin:::bin,daemon
+daemon:::bin,daemon
+sys:::bin,adm
+
+我们使用下列来讲解
+root:::root
+
+root	: 用户组名
+空		: 密码列, 开头为!表示无合法密码
+空   	: 用户组管理员的账号
+root    : 该用户组所属的账号
+
+## 用户组的管理员可以将账号加入到自己的用户组中, 现在已经很少使用了
+```
+
+### 总结
+了解完了 /etc/passwd、/etc/shadow、/etc/group之后, 我们来了解一下 UID/GID 与密码之间的关系, 重点是 /etc/passwd 文件, 其他的相关数据都是根据这个文件的字段去寻找出来的.
+![账户密码用户组关联关系](https://github.com/gkdaxue/linux/raw/master/image/chapter_A5_0003.png)
+
+登录时, 根据 root 用户名来找到 UID 和 GID (均为0), 然后在根据 GID 找到组名(root), 在根据用户名找到 密码, 这样就实现了关联起来.
 
 ## 文件权限
 ### 普通权限(rwx)
@@ -817,3 +856,12 @@ rm: cannot remove `/tmp/gkdaxue_file.txt': Operation not permitted  <== 也无�
 -rwSrwSrwT. 1 root root 0 Apr  7 11:09 permission_test
 -rws--x--x. 1 root root 0 Apr  7 11:09 permission_test
 ```
+
+### ACL访问控制权限
+从我们上面的讲解中, 我们可以发现一个问题, 所有的权限都是针对所有者、所有组和其他人的人来设置的, 那么现在问题来了, 有一个人没事总喜欢修改别人的文件, 但是他也是我们小组的成员, 那么我们怎么设置, 让他只能看不能修改呢? 这就需要用到我们所讲的 ACL 权限 来差异化的设置权限.
+
+
+
+
+## 有效用户组(effective group)和初始用户组(initial group)
+我们从 /etc/group 文件中可以得出: 一个人可以有多个用户组, 那么实际在运行时, 到底是用哪一个用户组的权限来运行程序或者脚本呢? 我们又该如何来切换用户的用户组呢? 这是一个很重要的问题.
