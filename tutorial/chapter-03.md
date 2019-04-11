@@ -1480,3 +1480,108 @@ locate 是从 /var/lib/mlocate 里面的数据找到所需要的数据, 所以�
 ```
 
 ## find命令
+可以按照指定的条件, 在目录层次结构中搜索文件.
+> find [ PATH ] [ options ] [ expression ]
+
+| 参数           | 作用                          |
+| ------------ | ---------------------------- |
+| **时间相关** | <br > |
+| -mtime [-+]n | 匹配修改内容的时间（-n指n天以内，+n指n天以前）   |
+| -atime [-+]n | 匹配访问文件的时间（-n指n天以内，+n指n天以前）   |
+| -ctime [-+]n | 匹配修改文件权限的时间（-n指n天以内，+n指n天以前） |
+| <br> | <br> |
+| **用户或用户组相关** | <br> |
+| -uid UID | UID为账号对应的用户ID(/etc/passwd), 以后讲解 |
+| -gid GID | GID为账号对用的组ID(/etc/group), 以后讲解 |
+| -user USER_NAME | 匹配用户账号为 USER_NAME 的文件                                       |
+| -group GROUP_NAME| 匹配所有组为 GROUP_NAME 的文件                                         |
+| -nouser   | 匹配无所有者的文件(所有者不在 /etc/passwd 文件中)                                     |
+| -nogroup  | 匹配无用户组的文件(用户组不存在 /etc/group 文件中)         |
+| <br> | <br> |
+| **文件权限名称有关** | <br> |
+| -name  FILE_NAME   | 查找文件名为 FILE_NAME 的文件   |
+| -size  [+-]SIZE | 匹配文件的大小（+50KB为查找超过50KB的文件，而-50KB为查找小于50KB的文件） |
+| --type FILE_TYPE | 匹配文件类型（块设备(b)、目录(d)、字符设备(c)、管道(p)、链接文件(l)、文本文件(f)）|
+| -perm [+-]mode | 匹配权限（mode为完全匹配，-mode为包含即可）      |
+| -exec COMMAND {} \;   | 后面可跟用于进一步处理搜索结果的命令(COMMAND 不能为别名形式)   |
+
+### 实例
+```bash
+## 打印一下现在时间
+[root@localhost ~]# date '+%F %T'
+2019-04-11 10:30:05
+
+## 查询一下 /etc 目录下 过去 24 小时内 有改动的文件
+## 0 表示当前时间, 所以为从现在开始到 24 小时之前
+## 如果为 4 天前的 24 小时, 那就是 -mtime 4
+[root@localhost ~]# find /etc/ -mtime 0 -exec ls -ld --full-time {} \;
+drwxr-xr-x. 118 root root 12288 2019-04-11 04:06:02.904432999 +0800 /etc/
+drwxr-xr-x. 2 root root 4096 2019-04-10 19:02:01.118463069 +0800 /etc/yum.repos.d
+drwxr-xr-x. 2 root root 4096 2019-04-10 19:02:01.114463068 +0800 /etc/rpm
+-rw-r--r--. 1 root root 317581 2019-04-11 04:06:02.904432999 +0800 /etc/prelink.cache
+drwxr-xr-x. 7 root root 4096 2019-04-11 09:23:22.068416003 +0800 /etc/sysconfig
+drwxr-xr-x. 2 root root 4096 2019-04-10 19:02:07.686463063 +0800 /etc/pki/nssdb
+drwxr-xr-x. 2 root root 4096 2019-04-10 19:02:01.114463068 +0800 /etc/pki/rpm-gpg
+
+                             -4 |----------------------------->| : 4天之内,包含4天修改的文件
+                        |<--4-->| : 表示 4天之前一天之内更改的文件
+<-----------------------| +4 : 表示 4 天之前, 不含 4 天本身
+ 
+<--------7------6-------5-------4-------3-------2-------1------| 现在
+
+## 匹配用户
+[root@localhost ~]# tail -n 3 /etc/passwd
+gkdaxue:x:500:500:gkdaxue:/home/gkdaxue:/bin/bash
+用户名为 gkdaxue(第一个字段)
+UID 为 500 第三个字段
+GID 为 500 第四个字段
+[root@localhost ~]# find /home -user gkdaxue | head -n 4
+/home/gkdaxue
+/home/gkdaxue/.gnupg
+/home/gkdaxue/.gnupg/gpg.conf
+/home/gkdaxue/.gnupg/secring.gpg
+[root@localhost ~]# find /home -uid 500 | head -n 4
+/home/gkdaxue
+/home/gkdaxue/.gnupg
+/home/gkdaxue/.gnupg/gpg.conf
+/home/gkdaxue/.gnupg/secring.gpg
+
+## 文件权限和名称
+[root@localhost ~]# find / -name passwd
+/etc/passwd
+/etc/pam.d/passwd
+/usr/bin/passwd
+/selinux/class/passwd
+/selinux/class/passwd/perms/passwd
+
+## r -> 4  w -> 2  x -> 1 称为数字表示法, rwx位置固定, 始终为 rwx 不会颠倒顺序
+## 555 为 r-xr-xr-x 第一列显示的中间 9 个字母
+## -perm 555 权限刚好等于 555 不能多不能少(现在了解即可, 以后讲解权限问题)
+[root@localhost ~]# find /etc -perm 555 -exec ls -ld {} \;
+-r-xr-xr-x. 1 root root 3045 Mar 23  2017 /etc/rc.d/init.d/lvm2-monitor
+-r-xr-xr-x. 1 root root 2137 Mar 23  2017 /etc/rc.d/init.d/lvm2-lvmetad
+-r-xr-xr-x. 1 root root 1362 Mar 23  2017 /etc/rc.d/init.d/blk-availability
+
+## -perm -555 : 必须全部包含 mode 权限 555 为 r-xr-xr-x 
+## -perm +555 : 包含任一mode的权限, 如 -perm +755 时, rw------- 也会被找出来, 因为它有 rw.....
+[root@localhost ~]# find /etc -perm -555 -exec ls -ld {} \;
+.............
+drwxr-xr-x. 2 root root 4096 Mar 20 17:17 /etc/gconf/gconf.xml.mandatory
+drwxr-xr-x. 2 root root 4096 Mar 20 17:17 /etc/gconf/gconf.xml.system
+drwxr-xr-x. 2 root root 4096 Mar  3 11:35 /etc/gconf/2
+
+## -perm +7000
+[root@localhost ~]# find / -perm +7000 -exec ls -ld {} \;
+drwxrwxrwt. 2 root root 4096 Apr  6 16:52 /tmp/.X11-unix
+drwxrwxrwt. 2 root root 4096 Apr  6 16:52 /tmp/.ICE-unix
+-rwsrwxrwx. 1 gkdaxue gkdaxue 0 Apr  7 10:43 /tmp/gkdaxue_file.txt
+-rwsr-xr-x. 1 root root 2438344 Mar 22  2017 /usr/bin/Xorg
+-rwsr-xr-x. 1 root root 59408 Mar 22  2017 /usr/bin/ksu
+....
+
+## 讲解含义
+find / -perm +7000 -exec ls -ld {} \;
+{} : 表示 find 找到的内容
+-exec 到 \; 是关键字, 表示 find 额外命令的开始(-exec) 到结束(\;)
+; : 在 Linux 中有特殊含义, 所以使用 \ 来转义
+```
