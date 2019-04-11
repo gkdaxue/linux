@@ -859,9 +859,185 @@ rm: cannot remove `/tmp/gkdaxue_file.txt': Operation not permitted  <== 也无�
 
 ### ACL访问控制权限
 从我们上面的讲解中, 我们可以发现一个问题, 所有的权限都是针对所有者、所有组和其他人的人来设置的, 那么现在问题来了, 有一个人没事总喜欢修改别人的文件, 但是他也是我们小组的成员, 那么我们怎么设置, 让他只能看不能修改呢? 这就需要用到我们所讲的 ACL 权限 来差异化的设置权限.
+ACL 就是 Access Control List 的缩写, 主要的目的是为了提供传统 owner、group、other 的 read 、 write、 execute 权限之外的具体权限设置, 可以针对 单一用户、单一文件或目录来设置.
 
+#### getfacl命令
+getfacl命令用于显示文件上设置的 ACL 信息
+> getfacl FILE_NAME
 
+#### setfacl命令
+设置某个文件/目录的访问控制权限.
 
+| 参数  | 作用   |
+| --- | -------------------------------------------- |
+| -m   | 给文件设置 ACL |
+| -R   | 递归(目录)设置 ACL |
+| -b   | 删除所有的 ACL |
+| -x { u:USERNAME \| g:GROUP_NAME } | 删除特定的 ACL | 
+| -d | 设置默认的 ACL 参数, 只对目录有效(该目录新建的文件都会引用该默认值) | 
+| -k | 删除默认的 ACL 参数 |
+
+##### 针对特定用户设置
+> setfacl [ options ] u:[用户]:权限  FILE_NAME
+
+```bash
+## 在 /var 目录下创建一个 000 权限的文件和目录
+[root@localhost ~]# cd /var
+[root@localhost var]# mkdir -m 000 acl_test_dir
+[root@localhost var]# touch acl_test_file ; chmod 000 acl_test_file
+[root@localhost var]# ll -d acl_test*
+d---------. 2 root root 4096 Apr 11 16:52 acl_test_dir
+----------. 1 root root    0 Apr 11 16:52 acl_test_file
+
+## 说明不存在这个用户, 等会验证用途
+[root@localhost var]# id test_gkdaxue
+id: test_gkdaxue: No such user
+
+## 切换用户 gkdaxue  因为没有权限, 所以会无法写入文件 已经跳转到该目录
+[root@localhost var]# su - gkdaxue
+[gkdaxue@localhost ~]$ echo 'gkdaxue' > /var/acl_test_file
+-bash: /var/acl_test_file: Permission denied
+[gkdaxue@localhost ~]$ cd /var/acl_test_dir
+-bash: cd: /var/acl_test_dir: Permission denied
+[gkdaxue@localhost ~]$ exit
+logout
+
+## 给一个不存在的用户设置则会报错, 所以一定要保证该用户存在
+[root@localhost var]# setfacl -m u:test_gkdaxue:rwx /var/acl_test_file
+setfacl: Option -m: Invalid argument near character 3
+
+## 给存在的用户 gkdaxue 设置权限
+[root@localhost var]# setfacl -m u:gkdaxue:rw /var/acl_test_file
+[root@localhost var]# setfacl -Rm u:gkdaxue:rwx /var/acl_test_dir/  # <== 目录不要忘了R选项
+
+## 当无用户列表时, 代表设置该文件所有者
+[root@localhost var]# setfacl -m u::rwx acl_test_file 
+
+## 第一列的最后一位由 . => + 说明存在访问控制权限
+[root@localhost var]# ll -d /var/acl_test_{dir,file}
+d---rwx---+ 2 root root 4096 Apr 11 16:52 /var/acl_test_dir
+-rwxrw----+ 1 root root    8 Apr 11 17:34 /var/acl_test_file
+
+## 再次验证
+[root@localhost var]# su - gkdaxue
+[gkdaxue@localhost ~]$ echo 'gkdaxue' > /var/acl_test_file 
+[gkdaxue@localhost ~]$ cd /var/acl_test_dir/
+[gkdaxue@localhost acl_test_dir]$ cat ../acl_test_file 
+gkdaxue
+[gkdaxue@localhost acl_test_dir]$ exit
+logout
+
+## 查看 ACL 访问权限
+[root@localhost var]# getfacl acl_test_{dir,file}
+# file: acl_test_dir
+# owner: root
+# group: root
+user::---         <== 其他用户没有任何权限
+user:gkdaxue:rwx  <== 而我们设置的用户却有权限
+group::---
+mask::rwx
+other::---
+
+# file: acl_test_file
+# owner: root
+# group: root
+user::rwx   <== 之前为 ---, 因为我们使用 u::rwx 所以变成了 rwx
+user:gkdaxue:rw-
+group::---
+mask::rw-
+other::---
+```
+
+##### 针对特定用户组的设置
+> setfacl [ options ] g:[用户组]:权限  FILE_NAME
+
+```bash
+[root@localhost var]# getfacl acl_test_file 
+# file: acl_test_file
+# owner: root
+# group: root
+user::rwx
+user:gkdaxue:rw-
+group::---
+mask::rw-
+other::---
+[root@localhost var]# setfacl -m g:gkdaxue:rwx acl_test_file 
+[root@localhost var]# getfacl acl_test_file 
+# file: acl_test_file
+# owner: root
+# group: root
+user::rwx
+user:gkdaxue:rw-
+group::---
+group:gkdaxue:rwx   <== 新设置的组权限
+mask::rwx
+other::---
+
+## 删除所有的 ACL 权限
+[root@localhost var]# setfacl -b acl_test_file
+[root@localhost var]# getfacl acl_test_file 
+# file: acl_test_file
+# owner: root
+# group: root
+user::rwx
+group::---
+other::---
+```
+
+##### 删除特定的 ACL 权限
+> -x : 删除特定的 ACL 权限
+>
+> -b : 删除所有的 ACL 权限
+
+```bash
+[root@localhost var]# setfacl -m g:gkdaxue:rwx acl_test_file 
+[root@localhost var]# setfacl -m u:gkdaxue:rwx acl_test_file 
+[root@localhost var]# getfacl acl_test_file 
+# file: acl_test_file
+# owner: root
+# group: root
+user::rwx
+user:gkdaxue:rwx
+group::---
+group:gkdaxue:rwx
+mask::rwx
+other::---
+
+[root@localhost var]# setfacl -x u:gkdaxue  acl_test_file 
+[root@localhost var]# getfacl acl_test_file 
+# file: acl_test_file
+# owner: root
+# group: root
+user::rwx
+group::---
+group:gkdaxue:rwx
+mask::rwx
+other::---
+```
 
 ## 有效用户组(effective group)和初始用户组(initial group)
 我们从 /etc/group 文件中可以得出: 一个人可以有多个用户组, 那么实际在运行时, 到底是用哪一个用户组的权限来运行程序或者脚本呢? 我们又该如何来切换用户的用户组呢? 这是一个很重要的问题.
+
+
+## 总结
+> 1. 用户能够进入某目录, 基本权限是什么? ( **至少拥有 x 权限** )
+> 2. 用户在某个目录内读取一个文件, 那么基本权限是什么? ()
+> ```bash
+> 目录 : 至少拥有 x 权限
+> 文件 : 至少拥有 r 权限
+> ```
+> 3. 用户可以修改一个文件的基本权限是什么?
+> ```bash
+> 目录 : 至少拥有 x 权限
+> 文件 : 至少拥有 r w 权限
+> ```
+> 4. 让一个用户可以创建一个文件的基本权限是什么?
+> ```bash
+> 目录 : 至少有用 w x 权限
+> ```
+> 5. 让用户进入某目录并执行该目录下的某个命令, 基本权限是什么?
+> ```bash
+> 目录 : 至少拥有 x 权限
+> 文件 : 至少拥有 x 权限
+> ```
+
