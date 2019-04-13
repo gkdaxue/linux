@@ -1079,8 +1079,149 @@ fi
 同之前所讲解的一样.
 ![non-login_shell](https://github.com/gkdaxue/linux/raw/master/image/chapter_A4_0004.png)
 
+#### 提问
+当我们不小心执行了一个操作, 使命令提示符变成了如下所示, 那么原因是什么?
+```bash
+[gkdaxue@localhost ~]$   <== 以前正常的提示符 
+-bash-4.1$               <== 现在的类似于乱码
+
+## 我们先看一下 PS1 环境变量
+-bash-4.1$ echo $PS1 
+\s-\v\$      <== 非正常的环境变量, 结合我们之前所说的 PS1 变量是在 /etc/bashrc 文件中加载的
+
+## /etc/bashrc 文件内容
+[ "$PS1" = "\\s-\\v\\\$ " ] && PS1="[\u@\h \W]\\$ " 
+
+## 查看 /etc/bashrc 是否存在
+-bash-4.1$ ll /etc/bashrc 
+-rw-r--r--. 1 root root 2699 Mar 22  2017 /etc/bashrc
+
+## 然后推上一级 ~/.bashrc , 发现不存在
+-bash-4.1$ ll ~/.bashrc 
+ls: cannot access /home/gkdaxue/.bashrc: No such file or directory
+
+## 然后复制一下, 退出或者重新加载配置文件即可
+-bash-4.1$ cp -a /etc/skel/.bashrc ~/
+-bash-4.1$ exit  
+logout
+
+## 成功解决问题
+[gkdaxue@localhost ~]$ 
+```
+
+### 其他文件
+#### /etc/man.config
+这个文件的内容规定了 man 的时候 man page 的路径到哪里去寻找.
+
+#### ~/.bash_history
+我们的历史命令就记录在这个文件中, 这个文件能够记录的几条数据和 HISTSIZE 这个变量有关, 每次登陆 bash 时, bash 会先读取这个文件, 然后将所有的历史命令读入内存, 这样当我们登陆 bash 后就可以查看上次使用过的哪些命令.
+
+#### ~/.bash_logout
+但我们注销 bash 后系统在帮我完成什么样的操作后才离开. 比如我们可以备份一些重要的数据.
+
 ## soure 命令 
+由于 /etc/profile 与 ~/.bash_profile 都是取得 login shell 的时候才读取的配置文件, 那么如果我们更改了这两个文件中的设置, 难道只能退出在登录才能生效吗? 当然是 NO, 所以我们就可以使用 source 命令.
+> source 配置文件名
+
+```bash
+[root@localhost ~]# source /etc/profile
+[root@localhost ~]# .    ./.bashrc         # <== 可以使用 . 的形式
+```
 
 # Linux 基本命令(3)
 ## read命令
+读取用户从键盘输入的变量值, **从 read 输入的内容都是字符串.**
+> read [ options ] 变量名....
+
+| 选项 | 作用 |
+|---- | -----|
+|-p 提示符 | 提示用户输入的提示信息 |
+| -t time_out | 超时时间, 用户超过这个时间没有输入, 自动结束(单位 s) |
+
+### 实例
+```bash
+[root@localhost ~]# read NAME
+gkdaxue   <== 如果你不输入, 它就会一直等待, 因为我们没有设置超时时间, 也没有提示客户进行输入
+[root@localhost ~]# echo $NAME
+gkdaxue
+
+## -p  -t 等待5秒不操作, 自动关闭
+[root@localhost ~]# read -p "Input Your name " -t 5 NAME
+Input Your name [root@localhost ~]# 
+[root@localhost ~]# read -p "Input Your name " -t 5 NAME
+Input Your name gkdaxue
+[root@localhost ~]# echo $NAME
+gkdaxue
+
+## 输入参数个数 = 变量个数
+[root@localhost ~]# read -p "请输入多个参数:" a b c 
+请输入多个参数:1 2 3
+[root@localhost ~]# echo $a $b $c
+1 2 3
+
+## 输入参数个数 < 变量个数
+[root@localhost ~]# read -p "请输入多个参数:" a b c d
+请输入多个参数:1 2 3
+[root@localhost ~]# echo $a $b $c $d
+1 2 3
+
+## 输入参数个数 > 变量个数
+[root@localhost ~]#  read -p "请输入多个参数:" a b c
+请输入多个参数:1 2 3 4
+[root@localhost ~]# echo $a $b $c
+1 2 3 4
+[root@localhost ~]# echo $c
+3 4
+```
+
+## declare/typeset命令
+声明变量的类型, 变量的类型默认为 字符串, 并且 bash 中数组运算, 默认最多仅能达到整数类型
+> declare [ options ] variable
+
+| 选项   | 作用                    |
+| --- | ----------------------------- |
+| -   | 指定变量的类型属性                     |
+| +   | 取消变量类型的设置                     |
+| f   | 仅显示函数                         |
+| r   | 将变量设置为只读 (变量不可更改, 也不能重设)                     |
+| x   | 指定的变量会成为环境变量，可供shell以外的程序来使用。 (export 作用一样) |
+| i   | [设置值]可以是数值,数字字符串或运算式          |
+| a   | 将变量声明为数组                      |
+| p   | 显示指定变量的声明类型                   |
+
+### 实例
+```bash
+## 因为默认为字符串, 所以没有想要的变量的效果
+[root@localhost ~]# sum=100+200+300
+[root@localhost ~]# echo $sum
+100+200+300
+
+## -i 设置为整型, 所以可以计算变量值
+[root@localhost ~]# declare -i sum=100+200+300
+[root@localhost ~]# echo $sum
+600
+[root@localhost ~]# declare -p sum
+declare -i sum="600"
+
+## 设置只读属性, unset 或者 +r 形式 均无法生效, 通常需要注销在登录才能操作
+[root@localhost ~]# declare -r sum  
+[root@localhost ~]# declare -p sum
+declare -ir sum="600"
+[root@localhost ~]# sum=200
+-bash: sum: readonly variable   <== 无法重新设置值
+```
+
+### 数组(array) 变量类型(了解即可)
+```bash
+## 有一个 test 数组, [] 中的为索引值, 为一些数字
+[root@localhost ~]# test[1]=['test1']
+[root@localhost ~]# test[2]=['test2']
+[root@localhost ~]# test[3]=['test3']
+[root@localhost ~]# echo ${test[1]}, ${test[2]}, ${test[3]}
+[test1], [test2], [test3]
+```
+
+## cut命令
+
+
 ## grep命令
