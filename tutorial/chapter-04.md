@@ -774,10 +774,313 @@ drwxr-xr-x.  2 root root 4096 May 11  2016 /etc/chkconfig.d
 > **所以以后在文件命名中, 尽量不要使用到上面这些符号**
 
 # Bash Shell 的操作环境
+## 路径与命令查找顺序
+我们之前就已经讲过了命令的查找顺序, 然后我们今天来复习一下, 然后来讲解接下来的知识点
+> 1. 是否已绝对路径或相对路径执行命令, 如果是立即执行
+> 2. 检查用户输入的命令是否是 alias 命令
+> 3. 判断用户输入的是不是内部命令, 如果是 直接执行
+> 4. 先去查找该命令是否被 hash 所保存下来
+> ```bash
+> [root@localhost ~]# hash | head -n 3
+> hits	command
+>    7	/bin/grep
+>    1	/bin/hostname
+> 如果保存下来, 直接根据路径, 无需查找, 否则就在 PATH 中执行查找(从左至右顺序符合条件的第一个命令)操作并 hash
+> ```
 
+## /etc/issue 和 /etc/motd
+我们可以在 bash 也有登录页面和欢迎信息, 在 (tty1-6)登录的时候, 会有几行提示信息, 那就是登录页面, 提示信息被写在 /etc/issue 里面
+```bash
+## tty1 - tty6 登录提示信息
+CentOS release 6.9 (Final)
+Kernel 2.6.32-696.el6.x86_64 on an x86_64
+
+## 查看 /etc/issue
+[root@localhost ~]# cat /etc/issue
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+## 那么 \r  \m 又都是代表什么含义呢?
+```
+
+| /etc/issue 文件中变量    | 含义                                    |
+| :-----: | ------------------------------------- |
+| \d     | 当前日期 |
+| \t     | 当前时间 |
+| \l (小写L)     | 显示第几个终端 |
+| \m     | 显示硬件等级(x86_64) |
+| \n     | 显示主机的网络名称                                |
+| \r     | 显示内核版本(uname -r)            |
+| \s     | 操作系统的名称                         |
+| \v    | 操作系统的版本                                 |
+
+所有我们就知道, 为什么我们使用 tty1-tty6时会显示对应的提示信息以及显示变量的设置, 还有一个 /etc/issue.nett 是提供给 telnet 远程登录程序使用的, 当我们使用 telnet 登录系统时就会显示 /etc/issue.net 文件中的内容, 但是实际的情况是 我们使用的最多的是 ssh 方式登录到系统中, 如果我们想要显示提示信息, 那么就需要用到我们所说的 /etc/motd 文件了.
+```bash
+## 该文件默认为空文件, 然后我们尝试写入一些信息
+[root@localhost ~]# cat /etc/motd
+[root@localhost ~]# echo 'Hi, How are you ?' > /etc/motd 
+[root@localhost ~]# cat /etc/motd 
+Hi, How are you ?
+
+## 我们退出当前终端, 重新登录
+[root@localhost ~]# exit
+logout
+[d:\~]$ ssh root@192.168.1.206
+Last login: Sat Apr 13 10:45:13 2019
+Hi, How are you ?  <== 发现出现了我们所添加的信息
+```
+### 总结
+> /etc/issue : 给 tty1-tty6 终端设置相应的提示信息, 允许使用特定的变量
+>
+> /etc/issue.net : 给 telnet 的用户设置提示信息
+>
+> /etc/motd : 给所有的终端设置提示信息(不解析 /etc/issue 中提供的变量) 
+
+## bash 的环境配置文件
+当我们登录系统时, 什么都没有做就可以使用一些变量, 就是因为环境配置文件的存在, bash 在启动是回去读取这些配置文件, 而这些配置文件可以分为 ` 全局配置文件 ` 和 ` 用户个人配置文件 `, 例如我们之前所说的别名 变量这些, 如果没有写入到配置文件中, 当我们退出 bash 时即失效, 如果我们想要保留这些设置, 就需要将这些配置写入到对应的配置文件中.
+> login shell : 取得 bash 时需要完整的登录流程(比如登录时, 需要输入账号和密码)
+>
+> non-login shell : 取得 bash 接口的方法不需要重复登录的动作(比如你已经登录系统了, 重新打开一个新的bash 不需要登录)
+
+### login shell 配置文件
+login shell 只会读取两个配置文件 /etc/profile 和 ~/.bash_profile .
+> /etc/profile : 系统整体的配置文件, 所有用户都可以使用
+>
+> ~/.bash_profile : 用户个人的配置文件, 只能用户自己使用
+
+#### /etc/profile
+```bash
+## 利用用户的标识符 (UID) 来设置很多的变量, 每个用户取得 bash 时都会读取的配置文件.设置的环境变量有:
+[root@localhost ~]# cat /etc/profile
+pathmunge () {
+    case ":${PATH}:" in
+        *:"$1":*)
+            ;;
+        *)
+            if [ "$2" = "after" ] ; then
+                PATH=$PATH:$1
+            else
+                PATH=$1:$PATH
+            fi
+    esac
+}
+
+
+if [ -x /usr/bin/id ]; then
+    if [ -z "$EUID" ]; then
+        # ksh workaround
+        EUID=`/usr/bin/id -u`    <== 设置有效用户的 ID 给 EUID
+        UID=`/usr/bin/id -ru`    <== 显示真实的 ID, 而不是有效的 ID 
+    fi
+    USER="`/usr/bin/id -un`"     <== 设置用户名
+    LOGNAME=$USER                <== 设置登录名
+    MAIL="/var/spool/mail/$USER" <== 设置邮箱地址变量
+fi
+
+# Path manipulation      <== 主要用来设置 PATH 变量
+if [ "$EUID" = "0" ]; then  
+    pathmunge /sbin
+    pathmunge /usr/sbin
+    pathmunge /usr/local/sbin
+else
+    pathmunge /usr/local/sbin after
+    pathmunge /usr/sbin after
+    pathmunge /sbin after
+fi
+
+HOSTNAME=`/bin/hostname 2>/dev/null`          <== 设置主机名
+HISTSIZE=1000                                 <== 设置历史命令记录条数
+if [ "$HISTCONTROL" = "ignorespace" ] ; then  <== 设置历史命令的控制方式
+    export HISTCONTROL=ignoreboth
+else
+    export HISTCONTROL=ignoredups
+fi
+
+export PATH USER LOGNAME MAIL HOSTNAME HISTSIZE HISTCONTROL  <== 提升为环境变量
+
+## 针对不同的用户设置不同的 umask 值
+if [ $UID -gt 199 ] && [ "`/usr/bin/id -gn`" = "`/usr/bin/id -un`" ]; then
+    umask 002
+else
+    umask 022
+fi
+
+## 循环读取 /etc/profile.d/*.sh 下的配置文件
+for i in /etc/profile.d/*.sh ; do
+    if [ -r "$i" ]; then
+        if [ "${-#*i}" != "$-" ]; then
+            . "$i"
+        else
+            . "$i" >/dev/null 2>&1
+        fi
+    fi
+done
+
+unset i
+unset -f pathmunge
+```
+
+#### /etc/profile.d/*.sh
+只要在/etc/profile.d/ 目录下并且扩展名为 .sh 的文件, 并且用户具有 r 权限, 那么该文件就会被 /etc/profile 调用, 有兴趣的同学可以自己查看一下. 我们主要讲解 /etc/sysconfig/il8n 这个文件, 这个文件是被 /etc/profile.d/lang.sh 调用的, 它决定了 bash 默认使用的什么语系, 这个文件中最重要的就是 LANG 这个变量的设置
+
+#### ~/.bash_profile
+bash 在读取完整体环境设置的 /etc/profile 并调用了其他相应的文件后,  接下来就会读取用户的个人配置文件, 个人配置文件主要有三个, 依序是 :
+> 1. ~/.bash_profile
+> 2. ~/.bash_login
+> 3. ~/.profile
+
+**只会按照上面的顺序读取三个配置文件中的一个**, 主要是为了照顾其他 shell 转换过来的用户习惯.
+```bash
+[root@localhost ~]# cat ~/.bash_profile 
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then   <== 判断是否存在该文件, 如果存在则并读取设置
+	. ~/.bashrc   
+fi
+
+PATH=$PATH:$HOME/bin 
+export PATH
+```
+
+#### ~/.bashrc
+```bash
+[root@localhost ~]# cat ~/.bashrc
+# .bashrc
+
+# User specific aliases and functions
+
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then   <== 如果 /etc/bashrc 文件存在, 就加载 /etc/bashrc
+	. /etc/bashrc
+fi
+```
+
+#### /etc/bashrc
+```bash
+[root@localhost ~]# cat /etc/bashrc
+if [ "$PS1" ]; then
+  if [ -z "$PROMPT_COMMAND" ]; then
+    case $TERM in
+    xterm*)
+        if [ -e /etc/sysconfig/bash-prompt-xterm ]; then
+            PROMPT_COMMAND=/etc/sysconfig/bash-prompt-xterm
+        else
+            PROMPT_COMMAND='printf "\033]0;%s@%s:%s\007" "${USER}" "${HOSTNAME%%.*}" "${PWD/#$HOME/~}"'
+        fi
+        ;;
+    screen)
+        if [ -e /etc/sysconfig/bash-prompt-screen ]; then
+            PROMPT_COMMAND=/etc/sysconfig/bash-prompt-screen
+        else
+            PROMPT_COMMAND='printf "\033]0;%s@%s:%s\033\\" "${USER}" "${HOSTNAME%%.*}" "${PWD/#$HOME/~}"'
+        fi
+        ;;
+    *)
+        [ -e /etc/sysconfig/bash-prompt-default ] && PROMPT_COMMAND=/etc/sysconfig/bash-prompt-default
+        ;;
+      esac
+  fi
+  shopt -s checkwinsize
+  [ "$PS1" = "\\s-\\v\\\$ " ] && PS1="[\u@\h \W]\\$ "   <== 设置 PS1 变量
+fi
+
+if ! shopt -q login_shell ; then # We're not a login shell
+    pathmunge () {
+        case ":${PATH}:" in
+            *:"$1":*)
+                ;;
+            *)
+                if [ "$2" = "after" ] ; then
+                    PATH=$PATH:$1
+                else
+                    PATH=$1:$PATH
+                fi
+        esac
+    }
+
+    # 设置 umask 值
+    if [ $UID -gt 199 ] && [ "`/usr/bin/id -gn`" = "`/usr/bin/id -un`" ]; then
+       umask 002
+    else
+       umask 022
+    fi
+
+    # 加载 /etc/profile.d/*.sh
+    for i in /etc/profile.d/*.sh; do
+        if [ -r "$i" ]; then
+            if [ "$PS1" ]; then
+                . "$i"
+            else
+                . "$i" >/dev/null 2>&1
+            fi
+        fi
+    done
+
+    unset i
+    unset pathmunge
+fi
+# vim:ts=4:sw=4
+```
+![login_shell](https://github.com/gkdaxue/linux/raw/master/image/chapter_A4_0003.png)
+
+### non-login shell
+当你取得 non-login shell 时, 该 bash 仅会读取 ~/.bashrc 而已
+
+#### ~/.bashrc   
+```bash
+[root@localhost ~]# cat ~/.bashrc    <== root 用户的 .bashrc 文件
+alias rm='rm -i'   <== 普通用户的 .bashrc 文件没有如下别名, 主要是因为防止 root 误操作.
+alias cp='cp -i'
+alias mv='mv -i'
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then  <== 判断是否存在该文件, 存在就加载 /etc/bashrc 文件
+	. /etc/bashrc
+fi
+
+## 普通用户
+[root@localhost ~]# cat ~gkdaxue/.bashrc   <== 普通用户的 .bashrc 文件  
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+
+# User specific aliases and functions
+
+```
+
+#### /etc/bashrc
+和之前讲过的文件一样, 不在讲解.
+```bash
+[root@localhost ~]# cat /etc/bashrc
+......
+    for i in /etc/profile.d/*.sh; do    <== 加载 /etc/profile.d/*.sh 文件
+        if [ -r "$i" ]; then
+            if [ "$PS1" ]; then
+                . "$i"
+            else
+                . "$i" >/dev/null 2>&1
+            fi
+        fi
+    done
+
+    unset i
+    unset pathmunge
+fi
+# vim:ts=4:sw=4
+```
+#### /etc/profile.d/*.sh
+同之前所讲解的一样.
+![non-login_shell](https://github.com/gkdaxue/linux/raw/master/image/chapter_A4_0004.png)
+
+## soure 命令 
 
 # Linux 基本命令(3)
 ## read命令
 ## grep命令
-# 用户用户组管理
-## passwd命令
