@@ -830,6 +830,8 @@ rm: cannot remove `/tmp/gkdaxue_file.txt': Operation not permitted  <== 也无�
 > SGID : 用 s 或 S 表示 也可以用数字 2 表示 (出现在所有组 x 位置上)
 >
 > SBIT : 用 t 或 T 表示 也可以用数字 1 表示 (出现在其他人 x 位置上)
+>
+> umask 有四位数字, 后三位表示 owner, group, other 权限, 第一位表示的也就是特殊权限
 
 所以我们就可以用 chmod 4755 filename 来设置文件的一般权限以及特殊权限(4 SUID), 也就是 ` chmod [特殊权限]一般权限 FILE `
 
@@ -1000,7 +1002,7 @@ user::rwx
 user:gkdaxue:rwx
 group::---
 group:gkdaxue:rwx
-mask::rwx
+mask::rwx    <== 注意这个 mask , 稍后讲解
 other::---
 
 [root@localhost var]# setfacl -x u:gkdaxue  acl_test_file 
@@ -1011,17 +1013,110 @@ other::---
 user::rwx
 group::---
 group:gkdaxue:rwx
+mask::rwx    <== 注意这个 mask , 稍后讲解
+other::---
+```
+
+#### mask有效权限
+我们查看文件或者目录的 ACL 权限时, 会发现出现了 mask 这个东西, 它的意思是用户或组设置的权限必须要存在于 mask 的权限范围内才会生效, 即有效权限( effective permission)
+> setfacl [ options ] m:权限  FILE_NAME
+
+```bash
+[root@localhost var]# getfacl acl_test_file 
+# file: acl_test_file
+# owner: root
+# group: root
+user::rwx
+group::---
+group:gkdaxue:rwx
 mask::rwx
 other::---
+[root@localhost var]# setfacl -m m:r acl_test_file
+[root@localhost var]# getfacl acl_test_file 
+# file: acl_test_file
+# owner: root
+# group: root
+user::rwx
+group::---
+group:gkdaxue:rwx		#effective:r--
+mask::r--
+other::---
+
+## 然后我们切换到 gkdaxue 用户尝试一下
+## 虽然 gkdaxue 用户组拥有 777 权限, 但是有效权限还仅仅只是有 r 权限而已
+[root@localhost var]# id gkdaxue
+uid=500(gkdaxue) gid=500(gkdaxue) groups=500(gkdaxue)
+[root@localhost var]# su - gkdaxue
+[gkdaxue@localhost ~]$ echo 'test' > /var/acl_test_file 
+-bash: /var/acl_test_file: Permission denied
+[gkdaxue@localhost ~]$ cat /var/acl_test_file 
+gkdaxue
+[gkdaxue@localhost ~]$ exit
+logout
+
+## 这样我们就可以使用 mask 来设置最大允许的权限, 避免因为不小心开放了某些不该开放的权限给其他用户或用户组.
 ```
 
 ## 有效用户组(effective group)和初始用户组(initial group)
 我们从 /etc/group 文件中可以得出: 一个人可以有多个用户组, 那么实际在运行时, 到底是用哪一个用户组的权限来运行程序或者脚本呢? 我们又该如何来切换用户的用户组呢? 这是一个很重要的问题.
+> 在 /etc/passwd 文件中的第四个字段中的 GID 就是用户的初始用户组, 当用户登录系统时, 他就拥有了这个用户组的相关权限. 
 
+```bash
+[root@localhost ~]# id gkdaxue
+uid=500(gkdaxue) gid=500(gkdaxue) groups=500(gkdaxue)
+[root@localhost ~]# usermod -G users gkdaxue
+[root@localhost ~]# grep gkdaxue /etc/passwd /etc/group
+/etc/passwd:gkdaxue:x:500:500:gkdaxue:/home/gkdaxue:/bin/bash
+/etc/group:users:x:100:gkdaxue  <== gkdaxue 用户的附加组
+/etc/group:gkdaxue:x:500:       <== gkdaxue 用户的初始用户组 
+[root@localhost ~]# id gkdaxue
+uid=500(gkdaxue) gid=500(gkdaxue) groups=500(gkdaxue),100(users)
+
+/etc/passwd 文件中, gkdaxue UID=500, GID=500
+/etc/group 文件中  GID=500 gkdaxue   GID=100 users
+
+因为 gkdaxue 同时支持 users 以及 gkdaxue 用户组, 所以在执行一般权限时, 针对用户组的部分, 只要是 users 以及
+gkdaxue 用户组所拥有的功能, gkdaxue 用户都可以操作. 那么问题来了, 如果我们新建一个文件, 到底是以哪个组作为用户组呢?
+```
+
+## groups命令
+当用户登录系统是, 可以使用 groups 命令来查看所有支持的用户组.
+> groups
+
+```bash
+[gkdaxue@localhost ~]$ groups
+gkdaxue users
+
+## 我们可以看到 gkdaxue 这个用户属于 gkdaxue 和 users 这两个组, 第一个输出的组即为有效用户组, 也就是 gkdaxue
+## 那么我们创建的文件属组也就是 gkdaxue
+[gkdaxue@localhost ~]$ touch user_file.txt
+[gkdaxue@localhost ~]$ ll user_file.txt 
+-rw-rw-r--. 1 gkdaxue gkdaxue 0 Apr 12 18:49 user_file.txt
+```
+
+## newgrp命令
+我们知道如何查看有效用户组了, 那么我们如何切换呢, 就要使用到我们所说的 newgrp 命令, 你想要切换的用户组必须是此用户已经支持的用户组, 才可以切换.
+```bash
+[gkdaxue@localhost ~]$ newgrp users
+[gkdaxue@localhost ~]$ groups
+users gkdaxue     <== 发现用户组的顺序已经改变了, users 变为了有效用户组
+[gkdaxue@localhost ~]$ touch user_file2.txt
+[gkdaxue@localhost ~]$ ll user_file*
+-rw-r--r--. 1 gkdaxue users   0 Apr 12 18:53 user_file2.txt   <== 发现用户组已经改变了
+-rw-rw-r--. 1 gkdaxue gkdaxue 0 Apr 12 18:49 user_file.txt
+
+## newgrp 可以更改当前用户的有效用户组, 并且是以一个 shell 来提供的功能. 新的 shell 的有效用户组就是 users.
+[gkdaxue@localhost ~]$ groups
+users gkdaxue  <==  newgrp 新建的 shell
+[gkdaxue@localhost ~]$ exit   # <== 退出 newgrp 新建的 shell, 就可以发现问题 
+exit                          
+[gkdaxue@localhost ~]$ groups
+gkdaxue users  <== 发现有效用户组已经变回原来的 
+```
 
 ## 总结
 > 1. 用户能够进入某目录, 基本权限是什么? ( **至少拥有 x 权限** )
-> 2. 用户在某个目录内读取一个文件, 那么基本权限是什么? ()
+> 2. 用户在某个目录内读取一个文件, 那么基本权限是什么?
 > ```bash
 > 目录 : 至少拥有 x 权限
 > 文件 : 至少拥有 r 权限
@@ -1041,3 +1136,15 @@ other::---
 > 文件 : 至少拥有 x 权限
 > ```
 
+# 用户用户组管理
+## id命令
+
+## useradd命令
+## usermod命令
+## userdel命令
+## passwd命令
+## groupadd命令
+
+
+
+# 练习题
