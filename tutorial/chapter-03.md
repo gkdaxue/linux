@@ -1310,6 +1310,38 @@ alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-ti
 
 如果别名和原命令名称一致, 比如 ` cp='cp -i' `, 那么我如果使用 cp 命令时, 遇到同名的文件会提示我是否覆盖, 但是我不想要提示怎么办, 我们就可以使用 ` \COMMAND ` 命令的形式来避免别名的影响.
 
+### 注意事项
+> 1. 等号两边不能有空格
+> 2. 如果value中有空格, 一定要用引号括起来
+> 3. 必须使用 '' 来定义别名, 而不能使用双引号
+
+```bash
+## 查看当前路径
+[root@localhost ~]# echo $PWD
+/root
+ 
+## '' 和 "" 设置别名
+[root@localhost ~]# alias dirA="echo work directory is $PWD"
+[root@localhost ~]# alias dirB='echo work directory is $PWD'
+ 
+## 使用别名, 看着似乎没有什么问题
+[root@localhost ~]# dirA
+work directory is /root
+[root@localhost ~]# dirB
+work directory is /root
+ 
+## 跳到根目录下面 
+[root@localhost ~]# cd /
+[root@localhost ~]# pwd
+/
+ 
+## 在分别使用别名
+[root@localhost /]# dirA
+work directory is /root   ## 结果错误,主要原因 双引号会解析变量
+[root@localhost /]# dirB
+work directory is /       ## 结果正确  
+```
+
 ## unalias命令
 移除定义的别名, 这里的移除只是暂时的移除, 等重新登录 shell 时依然会有这些定义的别名, 如果需要彻底移除, 就需要修改配置文件并重新加载配置文件, 使当前 shell 生效.
 > unalias [-a] name [name ....]
