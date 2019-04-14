@@ -1221,7 +1221,121 @@ declare -ir sum="600"
 [test1], [test2], [test3]
 ```
 
-## cut命令
+## wc命令
+统计文件中的字节数、字数和行数
+> wc [ options ] FILE...
 
+| 选项 | 作用 |
+| --- | -------- |
+| -c  | 显示Bytes数 |
+| -l  | 显示行数     |
+| -w  | 统计字数     |
+
+### 实例
+```bash
+## 准备实验文件
+[root@localhost ~]# echo '世界 你好' > wc_file.txt
+[root@localhost ~]# file wc_file.txt 
+wc_file.txt: UTF-8 Unicode text
+
+## 按照字节数显示内容(包含控制符), 现在了解即可
+[root@localhost ~]# sed -n l wc_file.txt 
+\344\270\226\347\225\214 \344\275\240\345\245\275$  <== 14 个字节
+           6     +      空格(1) +   6   + $   = 14
+
+## 默认使用
+[root@localhost ~]# wc wc_file.txt 
+ 1  2 14 wc_file.txt   <== 行数  单词数   字节数
+[root@localhost ~]# wc -l wc_file.txt 
+1 wc_file.txt
+[root@localhost ~]# wc -w wc_file.txt 
+2 wc_file.txt
+[root@localhost ~]# wc -c wc_file.txt 
+14 wc_file.txt  <== 6 + 空格(1) + 6 + 控制符$(1) = 14
+```
+
+## cut命令
+提取每行的指定部分, 以行为单位
+
+| 选项 | 作用 |
+| ---- | -----|
+| -d DELIM | 指定分隔符 |
+| -f LIST | 要提取的列 |
+| -c 字符范围 | 以字符的单位取出固定字符区间 | 
+ 
+### 实例
+```bash
+[root@localhost ~]# echo $PATH
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+            1              2               3           4    5       6         7        8   
+
+## -f 后边有多种用法  1  1-3    1-3,6      5-
+[root@localhost ~]# echo $PATH | cut -d ':' -f 1
+/usr/lib64/qt-3.3/bin
+[root@localhost ~]# echo $PATH | cut -d ':' -f 1-3
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin
+[root@localhost ~]# echo $PATH | cut -d ':' -f 1-3,6
+/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin
+[root@localhost ~]# echo $PATH | cut -d ':' -f 5-
+/bin:/usr/sbin:/usr/bin:/root/bin
+
+## -c 的用法, 如果不想要 declare -x 应该怎么操作
+[root@localhost ~]# export | head -n 5
+declare -x CVS_RSH="ssh"
+declare -x G_BROKEN_FILENAMES="1"
+declare -x HISTCONTROL="ignoredups"
+declare -x HISTSIZE="1000"
+declare -x HOME="/root"
+[root@localhost ~]# export | head -n 5 | cut -c 12-
+CVS_RSH="ssh"
+G_BROKEN_FILENAMES="1"
+HISTCONTROL="ignoredups"
+HISTSIZE="1000"
+HOME="/root"
+```
 
 ## grep命令
+文本搜索工具, 根据用户指定的"模式"对目标文本**逐行**进行匹配检查, 打印匹配到的行(也是以行为单位), 简单来说就是 解析一行文字, 取得关键字, 如果存在关键字就将整行取出来.
+> grep [ options ] '查找的字符串'  FILE_NAME
+
+| 选项 | 作用 |
+| --- | ---- |
+| -i  | 忽略大小写 |
+| -v | 反向选择, 显示没有匹配字符串的那行 | 
+|-n | 显示匹配到的行号 | 
+
+### 实例
+```bash
+## 显示 5 个 不能登录系统的用户
+[root@localhost ~]# grep '/sbin/nologin' /etc/passwd | head -n 5
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+
+## -v 反向选择
+[root@localhost ~]# grep -v "/sbin/nologin" /etc/passwd | head -n 5
+root:x:0:0:root:/root:/bin/bash
+sync:x:5:0:sync:/sbin:/bin/sync
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt
+gkdaxue:x:500:500:gkdaxue:/home/gkdaxue:/bin/bash
+
+## -n 显示行号
+[root@localhost ~]# grep -vn "/sbin/nologin" /etc/passwd | head -n 5
+1:root:x:0:0:root:/root:/bin/bash
+6:sync:x:5:0:sync:/sbin:/bin/sync
+7:shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+8:halt:x:7:0:halt:/sbin:/sbin/halt
+34:gkdaxue:x:500:500:gkdaxue:/home/gkdaxue:/bin/bash
+
+## -i 忽略大小写
+[root@localhost ~]# grep '/SBIN/NOLOGIN' /etc/passwd | head -n 5
+[root@localhost ~]# grep -i "/SBIN/NOLOGIN" /etc/passwd | head -n 5
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+```
