@@ -783,7 +783,8 @@ drwxr-xr-x.  2 root root 4096 May 11  2016 /etc/chkconfig.d
 > ```bash
 > [root@localhost ~]# hash | head -n 3
 > hits	command
->    7	/bin/grep
+>    7	/bin/
+>    
 >    1	/bin/hostname
 > 如果保存下来, 直接根据路径, 无需查找, 否则就在 PATH 中执行查找(从左至右顺序符合条件的第一个命令)操作并 hash
 > ```
@@ -1296,13 +1297,16 @@ HOME="/root"
 
 ## grep命令
 文本搜索工具, 根据用户指定的"模式"对目标文本**逐行**进行匹配检查, 打印匹配到的行(也是以行为单位), 简单来说就是 解析一行文字, 取得关键字, 如果存在关键字就将整行取出来.
-> grep [ options ] '查找的字符串'  FILE_NAME
+> grep [ options ]  PATTERN  FILE_NAME
 
 | 选项 | 作用 |
 | --- | ---- |
 | -i  | 忽略大小写 |
 | -v | 反向选择, 显示没有匹配字符串的那行 | 
 |-n | 显示匹配到的行号 | 
+| -A NUMBER | 显示匹配到行的后 NUMBER 行 |
+| -B NUMBER | 显示匹配到行的前 NUMBER 行 |
+| -C NUMBER | 显示匹配到行的前后各 NUMBER 行 |
 
 ### 实例
 ```bash
@@ -1338,4 +1342,39 @@ daemon:x:2:2:daemon:/sbin:/sbin/nologin
 adm:x:3:4:adm:/var/adm:/sbin/nologin
 lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
 mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+
+## -A -B -C 演示
+[root@localhost ~]# cat -n /etc/passwd | head -n 3
+     1	root:x:0:0:root:/root:/bin/bash
+     2	bin:x:1:1:bin:/bin:/sbin/nologin
+     3	daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+[root@localhost ~]# grep -n  '/bin:' /etc/passwd
+2:bin:x:1:1:bin:/bin:/sbin/nologin
+
+[root@localhost ~]# grep -n -A 1  '/bin:' /etc/passwd
+2:bin:x:1:1:bin:/bin:/sbin/nologin
+3-daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+[root@localhost ~]# grep -n -B 1  '/bin:' /etc/passwd
+1-root:x:0:0:root:/root:/bin/bash
+2:bin:x:1:1:bin:/bin:/sbin/nologin
+
+[root@localhost ~]# grep -n -C 1  '/bin:' /etc/passwd
+1-root:x:0:0:root:/root:/bin/bash
+2:bin:x:1:1:bin:/bin:/sbin/nologin
+3-daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+## 并且 grep 也支持我们之前所说的通配符
+[root@localhost ~]# grep 'r..t' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+operator:x:11:0:operator:/root:/sbin/nologin
+ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
+rm_test:x:502:502::/home/rm_test:/bin/bash
 ```
+
+## sort命令
+
+
+## uniq命令
+## tr命令
