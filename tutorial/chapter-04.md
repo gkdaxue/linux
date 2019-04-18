@@ -1257,6 +1257,7 @@ wc_file.txt: UTF-8 Unicode text
 
 ## cut命令
 提取每行的指定部分, 以行为单位
+> cut [options] FILE_NAME
 
 | 选项 | 作用 |
 | ---- | -----|
@@ -1374,7 +1375,265 @@ rm_test:x:502:502::/home/rm_test:/bin/bash
 ```
 
 ## sort命令
+对文本文件行进行排序, 可以按照不同的数据类型来排序, 例如数字和文字的排序方式就不同. 也可语系的编码有关. (**不会修改原文件**)
+**默认按照 ASCLL 字母表的顺序排序, 逐个字符从左到右开始比较**
+> sort [ options ] FILE_NAME
 
+| 选项 | 作用 |
+|----| ----|
+| -n | 使用纯数字进行排序 |
+| -r | 降序 |
+| -t | 分隔符 | 
+| -k | 以哪个字段为关键字进行排序 |
+| -u | 相同的数据, 只出现一次 |
+| -f | 排序时, 忽略大小写 | 
+
+### 实例
+```bash
+## 数字排序测试
+[root@localhost ~]# cat <<EOF > sort.txt
+> 456
+> 67
+> 67
+> 111
+> 222
+> 111
+> EOF
+[root@localhost ~]# cat sort.txt 
+456
+67
+67
+111
+222
+111
+[root@localhost ~]# sort sort.txt 
+111
+111
+222
+456
+67
+67
+
+## -u 相同内容(内容相邻切相同), 只出现一次
+[root@localhost ~]# sort -u sort.txt 
+111
+222
+456
+67
+
+## -n 按照数字进行排序(升序)
+[root@localhost ~]# sort -n sort.txt 
+67
+67
+111
+111
+222
+456
+
+## -r 降序显示
+[root@localhost ~]# sort -nr sort.txt 
+456
+222
+111
+111
+67
+67
+
+## 字母排序测试
+[root@localhost ~]# cat /etc/passwd | head -n 5
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+[root@localhost ~]# sort /etc/passwd | head -n 5
+abrt:x:173:173::/etc/abrt:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+apache:x:48:48:Apache:/var/www:/sbin/nologin
+avahi-autoipd:x:170:170:Avahi IPv4LL Stack:/var/lib/avahi-autoipd:/sbin/nologin
+bin:x:1:1:bin:/bin:/sbin/nologin
+[root@localhost ~]# sort -r /etc/passwd | head -n 5
+vcsa:x:69:69:virtual console memory owner:/dev:/sbin/nologin
+vbird1:x:501:501::/home/vbird1:/bin/bash
+uucp:x:10:14:uucp:/var/spool/uucp:/sbin/nologin
+usbmuxd:x:113:113:usbmuxd user:/:/sbin/nologin
+tcpdump:x:72:72::/:/sbin/nologin
+
+## 如果我们想以UID(/etc/passwd文件的第三个字段) 排序 (0, 10, 11, 113)
+[root@localhost ~]# sort -t : -k 3 /etc/passwd | head -n 5
+root    :x:0:0:root:/root:/bin/bash
+uucp    :x:10:14:uucp:/var/spool/uucp:/sbin/nologin
+operator:x:11:0:operator:/root:/sbin/nologin
+usbmuxd :x:113:113:usbmuxd user:/:/sbin/nologin
+bin     :x:1:1:bin:/bin:/sbin/nologin
+## 必须使用 -n 作为数字来处理 (0, 1, 2, 3, 4)
+[root@localhost ~]# sort -t : -k 3 -n /etc/passwd | head -n 5
+root  :x:0:0:root:/root:/bin/bash
+bin   :x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm   :x:3:4:adm:/var/adm:/sbin/nologin
+lp    :x:4:7:lp:/var/spool/lpd:/sbin/nologin
+```
 
 ## uniq命令
+报告或省略重复行. **重复的行必须是相邻且重复,才算重复行**
+> uniq [ options ] FILE_NAME
+
+| 选项 | 作用 |
+| --- | --- |
+| -c | 统计重复的行 |
+| -d | 只显示重复行 |
+| -i | 忽略大小写 |
+
+### 实例
+```bash
+[root@localhost ~]# cat sort.txt 
+456
+67
+67
+111
+222
+111
+
+## 111 与 111 不相邻, 所以不能算重复行
+[root@localhost ~]# uniq sort.txt 
+456
+67
+111
+222
+111
+
+## 所以我们就可以结合 sort 来处理
+[root@localhost ~]# sort -n sort.txt | uniq 
+67
+111
+222
+456
+
+## -c 统计重复行的次数
+[root@localhost ~]# uniq -c sort.txt 
+      1 456
+      2 67
+      1 111
+      1 222
+      1 111
+
+## -d 只显示重复行
+[root@localhost ~]# uniq -d sort.txt 
+67
+[root@localhost ~]# sort -n sort.txt | uniq -d
+67
+111
+```
+
+## tee命令
+输出重定向 > 会将数据流整个传送给文件或设备, 因此除非我们去读取该文件或者设备, 否则我们就无法继续利用这个数据流了, 但是如果我们想要将数据流处理过程中的某段信息保存下来, 那么我们应该如何操作? 这个时候我们就可以使用 tee 命令.
+> tee [-a] file
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -a | 以追加的方式将数据写入到 file 文件中 |
+
+### 实例
+```bash
+## 保存到文件的同时
+[root@localhost ~]# ls -l /etc | tee tee.txt | more
+total 2044
+drwxr-xr-x.  3 root root   4096 Mar  3 11:35 abrt
+drwxr-xr-x.  4 root root   4096 Mar  3 11:39 acpi
+-rw-r--r--.  1 root root     46 Mar 12 10:52 adjtime
+-rw-r--r--.  1 root root   1512 Jan 12  2010 aliases
+-rw-r--r--.  1 root root  12288 Mar  3 11:43 aliases.db
+drwxr-xr-x.  2 root root   4096 Mar  3 11:38 alsa
+drwxr-xr-x.  2 root root   4096 Mar  3 11:39 alternatives
+-rw-------.  1 root root    541 Aug 24  2016 anacrontab
+-rw-r--r--.  1 root root    245 Nov 11  2010 anthy-conf
+-rw-r--r--.  1 root root    148 Jan 12  2016 asound.conf
+......   <== more 命令来查看更多, 这里省略
+[root@localhost ~]# cat tee.txt 
+total 2044
+drwxr-xr-x.  3 root root   4096 Mar  3 11:35 abrt
+drwxr-xr-x.  4 root root   4096 Mar  3 11:39 acpi
+-rw-r--r--.  1 root root     46 Mar 12 10:52 adjtime
+-rw-r--r--.  1 root root   1512 Jan 12  2010 aliases
+-rw-r--r--.  1 root root  12288 Mar  3 11:43 aliases.db
+drwxr-xr-x.  2 root root   4096 Mar  3 11:38 alsa
+drwxr-xr-x.  2 root root   4096 Mar  3 11:39 alternatives
+-rw-------.  1 root root    541 Aug 24  2016 anacrontab
+-rw-r--r--.  1 root root    245 Nov 11  2010 anthy-conf
+-rw-r--r--.  1 root root    148 Jan 12  2016 asound.conf
+-rw-r--r--.  1 root root      1 Mar 22  2017 at.deny
+drwxr-x---.  3 root root   4096 Mar  3 11:39 audisp
+....  省略
+[root@localhost ~]# wc -l tee.txt 
+252 tee.txt
+```
+
 ## tr命令
+转换或者删除字符, 可以用来删除一段信息中的文字, 或者进行文字信息的转换.
+> tr [ options ] SET1 [SET2]
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -d | 删除信息当中的 SET1 这个字符串 |
+| -s | 替换掉重复的字符串 |
+
+### 实例
+```bash
+## 指的是替换 a 和 b, 而不是 ab ,  a -> A ; b -> B
+[root@localhost ~]# tr ab AB
+apple
+Apple
+Baby
+BABy
+^C
+
+## 原始记录
+[root@localhost ~]# head -n 3 /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+## 把小写全部转换成大写字母
+[root@localhost ~]# head -n 3 /etc/passwd | tr '[a-z]' '[A-Z]'
+ROOT:X:0:0:ROOT:/ROOT:/BIN/BASH
+BIN:X:1:1:BIN:/BIN:/SBIN/NOLOGIN
+DAEMON:X:2:2:DAEMON:/SBIN:/SBIN/NOLOGIN
+
+## 删除 : 字符
+[root@localhost ~]# head -n 3 /etc/passwd | tr -d ':'
+rootx00root/root/bin/bash
+binx11bin/bin/sbin/nologin
+daemonx22daemon/sbin/sbin/nologin
+
+## 在 DOS 下面会自动在每行的行尾加入 ^M 这个断行符号, 所以我们可以使用 tr 来将 ^M 去除
+[root@localhost ~]# cp /etc/passwd .
+[root@localhost ~]# unix2dos passwd passwd
+unix2dos: converting file passwd to DOS format ...
+unix2dos: converting file passwd to DOS format ...
+[root@localhost ~]# file /etc/passwd passwd
+/etc/passwd: ASCII text
+passwd:      ASCII text, with CRLF line terminators  <== DOS 断行
+
+## 断行为 ^M$
+[root@localhost ~]# cat -e passwd | head -n 3
+root:x:0:0:root:/root:/bin/bash^M$
+bin:x:1:1:bin:/bin:/sbin/nologin^M$
+daemon:x:2:2:daemon:/sbin:/sbin/nologin^M$
+
+## 然后尝试删除 ^M (^M 可以使用 \r 来代替)
+[root@localhost ~]# cat passwd | tr -d '\r' > passwd.linux
+[root@localhost ~]# file passwd.linux 
+passwd.linux: ASCII text
+[root@localhost ~]# cat -e passwd.linux | head -n 3
+root:x:0:0:root:/root:/bin/bash$
+bin:x:1:1:bin:/bin:/sbin/nologin$
+daemon:x:2:2:daemon:/sbin:/sbin/nologin$
+```
+
+## col命令
+
+
+## join命令
+## paste命令
+## expand命令
