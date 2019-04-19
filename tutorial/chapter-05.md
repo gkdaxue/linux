@@ -1138,10 +1138,337 @@ gkdaxue users  <== 发现有效用户组已经变回原来的
 
 # 用户用户组管理
 ## id命令
+用来显示用户的 UID, GID 组名等账号属性信息.
+> id [USER_NAME]
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -g | 只显示有效 GID |
+| -n | 显示名称, 而不是显示数字 |
+| -G | 打印所有组 ID |
+| -u | 只显示有效的 UID |
+
+### 实例
+```bash
+## 默认打印当前用户信息以及上下文
+[root@localhost ~]# id
+uid=0(root) gid=0(root) groups=0(root) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+[root@localhost ~]# id root
+uid=0(root) gid=0(root) groups=0(root)
+[root@localhost ~]# id -g root
+0
+[root@localhost ~]# id -gn root
+root
+[root@localhost ~]# id -G root
+0
+[root@localhost ~]# id -Gn root
+root
+[root@localhost ~]# id -u root
+0
+[root@localhost ~]# id -un root
+root
+
+## 也可以用来判断系统中是否存在这个用户
+[root@localhost ~]# id aaaaaa
+id: aaaaaa: No such user
+```
+
+## finger命令
+查看用户账号相关的信息, 大部分都是 /etc/passwd/文件中的内容. 有些系统中没有安装这个软件, 就需要自己手动来安装一下
+> finger [USER_NAME]
+
+```bash
+## 安装此软件 
+[root@localhost ~]# yum install -y finger
+.....
+
+[root@localhost ~]# finger root
+Login: root       <== 用户账号     	    Name: root         <== /etc/passwd 内第五字段的内容
+Directory: /root  <== 用户家目录         Shell: /bin/bash   <== 默认的 shell
+On since Sun Mar  3 16:07 (CST) on pts/0 from 192.168.1.11 <== 登录日期 终端 IP地址
+No mail.   <== 没有邮件    (/var/spool/mail/USER_NAME 中的邮件数据)
+No Plan.   <== 没有计划文档( ~/.plan 文件内容)
+
+## 找出目前登录到系统的用户, 包含终端(tty) 和 登录时间(Login Time)
+[root@localhost ~]# finger
+Login     Name       Tty      Idle  Login Time   Office     Office Phone
+root      root       pts/0          Mar  3 16:07 (192.168.1.11)
+```
 
 ## useradd命令
+useradd 命令用来添加一个用户
+> useradd [ options ] USER_NAME
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -u UID | 使用指定的 UID 来创建用户 (UID 这个用户不能存在, 否则报错) |
+| -g GID | 使用指定的 GID 或者组名 来创建账户 (GID 这个用户组必须已经存在) |
+| -G GROUP_NAME | 设置 GROUP_NAME 作为 用户的附加组 (附加组必须事先存在) |
+| -M | 不要创建用户家目录 (系统账号默认值) |
+| -m | 创建用户家目录 (一般账号默认值) |
+| -c | 设置账户的备注信息 |
+| -d HOME_DIR | 指定 HOME_DIR(绝对路径) 作为用户的家目录而不使用默认值 <br> 如果目录已存在, 则会提示一些信息, 并且缺少从/etc/skel/复制的一些文件 |
+| -r | 创建一个系统账号 |
+| -s SHELL | 设定用户的默认 SHELL, 如果没有指定, 默认为 /bin/bash |
+| -D | 显示创建用户的默认值 |
+
+### 实例
+```bash
+## 使用默认设置添加一个用户
+[root@localhost ~]# grep gkdaxue /etc/{passwd,shadow,group}
+/etc/passwd:gkdaxue:x:500:500::/home/gkdaxue:/bin/bash  <== 普通用户的 UID 从 500 开始
+/etc/shadow:gkdaxue:!!:17958:0:99999:7:::
+/etc/group:gkdaxue:x:500:   <== 会创建一个和用户名一模一样的用户组
+[root@localhost ~]# ll /home
+total 20
+drwx------. 4 gkdaxue gkdaxue  4096 Mar  3 14:53 gkdaxue     <== 默认家目录
+drwx------. 2 root    root    16384 Mar  3 11:31 lost+found
+
+## -D : 显示创建用户的默认值, 这些内容怎么来的呢?
+[root@localhost ~]# useradd -D
+GROUP=100              <== 默认的用户组
+HOME=/home             <== 用户家目录默认的位置
+INACTIVE=-1            <== 密码失效日, shadow 文件的第七列
+EXPIRE=                <== 账号失效日, shadow 文件的第八列
+SHELL=/bin/bash        <== 默认的 shell
+SKEL=/etc/skel         <== 用户家目录的内容数据参考目录
+CREATE_MAIL_SPOOL=yes  <== 是否主动帮助用户创建邮箱
+## 其实就是读取了 /etc/default/useradd 配置文件来的
+[root@localhost ~]# cat /etc/default/useradd 
+# useradd defaults file
+GROUP=100
+HOME=/home
+INACTIVE=-1
+EXPIRE=
+SHELL=/bin/bash
+SKEL=/etc/skel
+CREATE_MAIL_SPOOL=yes
+```
+我们可以简单的总结一下, 系统帮我们做了哪些工作 :
+> 1. 在 /etc/passwd 下创建了一行数据, 包含 UID GID 家目录 SHELL 等
+> 2. 在 /etc/shadow 下将此账号的密码相关信息写入, 但是没有密码(只有使用 passwd 设置了密码了之后, 才算完成了用户创建的流程)
+> 3. 在 /etc/group 下加入一个与账号名称一模一样的组名
+> 4. 在 /home 下创建一个与账号同名的目录作为用户家目录且权限为 700
+
+```bash
+## 创建一个 uid 为 888 附属组为 gkdaxue 的 gkdaxue 2用户
+[root@localhost ~]# useradd -u 888 -G gkdaxue gkdaxue2
+[root@localhost ~]# grep gkdaxue2 /etc/{passwd,shadow,group}
+/etc/passwd:gkdaxue2:x:888:888::/home/gkdaxue2:/bin/bash   <== UID 为 888
+/etc/shadow:gkdaxue2:!!:17958:0:99999:7:::
+/etc/group:gkdaxue:x:500:gkdaxue2   <== gkdaxue2 的附属组为 gkdaxue
+/etc/group:gkdaxue2:x:888:
+
+## 在创建一个系统用户 -r
+[root@localhost ~]# useradd -r gkdaxue_r
+[root@localhost ~]# grep gkdaxue_r /etc/{passwd,shadow,group}
+/etc/passwd:gkdaxue_r:x:496:493::/home/gkdaxue_r:/bin/bash   <== 系统用户的 UID < 500
+/etc/shadow:gkdaxue_r:!!:17958::::::
+/etc/group:gkdaxue_r:x:493:
+[root@localhost ~]# ll /home
+total 24    <== 发现没有对应的用户家目录(系统用户默认不会创建家目录)
+drwx------. 4 gkdaxue  gkdaxue   4096 Mar  3 14:53 gkdaxue
+drwx------. 4 gkdaxue2 gkdaxue2  4096 Mar  3 15:37 gkdaxue2
+drwx------. 2 root     root     16384 Mar  3 11:31 lost+found
+```
+
+### useradd 参考文件
+#### /etc/default/useradd
+```bash
+## -D : 显示创建用户的默认值, 这些内容怎么来的呢?
+[root@localhost ~]# useradd -D  # <== 内容就是  /etc/default/useradd 文件内容 
+GROUP=100              <== 默认的用户组
+HOME=/home             <== 用户家目录默认的位置
+INACTIVE=-1            <== 密码失效日, shadow 文件的第七列
+EXPIRE=                <== 账号失效日, shadow 文件的第八列
+SHELL=/bin/bash        <== 默认的 shell
+SKEL=/etc/skel         <== 用户家目录的内容数据参考目录(需要从里面复制文件到用户家目录)
+CREATE_MAIL_SPOOL=yes  <== 是否主动帮助用户创建邮箱
+
+## 查看 GID 为 100 的用户组
+[root@localhost ~]# sort -nt ':' -k 3 /etc/group | grep 100
+users:x:100:   <== GID 为 100 的用户组为 users
+```
+**GID=100 : 让新设置的用户的初始组为 users, 但是在 Centos中, 默认的用户组为与用户名同名的用户组.**
+> 私有用户组 : 系统会创建一个和用户名同名的用户组并作为用户的初始用户组, 有 Redhat, Centos 等
+>
+> 公共用户组 : 以 GID=100 作为新建用户的初始用户组,因此所有账号都属于 users这个用户组, 有 SUSE 等
+
+**INACTIVE=-1 : 密码到期后多长时间还可以使用旧密码登录**
+> 0 : 密码过期后立即失效
+>
+> -1 : 代表密码永远不会失效
+>
+> 30 : 如果是数字, 比如30, 表示过期30天后才失效
+
+**EXPIRE= : 账号失效日期**
+> shadow 文件中的第八个字段, 账号在这个日期后直接失效, 不会考虑密码问题
+
+**SHELL=/bin/bash : 默认使用的 shell 程序文件名**
+新建用户默认使用的 shell 程序, 如果一个用户的 shell 被设置为 /sbin/nologin 那么他就无法登录系统, 查看系统中所有的 shell.
+```bash
+[root@localhost ~]# cat /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/bin/dash
+/bin/tcsh
+/bin/csh
+```
+
+**SKEL=/etc/skel : 用户家目录参考目录**
+我们可以在用户的家目录中发现一些隐藏文件, 这些文件大部分都是从 /etc/skel 中复制而来, 设置环境变量等内容. 如果自己手动创建用户, 就需要自己手动复制文件到用户的家目录中.
+```bash
+[root@localhost ~]# ll -A /home/gkdaxue/
+total 20
+-rw-r--r--. 1 gkaxue gkaxue   18 Mar 23  2017 .bash_logout
+-rw-r--r--. 1 gkaxue gkaxue  176 Mar 23  2017 .bash_profile
+-rw-r--r--. 1 gkaxue gkaxue  124 Mar 23  2017 .bashrc
+drwxr-xr-x. 2 gkaxue gkaxue 4096 Nov 12  2010 .gnome2
+drwxr-xr-x. 4 gkaxue gkaxue 4096 Mar  3 11:33 .mozilla
+[root@localhost ~]# ll -A /etc/skel/
+total 20
+-rw-r--r--. 1 root root   18 Mar 23  2017 .bash_logout
+-rw-r--r--. 1 root root  176 Mar 23  2017 .bash_profile
+-rw-r--r--. 1 root root  124 Mar 23  2017 .bashrc
+drwxr-xr-x. 2 root root 4096 Nov 12  2010 .gnome2
+drwxr-xr-x. 4 root root 4096 Mar  3 11:33 .mozilla
+```
+
+**CREATE_MAIL_SPOOL=yes : 创建用户的 mailbox**
+```bash
+[root@localhost ~]# ll /var/spool/mail/gkdaxue 
+-rw-rw----. 1 gkaxue mail 0 Mar  3 16:16 /var/spool/mail/gkdaxue
+```
+
+#### /etc/login.defs
+```bash
+[root@localhost ~]# grep -v '^#' /etc/login.defs 
+MAIL_DIR	/var/spool/mail    <== 用户邮箱的存放地址
+
+PASS_MAX_DAYS	99999          <== /etc/shadow 文件的第五列, 多长时间需要更改密码
+PASS_MIN_DAYS	0              <== /etc/shadow 文件的第四列, 不可更改密码天数
+PASS_MIN_LEN	5              <== 密码的最小长度, 但是已被 pam 替代, 所以无效
+PASS_WARN_AGE	7              <== /etc/shadow 文件的第六列, 过期前警告的天数
+
+UID_MIN			  500          <== 普通用户最小的 UID, UID < 500 的为系统用户
+UID_MAX			60000          <== 普通用户能够使用的最大 UID
+GID_MIN			  500          <== 普通用户组最小的 GID, GID < 500 的为系统使用
+GID_MAX			60000          <== 普通用户组能够使用的最大 GID
+
+CREATE_HOME	yes                <== 在不加 -m 或 -M 时, 是否主动给用户创建家目录
+
+UMASK           077            <== 用户家目录的 umask 值, 所以用户家目录权限为 700
+
+USERGROUPS_ENAB yes            <== 使用 userdel 删除时, 是否会删除初始用户组(没有人隶属这个用户组, 才会删除)
+
+ENCRYPT_METHOD SHA512          <== 用户密码的加密方式
+
+## 所以我们就能理解密码文件中的一些含义
+[root@localhost ~]# grep gkdaxue /etc/shadow
+gkdaxue:!!:17958:0:99999:7:::
+                 0:99999:7
+但是我们现在登录使用了 pam 模块来进行校验, 所以 PASS_MIN_LEN 已经失效了 
+```
+### UID 和 GID的规则
+系统中的用户可以分为三种 :
+1. 系统管理员 : UID 为 0 的用户, 默认为 root
+2. 系统用户 : 0 < UID < 500 的用户 (系统用户默认不能登录系统且没有家目录)
+3. 普通用户 : 或者叫做一般用户, 500(UID_MIN) <= UID <= 6000(UID_MAX) 的用户, 默认可以登录系统并且有家目录
+
+> 普通用户 : 系统会默认先找到系统中 UID 最大的值, 如果没有大于或者等于500的, 则 UID 为 500 (UID_MIN) 开始, 否则就设置 UID 为系统中最大的 UID + 1. 比如系统中有一个用户的 UID 为 888, 但是 500-888 之间还有未分配的UID, 那么新建的用户的 UID 为 888 + 1, 不会使用 500-800 之间的 UID
+>
+> 系统用户 : 会找到比 500 小的最大的那个 UID - 1 作为 UID
+
+### 总结
+useradd 在创建 Linux 上的账号时至少会参考到以下文件(包含修改的文件) :
+1. /etc/default/useradd
+2. /etc/login.defs
+3. /etc/skel/*
+4. /etc/passwd
+5. /etc/shadow
+6. /etc/group
+7. /etc/gshadow
+8. /home/USER_NAME
+9. /var/spool/mail/USER_NAME
+
+## chsh命令
+就是 change shell 的简写, 就是改变用户的 login shell 的作用
+> chsh [ options ] [ USER_NAME ]
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -l  | 列出系统上目前可用的 shell ( /etc/shells 文件的内容) |
+| -s | 设置修改用户的 shell |
+
+### 实例
+```bash
+## 就是查看 /etc/shells 文件的内容
+[root@localhost ~]# chsh -l
+/bin/sh
+/bin/bash
+/sbin/nologin   <== 不合法的 shell, 不能登录到系统
+/bin/dash
+/bin/tcsh
+/bin/csh
+
+## 查看 gkdaxue 用户的 shell, 也可以使用 finger 命令
+[root@localhost ~]# grep gkdaxue /etc/passwd
+gkdaxue:x:500:500::/home/gkdaxue:/bin/bash
+
+## -s 修改 gkdaxue 用户的 shell 为 /sbin/nologin , 将会无法登录系统
+[root@localhost ~]# chsh -s /sbin/nologin gkdaxue
+Changing shell for gkdaxue.
+Shell changed.
+[root@localhost ~]# finger gkdaxue | grep Shell
+Directory: /home/gkdaxue            	Shell: /sbin/nologin  <== shell 已改变
+[root@localhost ~]# su - gkdaxue
+This account is currently not available.  <==  尝试切换到 gkdaxue 发现不合法, 无法登录
+
+## 切换到正常的shell /bin/bash 然后尝试登录
+[root@localhost ~]# chsh -s /bin/bash gkdaxue
+Changing shell for gkdaxue.
+Shell changed.
+[root@localhost ~]# finger gkdaxue | grep Shell
+Directory: /home/gkdaxue            	Shell: /bin/bash  <== shell 已改变
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$   <== 成功切换到 gkdaxue 用户
+
+## 普通用户也可以切换自己的 shell, 从下面的权限可以看出
+[root@localhost ~]# ll -d $(which chsh)
+-rws--x--x. 1 root root 20056 Mar 22  2017 /usr/bin/chsh  <== 拥有者有 rws 权限
+```
+
 ## usermod命令
+如果我们在添加用户的时候设置了错误的信息, 我们就可以通过 usermod 命令来修改或者直接修改对应文件的对应字段信息.
+> usermod < options > USER_NAME
+
+
+
+
+
+
+
 ## userdel命令
+删除用户的相关数据, 包含 /etc/passwd, /etc/shadow, /etc/group, /etc/gshadow, /home/USER_NAME, /var/spool/mail/USER_NAME 等
+**删除用户时, 默认不会删除用户的家目录, 如果想要删除用户的家目录, 需要使用 -r 选项**
+> userdel [ -r ] USER_NAME
+
+| 选项 | 作用 |
+| --- |--- |
+| -r | 连同用户家目录一起删除 |
+
+### 实例
+```bash
+## -r 连同用户家目录一起删除
+[root@localhost ~]# userdel -r gkdaxue2
+
+## 如果真的想要删除该用户所有的数据, 应该先找到属于该用户的所有文件, 然后在执行 userdel 操作
+## 因为该用户已经在系统上操作了一段时间, 那么肯定会有其他的文件存在. 比如 /var/spool/mail/USER_NAME
+find / -user USER_NAME 
+userdel -r USER_NAME
+```
+
 ## passwd命令
 ## groupadd命令
 
