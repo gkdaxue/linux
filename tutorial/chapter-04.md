@@ -843,6 +843,18 @@ Hi, How are you ?  <== 发现出现了我们所添加的信息
 >
 > non-login shell : 取得 bash 接口的方法不需要重复登录的动作(比如你已经登录系统了, 重新打开一个新的bash 不需要登录)
 
+```bash
+login shell :
+	正常通过终端登录
+	su - USERNAME
+	su -l USERNAME
+
+non-login shell :
+	su USERNAME
+	图形终端下打开命令窗口
+	自动执行的 shell 脚本
+```
+
 ### login shell 配置文件
 login shell 只会读取两个配置文件 /etc/profile 和 ~/.bash_profile .
 > /etc/profile : 系统整体的配置文件, 所有用户都可以使用
@@ -1079,6 +1091,17 @@ fi
 #### /etc/profile.d/*.sh
 同之前所讲解的一样.
 ![non-login_shell](https://github.com/gkdaxue/linux/raw/master/image/chapter_A4_0004.png)
+
+#### 总结
+```bash
+profile类文件
+	设定环境变量
+	运行命令或脚本
+
+bashrc类的文件
+	设定本地变量
+	定义别名命令
+```
 
 #### 提问
 当我们不小心执行了一个操作, 使命令提示符变成了如下所示, 那么原因是什么?
