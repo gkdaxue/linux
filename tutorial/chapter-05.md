@@ -16,7 +16,9 @@ Linux是一个多用户, 多任务的环境, 所以我们如何正确的管理�
 > 其他人 : 就是除了我们这个家庭之外的人
 
 虽然我们在登录系统的时候输入的是用户名和密码, 每个登录的用户至少都会取得两个ID, 分别是 UID(user id) 和 GID(group id), 但是 Linux 其实并不认识用户名, 它仅能认识ID, UID和用户名的对应关系就被保存在 /etc/passwd 文件中. GID和组名的关系则被保存在 /etc/group 文件中.
-> 默认系统上的账号信息会保存在 /etc/passwd 文件中, 密码则会保存在 /etc/shadow 文件中. 组信息则会保存在 /etc/group 文件中. 
+> 默认系统上的账号信息会保存在 /etc/passwd 文件中, 密码则会保存在 
+> 
+>  文件中. 组信息则会保存在 /etc/group 文件中. 
 
 那么当你在输入账号和密码时, 系统为你做了什么事情呢?
 > 1. 先到 /etc/passwd 文件中查询是否有你输入的用户名, 没有则跳出, 给出错误信息. 如果有则将 UID/GID 读出来, 顺便也会将` 家目录 `和 ` shell ` 也一并读出来.
@@ -1206,7 +1208,7 @@ useradd 命令用来添加一个用户
 | -G GROUP_NAME | 设置 GROUP_NAME 作为 用户的附加组 (附加组必须事先存在) |
 | -M | 不要创建用户家目录 (系统账号默认值) |
 | -m | 创建用户家目录 (一般账号默认值) |
-| -c | 设置账户的备注信息 |
+| -c '备注信息' | 设置账户的备注信息 |
 | -d HOME_DIR | 指定 HOME_DIR(绝对路径) 作为用户的家目录而不使用默认值 <br> 如果目录已存在, 则会提示一些信息, 并且缺少从/etc/skel/复制的一些文件 |
 | -r | 创建一个系统账号 |
 | -s SHELL | 设定用户的默认 SHELL, 如果没有指定, 默认为 /bin/bash |
@@ -1399,7 +1401,7 @@ useradd 在创建 Linux 上的账号时至少会参考到以下文件(包含修�
 | 选项 | 作用 |
 | ---- | ---- |
 | -l  | 列出系统上目前可用的 shell ( /etc/shells 文件的内容) |
-| -s | 设置修改用户的 shell |
+| -s SHELL | 设置修改用户的 shell (绝对路径) |
 
 ### 实例
 ```bash
@@ -1443,11 +1445,59 @@ Directory: /home/gkdaxue            	Shell: /bin/bash  <== shell 已改变
 如果我们在添加用户的时候设置了错误的信息, 我们就可以通过 usermod 命令来修改或者直接修改对应文件的对应字段信息.
 > usermod < options > USER_NAME
 
+| 选项 | 作用 |
+| ---- | ----- |
+| -c '备注信息' | 修改用户的备注信息 |
+| -d HOME_DIR| 修改用户的家目录 |
+| -u UID | 更改用户的 UID |
+| -g GID | 设置用户的初始用户组 |
+| -G GID | 设置用户的附加组 (覆盖之前的附加组) |
+| -a | 追加用户的附加组, 不会覆盖之前的附加组 |
+| -l NEW_NAME | 修改用户的登录名 |
+| -s SHELL | 更改用户的 shell |
+| -e "YYYY-MM-DD" | 账号过期日 |
+| -f  天数 | 密码过期后宽限时间 |
+| -L | 锁定账户, 无法登录系统(就是修改了 /etc/shadow 文件的密码列, 使密码列前边多了一个 !) |
+| -U | 解锁账户, 使用户可以登录系统 | 
 
+### 实例
+```bash
+## 查看用户
+[root@localhost ~]# grep gkdaxue /etc/passwd
+gkdaxue:x:500:500::/home/gkdaxue:/bin/bash
 
+## 修改用户信息并查看
+[root@localhost ~]# usermod -u 888 -s /sbin/nologin -l gkdaxue_test gkdaxue
+[root@localhost ~]# grep gkdaxue /etc/passwd
+gkdaxue_test:x:888:500::/home/gkdaxue:/sbin/nologin
 
+## -f 宽限日  -e 账号失效日
+[root@localhost ~]# grep gkdaxue /etc/shadow
+gkdaxue_test:!!:17958:0:99999:7:::
+[root@localhost ~]# usermod -f 5 -e '2019-05-20' gkdaxue_test
+[root@localhost ~]# grep gkdaxue /etc/shadow
+gkdaxue_test:!!:17958:0:99999:7:5:18036:
 
-
+## -L -U 锁定和解锁账户, 必须先设置一个密码, 才能看出来区别
+root@localhost ~]# grep gkdaxue /etc/shadow
+gkdaxue_test:!!:17958:0:99999:7:5:18036:
+[root@localhost ~]# passwd gkdaxue_test
+Changing password for user gkdaxue_test.
+New password: 
+BAD PASSWORD: it is too short
+BAD PASSWORD: is too simple
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+[root@localhost ~]# grep gkdaxue_test /etc/shadow
+gkdaxue_test:$6$japdiOWm$kg1jBy/LLdJS98MUvZusRhPc4rMap.1LDlghJ2J.F..:17958:0:99999:7:5:18036:
+[root@localhost ~]# usermod -L gkdaxue_test
+## 锁定账户, 发现只有密码列前边多了一个 ! 导致按照加密规则不能计算出来密码, 相当于锁定了账户
+[root@localhost ~]# grep gkdaxue_test /etc/shadow
+gkdaxue_test:!$6$japdiOWm$kg1jBy/LLdJS98MUvZusRhPc4rMap.1LDlghJ2J.F.:17958:0:99999:7:5:18036:
+[root@localhost ~]# usermod -U gkdaxue_test
+[root@localhost ~]# grep gkdaxue_test /etc/shadow
+gkdaxue_test:$6$japdiOWm$kg1jBy/LLdJS98MUvZusRhPc4rMap.1LDlghJ2J.F..:17958:0:99999:7:5:18036:
+```
 
 ## userdel命令
 删除用户的相关数据, 包含 /etc/passwd, /etc/shadow, /etc/group, /etc/gshadow, /home/USER_NAME, /var/spool/mail/USER_NAME 等
@@ -1470,8 +1520,200 @@ userdel -r USER_NAME
 ```
 
 ## passwd命令
+默认我们创建好用户之后, 还需要为用户设置好密码之后, 用户才可以正常的使用该账户. 否则默认是被锁定的状态, 无法登录.
+> passwd [ options ] [ USER_NAME ]
+
+| 选项 | 作用 |
+| ---- | ---- |
+| --stdin USERNAME | 接受前一个管道的数据, 作为密码输入, 在 shell script 中使用 |
+| -l | 锁定该用户 (密码列前边有两个 !!) |
+| -u | 解锁该用户 |
+| -S USER_NAME | 显示密码相关参数 |
+| -n 天数 | 不可更改密码日期 (/etc/shadow 第4字段) |
+| -x 天数 | 密码最长使用时间 (/etc/shadow 第5字段) |
+| -w 天数 | 密码过期前的警告日期 (/etc/shadow 第6字段) |
+| -i 天数 | 密码延长使用时间 (/etc/shadow 第7字段) |
+| -d USER_NAME | 删除用户的密码 | 
+
+### 实例
+```bash
+## 没有用户, 默认为当前登录用户设置密码
+[root@localhost ~]# passwd
+Changing password for user root.
+New password:      <== 输入新的密码
+BAD PASSWORD: it is too short 
+BAD PASSWORD: is too simple
+Retype new password:    <==再次输入新的密码
+passwd: all authentication tokens updated successfully.   <== 提示成功修改密码
+
+## 使用 --stdin 给用户设置密码, 必须指明用户
+[root@localhost ~]# echo 'root' | passwd --stdin root
+Changing password for user root.
+passwd: all authentication tokens updated successfully.
+
+## 设置一系列参数, 尝试理解一下
+[root@localhost ~]# grep gkdaxue /etc/shadow
+gkdaxue:$6$japdiOWm$kg1jBy/LLdJS98MUvZusRhPc4rMap.1LDlghJ2J.F....:17958:0:99999:7:5:18036:
+[root@localhost ~]# passwd -n 10 -x 20 -w 5 -i 7  gkdaxue
+Adjusting aging data for user gkdaxue.
+passwd: Success
+[root@localhost ~]# grep gkdaxue /etc/shadow
+gkdaxue:$6$japdiOWm$kg1jBy/LLdJS98MUvZusRhPc4rMap.1LDlghJ2J.F....:17958:10:20:5:7:18036:
+
+## 锁定解锁账户, 密码列有两个 !!
+[root@localhost ~]# passwd -l gkdaxue
+Locking password for user gkdaxue.
+passwd: Success
+[root@localhost ~]# grep gkdaxue /etc/shadow
+gkdaxue:!!$6$japdiOWm$kg1jBy/LLdJS98MUvZusRhPc4rMap.1LDlghJ2J.F....:17958:10:20:5:7:18036:
+[root@localhost ~]# passwd -u gkdaxue
+Unlocking password for user gkdaxue.
+passwd: Success
+[root@localhost ~]# grep gkdaxue /etc/shadow
+gkdaxue:$6$japdiOWm$kg1jBy/LLdJS98MUvZusRhPc4rMap.1LDlghJ2J.F....:17958:10:20:5:7:18036:
+
+## 切换到普通用户, 尝试修改密码
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ passwd
+Changing password for user gkdaxue.
+Changing password for gkdaxue.
+(current) UNIX password: 
+You must wait longer to change your password
+passwd: Authentication token manipulation error  <== 为什么会报错, 想一下
+
+## 因为我们今天杠杆设置了密码, 然后有设置了 5 天之内不能更改密码, 导致的问题
+[gkdaxue@localhost ~]$ exit
+logout
+[root@localhost ~]# passwd -n 0 gkdaxue  # <== 0 表示随时都可以修改密码
+Adjusting aging data for user gkdaxue.
+passwd: Success
+
+## 重新尝试一下
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ passwd
+Changing password for user gkdaxue.
+Changing password for gkdaxue.
+(current) UNIX password:       <== 输入当前用户密码
+New password:                  <== 输入新密码
+BAD PASSWORD: it is too short  <== 提示密码太短
+New password:                  <== 输入新密码
+Retype new password:           <== 再输入一次密码
+passwd: all authentication tokens updated successfully.  <== 设置密码成功
+[gkdaxue@localhost ~]$ exit
+logout
+
+## -S 详细信息讲解
+[root@localhost ~]# passwd -S gkdaxue
+gkdaxue PS 2019-03-03 0 20 5 7 (Password set, SHA512 crypt.)
+
+密码新建时间 (2019-03-03)
+不可更改密码 (0)
+密码最长使用 (20)
+密码警告日期 (5)
+密码延长日期 (7)
+Password set, SHA512 crypt : 密码已经设置, 使用了 SHA512 加密方式加密密码
+
+## 删除用户密码
+[root@localhost ~]# passwd -d gkdaxue
+Removing password for user gkdaxue.
+passwd: Success
+[root@localhost ~]# passwd -S gkdaxue
+gkdaxue NP 2019-03-03 0 20 5 7 (Empty password.)
+```
+**root 设置自己的密码或者普通用户的密码, 不需要输入密码, 如果普通用户想要修改自己的密码, 则需要输入当前密码.**
+
+## chage命令
+我们在看用户密码文件的对应信息时,  有些数字比较不容易看出是什么时间, 比如 17958, 不计算鬼知道是哪一天, 所以这个时候就需要用到 chage 命令了
+> chage [ options ] USER_NAME
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -l | 列出该账户的相信信息 |
+| -d "YYYY-MM-DD" | 修改密码的最后一次修改时间 (/etc/shadow 第三字段) |
+| -m 天数 | 不可更改密码时间 (/etc/shadow 第四字段) |
+| -M 天数 | 最长使用时间 (/etc/shadow 第五字段) |
+| -W 天数 | 密码过期前警告日期 (/etc/shasow 第六字段) |
+| -I 天数 | 密码失效日 (/etc/shadow 第七字段) |
+| -E "YYYY-MM-DD" | 账号的有效期 (/etc/shadow 第八字段) |
+
+### 实例
+```bash
+## 密码刚被我们清除, 但是设置密码的时间却保留下来了
+[root@localhost ~]# grep gkdaxue /etc/shadow
+gkdaxue:.......:17958:1:20:5:7:18036:
+
+## -l 列出账号的相信信息
+[root@localhost ~]# chage -l gkdaxue
+Last password change				: Mar 03, 2019    <== 最后一次设置密码的时间
+Password expires					: Mar 23, 2019    <== 密码有效时间 03 + 20 = 23
+Password inactive					: Mar 30, 2019    <== 密码失效时间 23 + 7 = 30
+Account expires						: May 20, 2019    <== 账号失效日
+Minimum number of days between password change		: 1   <== 不可更改日期
+Maximum number of days between password change		: 20  <== 密码最长时间时间
+Number of days of warning before password expires	: 5   <== 密码到期前提醒时间
+```
+**如果想让用户在第一次登录时, 强制修改它们的密码之后才能正常使用系统, 就可以使用如下方式处理 :**
+```bash
+useradd gkdaxue_test
+echo 'root' | passwd --stdin gkdaxue_test
+chage -d 0 gkdaxue_test
+
+## 然后当用户登录时, 便会强制要求用户修改密码之后才可以操作系统
+```
+
 ## groupadd命令
+新增一个用户组
+> groupadd [ options ] GROUP_NAME
+
+| 选项 | 作用 |
+| ---- | --- |
+| -g GID | 指定 GROUP_NAME 的 GID |
+| -r | 创建系统用户组 |
+
+### 实例
+```bash
+## 如果默认添加用户组, 默认 GID 为 最大的 GID + 1 (/etc/login.defs)
+[root@localhost ~]# groupadd -g 999 user1
+[root@localhost ~]# grep user1 /etc/group
+user1:x:999:
+[root@localhost ~]# grep user1 /etc/gshadow
+user1:!::
+```
+
+## gpasswd命令
+```bash
+[root@localhost ~]# grep user1 /etc/{group,gshadow}
+/etc/group:user1:x:999:
+/etc/gshadow:user1:!::
+[root@localhost ~]# gpasswd user1
+Changing the password for group user1
+New Password: 
+Re-enter new password: 
+[root@localhost ~]# grep user1 /etc/{group,gshadow}
+/etc/group:user1:x:999:
+/etc/gshadow:user1:$6$hH8Tt/LCWCTZ$O6ymk2RGp.............::
+```
+
+## groupmod命令
+修改用户组的相关信息
+> groupmod [ options ] GROUP_NAME
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -g GID | 修改用户组的 GID |
+| -n NEW_GROUP_NAME | 修改用户组的组名 |
+
+### 实例
+```bash
+## 虽然我们能修改 GID, 但是不建议随便修改
+[root@localhost ~]# groupmod -g 888 -n user_test user1
+[root@localhost ~]# grep user_test /etc/group
+user_test:x:888:
+```
+
+## groupdel命令
 
 
 
-# 练习题
+
+# 练习题 
