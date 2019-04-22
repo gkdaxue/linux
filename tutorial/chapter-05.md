@@ -411,8 +411,26 @@ r : 4		w : 2		x : 1
 所有组(r--) : 4 + 0 + 0 = 4
 其他人(r--) : 4 + 0 + 0 = 4  
 
-所以我们只要执行命令 chmod 644 install.log 就可达到相同的权限效果
+所以我们只要执行命令 chmod 644 install.log 就可达到相同的权限效果, 那么分析一下 777 应该是什么样的?
+[root@localhost ~]# chmod 777 install.log
+[root@localhost ~]# ll install.log
+-rwxrwxrwx. 1 root root 50698 Mar  3 11:42 install.log
 
+## 特殊用法, 如果 chmod 的数字为 一个数字, 两个数字 又会有什么样的变化呢?
+[root@localhost ~]# chmod 6 install.log
+[root@localhost ~]# ll install.log
+-------rw-. 1 root root 50698 Mar  3 11:42 install.log  <== 发现被赋值给了 other 用户
+[root@localhost ~]# chmod 47 install.log
+[root@localhost ~]# ll install.log
+----r--rwx. 1 root root 50698 Mar  3 11:42 install.log  <== 4 赋值 group 用户 7 赋值给 other 用户
+
+## 总结, 如果数字不足三位, 相当于在左边补零, 006, 047
+[root@localhost ~]# chmod 757 install.log
+[root@localhost ~]# ll install.log
+-rwxr-xrwx. 1 root root 50698 Mar  3 11:42 install.log
+[root@localhost ~]# chmod 47 install.log
+[root@localhost ~]# ll install.log
+----r--rwx. 1 root root 50698 Mar  3 11:42 install.log
 
 ## 练习题
 [root@localhost ~]# ls -al .bashrc 
@@ -482,6 +500,13 @@ r : 4		w : 2		x : 1
 
 在 + 与 - 的状态下, 如果没有指定到的权限, 那么该权限不会被改动,只会在对应权限上操作
 在 = 的状态下, 权限只能拥有 = 之后设置的权限
+
+## 如果等号后边, 没有跟上权限, 那说明权限为空
+[root@localhost ~]# ls -l install.log
+-rw-r--r--. 1 root root 50698 Mar  3 11:42 install.log
+[root@localhost ~]# chmod ugo= install.log
+[root@localhost ~]# ll install.log
+----------. 1 root root 50698 Mar  3 11:42 install.log
 ```
 
 ### 总结实验1
