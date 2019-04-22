@@ -1681,6 +1681,20 @@ user1:!::
 ```
 
 ## gpasswd命令
+可以让一个用户成为某个组的管理员, 这样用户组管理员就可以管理哪些账号可以 加入/移除 该用户组.
+> gpasswd GROUP_NAME : 给组设置密码
+>
+> gpasswd [ options ] GROUP_NAME
+
+| 选项 | 作用 |
+|----|----|
+| -A USER_NAME | 将 USER_NAME 设置为 GROUP_NAME 的管理员 |
+| -M USER_NAME[,USER_NAME...] | 将这些用户加入到用户组中 |
+| -r | 删除用户组密码 (密码字段为空) |
+| -R | 让组密码失效 (密码字段为 ! ) |
+| -a USER_NAME | 将用户加入到 GROUP_NAME 用户组中 |
+| -d USER_NAME | 将用户从 GROUP_NAME 用户组中移除 |
+
 ```bash
 [root@localhost ~]# grep user1 /etc/{group,gshadow}
 /etc/group:user1:x:999:
@@ -1692,6 +1706,30 @@ Re-enter new password:
 [root@localhost ~]# grep user1 /etc/{group,gshadow}
 /etc/group:user1:x:999:
 /etc/gshadow:user1:$6$hH8Tt/LCWCTZ$O6ymk2RGp.............::
+
+## 查看一下文件内容, 现在有两个用户组, 一个用户 gkdaxue, 现在我想让 gkdaxue 成为 user_test 组的管理员
+[root@localhost ~]# tail -n 2 /etc/{group,gshadow}
+==> /etc/group <==
+gkdaxue:x:500:
+user_test:x:888:
+
+==> /etc/gshadow <==
+gkdaxue:!::
+user_test:$6$hH8Tt/LCWCTZ$O6ymk2RGp/B.MIDHoxkgrQahqK2UtQ1lo.X8PAY4DFypOWlnCM.....::
+[root@localhost ~]# tail -n 1 /etc/passwd
+gkdaxue:x:888:500::/home/gkdaxue:/bin/bash
+
+## 把 user_test 用户组的管理员设置为 gkdaxue
+[root@localhost ~]# gpasswd -A gkdaxue user_test
+[root@localhost ~]# tail -n 2 /etc/{group,gshadow}
+==> /etc/group <==
+gkdaxue:x:500:
+user_test:x:888:
+
+==> /etc/gshadow <==
+gkdaxue:!::
+user_test:$6$hH8Tt/LCWCTZ$O6ymk2RGp/B.MIDHoxkgrQahqK2UtQ1lo.X8PAY4DFypOWlnCM....:gkdaxue:
+
 ```
 
 ## groupmod命令
@@ -1712,8 +1750,87 @@ user_test:x:888:
 ```
 
 ## groupdel命令
+删除用户组, 如果有某个账号的初始用户组为该用户组, 则不能删除.
+> groupdel  GROUP_NAME
+
+```bash
+## 查看 gkdaxue 的用户组
+[root@localhost ~]# id gkdaxue
+uid=888(gkdaxue) gid=500(gkdaxue) groups=500(gkdaxue)
+[root@localhost ~]# grep gkdaxue /etc/{passwd,group}
+/etc/passwd:gkdaxue:x:888:500::/home/gkdaxue:/bin/bash
+/etc/group:gkdaxue:x:500:
+
+## 尝试删除
+[root@localhost ~]# groupdel gkdaxue
+groupdel: cannot remove the primary group of user 'gkdaxue'  <== 不能删除
+
+## 我们尝试修改, gkdaxue 的基本用户组为 user_test, 附加组为 gkdaxue
+[root@localhost ~]# usermod -g user_test -G gkdaxue gkdaxue
+[root@localhost ~]# id gkdaxue
+uid=888(gkdaxue) gid=888(user_test) groups=888(user_test),500(gkdaxue)
+
+## 然后在尝试删除 gkdaxue 用户组, 查看是否可以
+[root@localhost ~]# groupdel gkdaxue
+[root@localhost ~]# id gkdaxue
+uid=888(gkdaxue) gid=888(user_test) groups=888(user_test)  <== 发现可以删除
+
+## 如果一个用户组没有被用户当做初始用户组(基本组), 那么该用户组可以删除, 即使被其他用户作为附加组.
+```
+
+## 用户身份切换
 
 
 
 
-# 练习题 
+
+
+
+
+
+# 练习题
+## 任务一
+| 账号 | 备注 | 附加组 | 是否可登录 | 密码 |
+| --- | --- | :---: | :---: | --- |
+| myuser1 | 1st user | mygroup1 | 可以 | password |
+| myuser2 | 2nd user | mygroup1 | 可以 | password |
+| myuser3 | 3rd user | 无 | 不可以 | password |
+
+```bash
+groupadd mygroup1
+useradd -c '1st user' -G mygroup1 myuser1
+useradd -c '2nd user' -G mygroup1 myuser2
+useradd -c '3rd user' -s /sbin/nologin myuser3
+
+echo 'password' | passwd --stdin myuser1
+echo 'password' | passwd --stdin myuser2
+echo 'password' | passwd --stdin myuser3 
+```
+
+## 任务二
+用户 pro1, pro2, pro3 属于同一个项目的开发人员, 想让这三个用户在同一个目录 (/srv/projecta) 下进行开发工作, 但是这个三个用户分别有自己的家目录和私有用户组. 项目组名称为 projecta, 用户密码为 password, **用户必须登录之后修改密码方可正常使用系统.**  应该如何设置,
+```bash
+groupadd projecta
+
+useradd -G projecta pro1
+useradd -G projecta pro2
+useradd -G projecta pro3
+
+echo 'password' | passwd --stdin pro1
+echo 'password' | passwd --stdin pro2
+echo 'password' | passwd --stdin pro3
+
+chage -d 0 pro1
+chage -d 0 pro2
+chage -d 0 pro3
+
+mkdir -p /srv/projecta
+chgrp projecta /srv/projecta
+chmod 2770 /srv/projecta
+```
+
+然后我们在修改, 让 myuser1 用户可以查看 /src/projecta 目录下的文件内容, 但是不能修改
+```bash
+## 因为 ACL 的权限设置不会被子目录所继承, 所以需要使用 d:u:myuser1:rx 来操作
+setfacl -m d:u:myuser1:rx /srv/projecta
+```
