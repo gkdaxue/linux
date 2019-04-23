@@ -859,6 +859,45 @@ www.gkdaxue.com
 www.gkdaxue.com
 ```
 
+### echo 保持命令原格式输出
+```bash
+## 我们现在只要知道它是查看网卡信息的命令就好了
+[root@localhost ~]# ifconfig eth0
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:179936 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:33051 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:14840825 (14.1 MiB)  TX bytes:2264681 (2.1 MiB)
+
+## `` 的作用是把里面的命令执行完后把内容返回出来. 发现格式十分的混乱
+[root@localhost ~]# echo `ifconfig eth0`
+eth0 Link encap:Ethernet HWaddr 00:0C:29:27:50:34 inet addr:192.168.1.206 Bcast:192.168.1.255 Mask:255.255.255.0 inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1 RX packets:179975 errors:0 dropped:0 overruns:0 frame:0 TX packets:33077 errors:0 dropped:0 overruns:0 carrier:0 collisions:0 txqueuelen:1000 RX bytes:14844382 (14.1 MiB) TX bytes:2267905 (2.1 MiB)
+
+## 然后如果我们想按照原结果输出, 就可以使用 "``" 或者 "$()" 这种格式.
+[root@localhost ~]# echo "`ifconfig eth0`"
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:180043 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:33119 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:14850245 (14.1 MiB)  TX bytes:2272687 (2.1 MiB)
+
+[root@localhost ~]# echo "$(ifconfig eth0)"
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:180169 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:33166 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:14861152 (14.1 MiB)  TX bytes:2277431 (2.1 MiB)
+```
+
 ## date命令
 
      date命令是我们使用比较频繁的一个命令, 比如我们需要每天备份数据库, 然后把文件自动按照“年-月-日”的格式备份. 只需要看一眼文件名称就能大概了解到文件的备份时间了. 这样便于我们的数据库出现问题时, 快速的进行修复工作.
