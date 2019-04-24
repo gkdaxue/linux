@@ -1804,14 +1804,331 @@ uid=888(gkdaxue) gid=888(user_test) groups=888(user_test)  <== 发现可以删�
 ```
 
 ## 用户身份切换
+从之前的案例我们知道, 管理员 root 的权限很大, 如果操作失误, 会导致灾难性的后果. 所以有些公司会要求不能使用 root 管理员来登录系统, 但是我们有些操作只有 root 可以操作, 那么应该怎么处理呢? 这就要用到我们所说的切换用户身份了.
 
+### su
+su 是最简单的切换命令了, 但是 su 切换到 root 用户时, 是需要输入 root 用户的密码的, 所以想要使用 su 命令切换到 root 用户, 前提是必须拥有 root 密码, 但是如果大家都知道了 root 密码, 这个好像又有点不安全, 比如某个人切换到 root 执行了爆炸性的命令 rm -rf /* , 谁知道是哪个人上去操作的.
+> su [options] [USERNAME]
 
+| 选项 | 作用 |
+| ---- | ---- |
+| - | 使用 login shell(环境变量完全切换) |
+| -c 'COMMAND' | 切换到 root 用户, 执行一次命令 |
 
+su 切换用户会有两种情况, 如果输入 su 命令, 默认切换到 root 用户, 当然也可以切换到其他用户
+> 1. su - root : 表明使用 login shell 的流程 , 环境变量全部切换
+> 2. su root   : 表明使用 non-login shell 的流程, 很多环境变量不会被改变 
 
+#### 实例
+```bash
+## 默认切换到 root, 需要输入 root 密码
+[gkdaxue@localhost ~]$ su - 
+Password: 
+[root@localhost ~]# exit   <== 退出 su 的环境
+logout
 
+## 使用 su root 切换
+[gkdaxue@localhost ~]$ su root
+Password:               <== 输入 root 密码
+[root@localhost gkdaxue]# env
+HOSTNAME=localhost.localdomain
+SELINUX_ROLE_REQUESTED=
+SHELL=/bin/bash
+TERM=xterm
+HISTSIZE=1000
+SSH_CLIENT=192.168.1.11 2984 22
+SELINUX_USE_CURRENT_RANGE=
+QTDIR=/usr/lib64/qt-3.3
+QTINC=/usr/lib64/qt-3.3/include
+SSH_TTY=/dev/pts/1
+USER=gkdaxue                 <== 还是原来用户
+PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/gkdaxue/bin                          
+MAIL=/var/spool/mail/gkdaxue <== 还是原来用户
+PWD=/home/gkdaxue            <== 还是原来用户
+LANG=en_US.UTF-8
+SELINUX_LEVEL_REQUESTED=
+HISTCONTROL=ignoredups
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+HOME=/root
+SHLVL=2
+LOGNAME=gkdaxue             <== 还是原来用户
+CVS_RSH=ssh
+QTLIB=/usr/lib64/qt-3.3/lib
+SSH_CONNECTION=192.168.1.11 2984 192.168.1.206 22
+LESSOPEN=||/usr/bin/lesspipe.sh %s
+G_BROKEN_FILENAMES=1
+_=/bin/env
+[root@localhost gkdaxue]# exit
+exit
 
+[gkdaxue@localhost ~]$ su - root
+Password:                       <== 输入 root 密码
+[root@localhost ~]# env
+HOSTNAME=localhost.localdomain
+SHELL=/bin/bash
+TERM=xterm
+HISTSIZE=1000
+QTDIR=/usr/lib64/qt-3.3
+QTINC=/usr/lib64/qt-3.3/include
+USER=root                    <== 完全切换到 root 用户
+MAIL=/var/spool/mail/root    <== 完全切换到 root 用户
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+PWD=/root                    <== 完全切换到 root 用户
+LANG=en_US.UTF-8
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+HISTCONTROL=ignoredups
+SHLVL=1
+HOME=/root                  <== 完全切换到 root 用户
+LOGNAME=root                <== 完全切换到 root 用户
+QTLIB=/usr/lib64/qt-3.3/lib
+CVS_RSH=ssh
+LESSOPEN=||/usr/bin/lesspipe.sh %s
+G_BROKEN_FILENAMES=1
+_=/bin/env
 
+## -c 执行一次命令, 默认不能读取该文件. 只有 root 可以读取, 切换 root 后可读取.
+[gkdaxue@localhost ~]$ ll /etc/shadow
+----------. 1 root root 1026 Mar  7 15:07 /etc/shadow
+[gkdaxue@localhost ~]$ cat /etc/shadow
+cat: /etc/shadow: Permission denied
+[gkdaxue@localhost ~]$ su -c 'cat /etc/shadow' - root
+Password:      <== 输入 root 密码
+root:$6$NnsNsHED$wTz2roXulfYEXmCGNU4B4lRxVDbCMfEipW1dBdLmE7IS3/:17962:0:99999:7:::
+bin:*:17246:0:99999:7:::
+daemon:*:17246:0:99999:7:::
+adm:*:17246:0:99999:7:::
+lp:*:17246:0:99999:7:::
+sync:*:17246:0:99999:7:::
+shutdown:*:17246:0:99999:7:::
+halt:*:17246:0:99999:7:::
+mail:*:17246:0:99999:7:::
+uucp:*:17246:0:99999:7:::
+............
+```
 
+#### 总结
+> 1. 想要完整的切换新用户的环境, 使用 'su - USERNAME'
+> 2. 如果只想要执行一次 root 的命令, 可以使用 -c 选项
+
+### sudo命令
+如果想要以 sudo命令 来执行 root 的命令串, 我们需要事先设置 sudo, 然后切换用户时需要输入当前用户自己的密码也可以设置为不需要密码, 这样就可以避免 root 的密码外流. **sudo可以让你以其他用户的身份执行命令(通常是root)**. 只有 /etc/sudoers 内的用户才可以使用 sudo 命令. 系统默认仅有 root 用户可以执行 sudo, 所以需要先使用 root 用户身份执行.
+> sudo [ options ]
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -u USER_NAME | 要切换到 USER_NAME, 如果没有此选项, 则代表切换到 root |
+| -b | 将要执行的指令放在后台执行 |
+
+**sudo执行流程**
+> 1. **当用户执行 sudo 时, 会去查询 /etc/sudoers 文件内查找该用户是否具有执行 sudo 的权限**
+> 2. 当用户具有 sudo 可执行权限后, 让用户输入自己的密码来确认
+> 3. 密码匹配成功后, 便开始执行 sudo 命令后接的命令(root 执行 sudo 不需要输入密码)
+> 4. 如果想要切换的用户和执行者身份相同, 也不需要输入密码
+
+#### 实例
+```bash
+## 切换到 gkdaxue ,然后创建一个 /tmp/gkdaxue.txt 文件
+[root@localhost ~]# sudo -u gkdaxue  touch gkdaxue.txt  
+touch: cannot touch `gkdaxue.txt': Permission denied       <== 想一下, 为什么没有权限
+[root@localhost ~]# sudo -u gkdaxue touch /tmp/gkdaxue
+[root@localhost ~]# ll /tmp/gkdaxue
+-rw-r--r--. 1 gkdaxue gkdaxue 0 Mar  7 16:10 /tmp/gkdaxue  <== 为什么这里可以, 注意看 user, group
+
+## sh -c '一串命令' : 来执行一串命令
+[root@localhost ~]# sudo -u gkdaxue sh -c "mkdir ~/www; cd ~/www; \
+> echo 'this is gkdaxue www directory conteent' > index.html "
+[root@localhost ~]# tree /home/gkdaxue/
+/home/gkdaxue/
+└── www
+    └── index.html
+
+1 directory, 1 file
+[root@localhost ~]# cat /home/gkdaxue/www/index.html 
+this is gkdaxue www directory conteent
+
+## 然后我们使用 gkdaxue 用户, 尝试使用 sudo 命令 切换到 root 用户
+[gkdaxue@localhost ~]$ sudo cat /etc/shadow
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.           <== 提醒警告
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for gkdaxue:          <== 输入 gkdaxue 用户的密码
+gkdaxue is not in the sudoers file.  This incident will be reported.  <== 提示不在 sudoers 文件中.
+```
+
+### visudo 和 /etc/sudoers
+我们知道了能否使用 sudo 要看 /etc/sudoers 的设置值, 当然我们也可以直接编辑该文件, 但是该文件的内容是有一定规定的, 如果设置错误会导致无法使用 sudo 命令, 所以我们可以使用 visudo 命令来编辑. 因为使用 visudo 修改结束离开时, 系统会去检查 /etc/sudoers 的语法.  除了 root 之外, 如果想要让其他账户使用 sudo 执行属于 root 的命令, 那么就需要 root 用户先去使用 visudo 命令修改 /etc/sudoers 文件, 让其他用户使用 全部/部分 root 的命令. 其实 visudo 就是利用 vi 编辑器将 /etc/sudoers 文件调出来进行修改而已. 
+
+#### /etc/sudoers 文件语法
+```bash
+[root@localhost ~]# cat -n /etc/sudoers
+....省略....
+90	## Allow root to run any commands anywhere 
+  用户账号  登录者的来源主机名=(可切换的身份)   可执行的命令
+91	root	            ALL=(ALL) 	           ALL    <== 这里加大了空格间距,这是默认的值
+....省略....
+
+用户账号          : 系统的哪个账户可以使用 sudo 这个命令
+登录者的来源主机名 : 这个账号由哪台主机连接到本机, 可以指定客户端计算机
+可切换的身份		 : 这个账号可以切换成什么身份来执行后续的命令
+可执行的命令		 : 可以执行的命令(必须使用绝对路径, 可以使用 which 命令查看) 
+ALL              : 特殊关键字, 表示任何身份 主机 命令的意思.
+
+```
+
+#### 针对单一用户设置
+我们想让 gkdaxue 用户来使用 root 的任何命令, 那么我们就可以这么操作.
+```bash
+## 这里先了解即可, 因为还没有学 vim 编辑器, 下面一章开始讲解.
+[gkdaxue@localhost ~]$ ll /etc/shadow
+----------. 1 root root 1026 Mar  7 15:07 /etc/shadow
+[gkdaxue@localhost ~]$ sudo cat /etc/shadow
+gkdaxue is not in the sudoers file.  This incident will be reported.  <== 没有添加, 不能使用
+
+## 此处使用 root 用户, 添加一个后续实验用户
+[root@localhost ~]# useradd test_user
+[root@localhost ~]# visudo
+....省略....
+## Allow root to run any commands anywhere
+root    ALL=(ALL)       ALL
+gkdaxue ALL=(ALL)       ALL      ## <== 添加此行
+....省略....
+
+## 然后发现 gkdaxue 用户可以正常访问了.
+[gkdaxue@localhost ~]$ sudo cat /etc/shadow | head -n 5
+[sudo] password for gkdaxue:     <== 输入 gkdaxue 用户的密码
+root:$6$NnsNsHED$wTz2roXulfYEXmCGNU4B4lRxVDbCqcFVI9b99bS3/:17962:0:99999:7:::
+bin:*:17246:0:99999:7:::
+daemon:*:17246:0:99999:7:::
+adm:*:17246:0:99999:7:::
+lp:*:17246:0:99999:7:::
+
+## 再次执行, 发现没有要求输入当前用户密码
+## 如果两次 sudo 的间隔超过 5 分钟, 那么系统会要求你输入密码, 否则不要求输入密码.
+[gkdaxue@localhost ~]$ sudo cat /etc/shadow | head -n 5
+root:$6$NnsNsHED$wTz2roXulfYEXmCGNU4B4lRxVDbCqcFVI9b99bS3/:17962:0:99999:7:::
+bin:*:17246:0:99999:7:::
+daemon:*:17246:0:99999:7:::
+adm:*:17246:0:99999:7:::
+lp:*:17246:0:99999:7:::
+
+## 然后我们发现, 这样给的权限太大了, 我们只想要他帮助我们修改其他用户的密码
+[root@localhost ~]# visudo
+....省略....
+## Allow root to run any commands anywhere
+root    ALL=(ALL)       ALL
+gkdaxue ALL=(root)      NOPASSWD: /usr/bin/passwd   ## <== 修改如下, 命令的绝对路径, 请仔细查看此行和之前对比.
+....省略....
+
+## 我已经超过 5 分钟后才执行的这个命令, 心细的朋友不知道有没有发现一个以下代码的一个问题
+## 他竟然没有要我输入当前用户的密码, 所以这就是 NOPASSWD 关键字的作用. 免除密码输入.
+[gkdaxue@localhost ~]$ sudo passwd test_user   
+Changing password for user test_user.
+New password: 
+BAD PASSWORD: it is too short
+BAD PASSWORD: is too simple
+Retype new password: 
+passwd: all authentication tokens updated successfully.  <== 设置成功, 说明没有问题.
+
+## 我们尝试切换到 test_user, 去创建一个文件, 结果不行, 想一下原因
+## 因为我们没有设置 gkdaxue 用户可以切换为 test_user 用户, 所以自然不行.
+[gkdaxue@localhost ~]$ sudo -u test_user mkdir /tmp/test_user.txt
+Sorry, user gkdaxue is not allowed to execute '/bin/mkdir /tmp/test_user.txt' as test_user on localhost.localdomain.
+
+## 如果我们想要设置除了不可以使用 /usr/bin/passwd 之外, 可以使用 root 的任何命令.
+## 那么我们只要在对应的命令前边加上 !/usr/bin/passwd,!/usr/bin/passwd root 即可.
+
+## 我们可以针对不同的用户设置不同的可执行命令, 保障系统的安全.
+```
+
+那么问题又来了, 来一个用户我就要这么设置一次, 这也太麻烦了吧, 所以我们也可以利用用户组的来操作.
+
+#### 针对用户组设置
+```bash
+[root@localhost ~]# cat -n /etc/sudoers
+....省略....
+    98	## Allows people in group wheel to run all commands
+    99	# %wheel	ALL=(ALL)	ALL
+   100	
+   101	## Same thing without a password
+   102	# %wheel	ALL=(ALL)	NOPASSWD: ALL   <== 和上面的一样, 除了不需要输入密码
+....省略....
+
+%wheel : % 表示用户组的意思, 所以就是表示 wheel 用户组
+#      : 表示注释的意思, 不生效, 所以我们需要去掉 # 号
+
+修改如下, 别忘记保存 : 
+    98	## Allows people in group wheel to run all commands
+    99	%wheel	ALL=(ALL)	ALL      # <== 去掉最左边的 # 号
+   100	
+   101	## Same thing without a password
+   102	# %wheel	ALL=(ALL)	NOPASSWD: ALL   # <== 如果不想要输入密码, 可以使用如下行. 去掉最左边的 # 号
+
+## 使用 root 用户更改 test_user 用户的附加组
+[root@localhost ~]# gpasswd -a test_user wheel
+Adding user test_user to group wheel
+[root@localhost ~]# id test_user
+uid=501(test_user) gid=501(test_user) groups=501(test_user),10(wheel)
+
+## 切换到 test_user 用户
+[gkdaxue@localhost ~]$ su - test_user
+Password: 
+[test_user@localhost ~]$ cat /etc/shadow
+cat: /etc/shadow: Permission denied  <== 不能访问
+[test_user@localhost ~]$ sudo cat /etc/shadow | head -n 5
+[sudo] password for test_user:    <== 需要输入密码, 因为没有设置免密
+root:$6$NnsNsHED$wTz2roXulfYEXmCGNU4B4lRxVDbCqcFVI9b99bS3....../:17962:0:99999:7:::
+bin:*:17246:0:99999:7:::
+daemon:*:17246:0:99999:7:::
+adm:*:17246:0:99999:7:::
+lp:*:17246:0:99999:7:::
+
+## 只要加入 wheel 用户组的用户, 都可以执行该操作. 这只是演示, 请根据自己实际需要设置执行的命令等等. 
+## 可以参考上面部分 给用户设置执行的命令
+```
+
+#### sudo 搭配 su 的使用方式
+有的时候我们既然切换为 root 用户, 肯定不可能只是输入一个命令, 基本上都是很多的命令, 按照我们之前的 sudo 方式来做, 效率太慢了. 那么我们应该怎么处理呢?
+
+**别名的概念**
+visudo 的别名可以是命令别名, 账户别名, 主机别名等, 如下:
+> 1. **别名一定要使用大写字符**.
+> 2. User_Alias : 账户别名
+> 3. Cmnd_Alias : 命令别名
+> 4. Host_ALias : 来源主机别名
+
+```bash
+/etc/sudoers 文件内容
+
+User_Alias ADMPW = gkdaxue, test_user
+Cmnd_Alias ADMPWCOM = !/usr/bin/passwd, !/usr/bin/passwd root
+
+ADMPW  ALL=(root)  ADMPWCOM   # <== 按照之前的格式 正确的写入即可.
+
+## 我们以后修改时, 只要修改 User_Alias 和 Cmnd_Alias 这两行即可.
+```
+
+了解了上面的知识, 那么我们来继续讲解内容
+```bash
+## 把我们之前添加的内容还原成最开始的样子, 内容修改如下, 保存退出
+[root@localhost ~]# visudo
+    90	## Allow root to run any commands anywhere 
+    91	root	ALL=(ALL) 	ALL
+    92	
+    93	User_Alias ADMINS = gkdaxue
+    94	ADMINS ALL=(root) /bin/su - 
+
+## 然后我们 gkdaxue 用户只要执行 sudo su - 命令, 输入自己的密码就可以变身成为 root 用户
+## 不但 root 密码不会外泄, 并且也可以以 root 身份执行很多条命令. 而不是一条一条执行.
+[gkdaxue@localhost ~]$ sudo su -
+[sudo] password for gkdaxue: 
+[root@localhost ~]# id
+uid=0(root) gid=0(root) groups=0(root) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+```
 
 # 练习题
 ## 任务一
