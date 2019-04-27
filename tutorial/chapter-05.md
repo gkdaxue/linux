@@ -817,7 +817,7 @@ SGID 既可以针对文件也可以针对目录来设置, 这是与 SUID 不同�
 ```
 
 #### SBIT
-SBIT 只针对目录有效, 当用户对目录有 wx 权限时, 即写入的权限时, 如果此目录被设置了 SBIT 权限, 那么只有该用户以及 root 可以删除该文件, 即使其他人有足够的权限, 也无法执行删除操作. 
+SBIT 只针对目录有效, 当用户对目录有 wx 权限时, 即写入的权限时, 如果此目录被设置了 SBIT 权限, 那么只有 **文件所有者**  以及 **root** 还有 **该目录的所有者** 可以删除该文件, 即使其他人有足够的权限, 也无法执行删除操作. 
 **当目录被设置 SBIT 特殊权限位后，文件的其他人权限部分的 x 执行权限就会被替换成 t 或者 T ，原本有 x 执行权限则会写成 t，原本没有 x 执行权限则会被写成 T。**
 
 ```bash
@@ -832,6 +832,7 @@ drwxrwxrwt. 11 root root 4096 Apr  7 03:09 /tmp    <== 注意其他人的权限�
 ## 使用另外一个用户来尝试删除目录, useradd rm_test 命令用于添加一个用户 rm_test
 ## su - rm_test 用于切换到 rm_test 用户
 [root@localhost ~]# useradd rm_test
+[root@localhost ~]# useradd gkdaxue_test
 [root@localhost ~]# su - rm_test
 [rm_test@localhost ~]$ cd /tmp
 [rm_test@localhost tmp]$ ll gkdaxue_file.txt 
@@ -841,6 +842,7 @@ rm: cannot remove `gkdaxue_file.txt': Operation not permitted  <== 即使满权�
 [rm_test@localhost tmp]$ exit
 logout
 
+
 ## 然后给与 SUID 尝试删除
 [root@localhost ~]# chmod u+s /tmp/gkdaxue_file.txt 
 [root@localhost ~]# ll /tmp/gkdaxue_file.txt 
@@ -848,6 +850,33 @@ logout
 [root@localhost ~]# su - rm_test
 [rm_test@localhost ~]$ rm -rf /tmp/gkdaxue_file.txt 
 rm: cannot remove `/tmp/gkdaxue_file.txt': Operation not permitted  <== 也无法删除
+
+
+## 验证文件夹目录的所有者也可以删除操作
+[root@localhost ~]# mkdir /tmp/sbit_test
+[root@localhost ~]# chown rm_test /tmp/sbit_test
+[root@localhost ~]# chmod 1777 /tmp/sbit_test/
+[root@localhost ~]# ll -d /tmp/sbit_test/
+drwxrwxrwt. 2 rm_test root 4096 Mar 12 05:47 /tmp/sbit_test/
+## 切换到 root 用户到该目录下创建一个 gkdaxue_user_file 文件
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ touch /tmp/sbit_test/gkdaxue_user_file
+[gkdaxue@localhost ~]$ exit
+logout
+## 在切换到 gkdaxue_test 用户尝试删除, 删除失败
+[root@localhost ~]# su - gkdaxue_test
+[gkdaxue_test@localhost ~]$ rm -rf /tmp/sbit_test/gkdaxue_user_file 
+rm: cannot remove `/tmp/sbit_test/gkdaxue_user_file': Operation not permitted
+[gkdaxue_test@localhost ~]$ exit
+logout
+## rm_test 用户为该目录的所有者, 执行删除操作, 发现删除成功.
+[root@localhost ~]# su - rm_test
+[rm_test@localhost ~]$ rm -rf /tmp/sbit_test/gkdaxue_user_file 
+[rm_test@localhost ~]$ ll
+total 0
+[rm_test@localhost ~]$ exit
+logout
+[root@localhost ~]# rm -rf /tmp/sbit_test/
 ```
 
 #### 总结
