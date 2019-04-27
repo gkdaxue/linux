@@ -905,9 +905,10 @@ getfacl命令用于显示文件上设置的 ACL 信息
 | -x { u:USERNAME \| g:GROUP_NAME } | 删除特定的 ACL | 
 | -d | 设置默认的 ACL 参数, 只对目录有效(该目录新建的文件都会引用该默认值) | 
 | -k | 删除默认的 ACL 参数 |
+| --set-file=- | 复制其他文件的 acl 权限设置给该文件 |
 
 ##### 针对特定用户设置
-> setfacl [ options ] u:[用户]:权限  FILE_NAME
+> setfacl [ options ] { u | g }:[ 用户 | 用户组 ]:权限[,{ u | g }:[ 用户 | 用户组 ]:权限....]  FILE_NAME
 
 ```bash
 ## 在 /var 目录下创建一个 000 权限的文件和目录
@@ -975,6 +976,62 @@ user:gkdaxue:rw-
 group::---
 mask::rw-
 other::---
+
+## 我们可以同时给多个用户或者用户组设置 acl 权限
+setfacl -m u:test1:rwx,u:test2:rw......  FILE_NAME
+setfacl -m g:test1:rwx,g:test2:rw......  FILE_NAME
+setfacl -m u:test1:rwx,g:test1:rw....... FILE_NAME
+
+## 还可以复制其他文件的 acl --set-file=-  避免了重复设置的麻烦
+[root@localhost ~]# touch copy_acl_file{1,2}
+[root@localhost ~]# getfacl copy_acl_file{1,2}
+# file: copy_acl_file1
+# owner: root
+# group: root
+user::rw-
+group::r--
+other::r--
+
+# file: copy_acl_file2
+# owner: root
+# group: root
+user::rw-
+group::r--
+other::r--
+
+[root@localhost ~]# setfacl -m u:gkdaxue:rwx,g:gkdaxue:rwx copy_acl_file1
+[root@localhost ~]# getfacl copy_acl_file1
+# file: copy_acl_file1
+# owner: root
+# group: root
+user::rw-
+user:gkdaxue:rwx
+group::r--
+group:gkdaxue:rwx
+mask::rwx
+other::r--
+
+[root@localhost ~]# getfacl copy_acl_file1 | setfacl --set-file=- copy_acl_file2
+[root@localhost ~]# getfacl copy_acl_file{1,2}
+# file: copy_acl_file1
+# owner: root
+# group: root
+user::rw-
+user:gkdaxue:rwx
+group::r--
+group:gkdaxue:rwx
+mask::rwx
+other::r--
+
+# file: copy_acl_file2
+# owner: root
+# group: root
+user::rw-
+user:gkdaxue:rwx     <== 已经复制过来了
+group::r--
+group:gkdaxue:rwx    <== 已经复制过来了
+mask::rwx
+other::r--
 ```
 
 ##### 针对特定用户组的设置
@@ -1047,6 +1104,9 @@ other::---
 #### mask有效权限
 我们查看文件或者目录的 ACL 权限时, 会发现出现了 mask 这个东西, 它的意思是用户或组设置的权限必须要存在于 mask 的权限范围内才会生效, 即有效权限( effective permission)
 > setfacl [ options ] m:权限  FILE_NAME
+
+**注意事项 :**
+> 除了所有者和其他人, 都会受到 mask 值的影响 mask 决定了他们最高的权限. 为了方便管理, 使用 mask 值时, 建议设置 其他人的权限为空.
 
 ```bash
 [root@localhost var]# getfacl acl_test_file 
