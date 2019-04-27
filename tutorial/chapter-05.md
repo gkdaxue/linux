@@ -922,6 +922,10 @@ d---------. 2 root root 4096 Apr 11 16:52 acl_test_dir
 [root@localhost var]# id test_gkdaxue
 id: test_gkdaxue: No such user
 
+## 给一个不存在的用户设置则会报错, 所以一定要保证该用户存在
+[root@localhost var]# setfacl -m u:test_gkdaxue:rwx /var/acl_test_file
+setfacl: Option -m: Invalid argument near character 3
+
 ## 切换用户 gkdaxue  因为没有权限, 所以会无法写入文件 已经跳转到该目录
 [root@localhost var]# su - gkdaxue
 [gkdaxue@localhost ~]$ echo 'gkdaxue' > /var/acl_test_file
@@ -930,10 +934,6 @@ id: test_gkdaxue: No such user
 -bash: cd: /var/acl_test_dir: Permission denied
 [gkdaxue@localhost ~]$ exit
 logout
-
-## 给一个不存在的用户设置则会报错, 所以一定要保证该用户存在
-[root@localhost var]# setfacl -m u:test_gkdaxue:rwx /var/acl_test_file
-setfacl: Option -m: Invalid argument near character 3
 
 ## 给存在的用户 gkdaxue 设置权限
 [root@localhost var]# setfacl -m u:gkdaxue:rw /var/acl_test_file
@@ -961,16 +961,16 @@ logout
 # file: acl_test_dir
 # owner: root
 # group: root
-user::---         <== 其他用户没有任何权限
+user::---         <== 如果没有用户, 默认为拥有者, 拥有者的权限为 000
 user:gkdaxue:rwx  <== 而我们设置的用户却有权限
-group::---
+group::---        <== 没有用户组, 默认为属组
 mask::rwx
-other::---
+other::---        <== 其他用户没有任何权限
 
 # file: acl_test_file
 # owner: root
 # group: root
-user::rwx   <== 之前为 ---, 因为我们使用 u::rwx 所以变成了 rwx
+user::rwx         <== 之前为 ---, 因为我们使用 u::rwx 所以变成了 rwx
 user:gkdaxue:rw-
 group::---
 mask::rw-
