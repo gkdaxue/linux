@@ -1102,7 +1102,7 @@ other::---
 ```
 
 #### mask有效权限
-我们查看文件或者目录的 ACL 权限时, 会发现出现了 mask 这个东西, 它的意思是用户或组设置的权限必须要存在于 mask 的权限范围内才会生效, 即有效权限( effective permission)
+我们查看文件或者目录的 ACL 权限时, 会发现出现了 mask 这个东西, 它的意思是用户或组设置的权限必须要存在于 mask 的权限范围内才会生效, 即有效权限( effective permission), **设置了 mask 之后在设置 acl 会导致 mask 失效.**
 > setfacl [ options ] m:权限  FILE_NAME
 
 **注意事项 :**
