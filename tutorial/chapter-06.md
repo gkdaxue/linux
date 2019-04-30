@@ -327,7 +327,7 @@ MANPATH_MAP     /usr/X11R6/bin          /usr/X11R6/man
 MANPATH_MAP     /usr/bin/X11            /usr/X11R6/man
 MANPATH_MAP     /usr/bin/mh             /usr/share/man
 ~                                                                           
-~                                                                                                                                                   
+~                                                                           
 "man.config" 7L, 268C                                     1,1           All
 
 ## 然后执行 :sp man_test.txt
@@ -369,7 +369,7 @@ man.config                                             1,1            All
 | ctrl + w 然后再按 k | 跳转到上面一个窗口 |
 | :q | 退出当前窗口 |
 
-## Vim 环境设置(~/.vimrc)和记录文件(~/.viminfo)
+## Vim 环境设置(\~/.vimrc)和记录文件(\~/.viminfo)
 当我们编辑完一个文件后正常退出, 当我们第二次进入的时候发现光标还是停留在了我们上次修改完成后退出的地方. 这是因为 Vim 会主动将我们做过的行为记录下俩, 这个记录被保存在 ~/.viminfo 文件中.
 如果我们想要我们每次查看不同文件都显示文件的行号, 难道每次都要先执行 :set nu 来操作吗, 当然不是这就需要用到我们所说的 vim 环境配置文件 ~/.vimrc, 我们可以在里面配置选项, 这样我们使用 vim 来查看文件就会使用 ~/.vimrc 的配置选项
 
