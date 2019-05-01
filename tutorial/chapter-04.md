@@ -1331,6 +1331,8 @@ HOME="/root"
 | -A NUMBER | 显示匹配到行的后 NUMBER 行 |
 | -B NUMBER | 显示匹配到行的前 NUMBER 行 |
 | -C NUMBER | 显示匹配到行的前后各 NUMBER 行 |
+| --color=auto | 对找到的关键字进行标色处理 |
+| -c | 统计含有匹配字符串的行数 |
 
 ### 实例
 ```bash
@@ -1593,7 +1595,7 @@ drwxr-x---.  3 root root   4096 Mar  3 11:39 audisp
 ```
 
 ## tr命令
-转换或者删除字符, 可以用来删除一段信息中的文字, 或者进行文字信息的转换.
+转换或者删除字符, 可以用来删除一段信息中的文字或者进行文字信息的转换.
 > tr [ options ] SET1 [SET2]
 
 | 选项 | 作用 |
@@ -1633,7 +1635,6 @@ daemonx22daemon/sbin/sbin/nologin
 [root@localhost ~]# cp /etc/passwd .
 [root@localhost ~]# unix2dos passwd passwd
 unix2dos: converting file passwd to DOS format ...
-unix2dos: converting file passwd to DOS format ...
 [root@localhost ~]# file /etc/passwd passwd
 /etc/passwd: ASCII text
 passwd:      ASCII text, with CRLF line terminators  <== DOS 断行
@@ -1655,8 +1656,295 @@ daemon:x:2:2:daemon:/sbin:/sbin/nologin$
 ```
 
 ## col命令
+过滤控制字符, 在许多UNIX说明文件里，都有RLF控制字符。当我们运用shell特殊字符">"和">>"，把说明文件的内容输出成纯文本文件时，控制字符会变成乱码，col指令则能有效滤除这些控制字符。
 
+| 选项 | 作用 |
+| ---- | ----- |
+| -b | 过滤掉所有的控制字符，包括RLF和HRLF |
+| -x | 将 tab 键转换为对等的空格键 |
+
+### 实例
+```bash
+## -x : 将 tab 键转换为对等的空格键
+[root@localhost ~]# cat -A /etc/man.config | tail -n 17 | head -n 7
+.gz^I^I/usr/bin/gunzip -c$
+.bz2^I^I/usr/bin/bzip2 -c -d$
+.lzma^I^I/usr/bin/unlzma -c -d$
+.z^I^I$
+.Z^I^I/bin/zcat$
+.F^I^I$
+.Y^I^I$
+[root@localhost ~]# cat /etc/man.config | tail -n 17 | head -n 7 | col -x 
+.gz             /usr/bin/gunzip -c
+.bz2            /usr/bin/bzip2 -c -d
+.lzma           /usr/bin/unlzma -c -d
+.z
+.Z              /bin/zcat
+.F
+.Y
+
+## -b : 过滤掉所有的控制字符，包括RLF和HRLF
+[root@localhost ~]# man man > man_test.txt
+[root@localhost ~]# cat -A man_test.txt | head
+man(1)                                                                  man(1)$
+$
+$
+$
+N^HNA^HAM^HME^HE$
+       man - format and display the on-line manual pages$
+$
+S^HSY^HYN^HNO^HOP^HPS^HSI^HIS^HS$
+       m^Hma^Han^Hn [-^H-a^Hac^Hcd^HdD^HDf^HfF^HFh^Hhk^HkK^HKt^Htv^HvV^HVw^HwW^HW] [-^H--^H-p^Hpa^Hat^Hth^Hh] [-^H-m^Hm _^Hs_^Hy_^Hs_^Ht_^He_^Hm] [-^H-p^Hp _^Hs_^Ht_^Hr_^Hi_^Hn_^Hg] [-^H-C^HC _^Hc_^Ho_^Hn_^Hf_^Hi_^Hg_^H__^Hf_^Hi_^Hl_^He]$
+       [-^H-M^HM _^Hp_^Ha_^Ht_^Hh_^Hl_^Hi_^Hs_^Ht] [-^H-P^HP _^Hp_^Ha_^Hg_^He_^Hr] [-^H-B^HB _^Hb_^Hr_^Ho_^Hw_^Hs_^He_^Hr] [-^H-H^HH _^Hh_^Ht_^Hm_^Hl_^Hp_^Ha_^Hg_^He_^Hr] [-^H-S^HS  _^Hs_^He_^Hc_^Ht_^Hi_^Ho_^Hn_^H__^Hl_^Hi_^Hs_^Ht]$
+[root@localhost ~]# vim man_test.txt
+[root@localhost ~]# man man | col -b > col_man_test.txt
+[root@localhost ~]# cat -A col_man_test.txt |  head
+man(1)^I^I^I^I^I^I^I^I^Iman(1)$
+$
+$
+$
+NAME$
+       man - format and display the on-line manual pages$
+$
+SYNOPSIS$
+       man [-acdDfFhkKtvVwW] [--path] [-m system] [-p string] [-C config_file]$
+       [-M pathlist] [-P pager] [-B browser] [-H htmlpager] [-S^I section_list]$
+
+```
 
 ## join命令
+通过公共的字段来连接两个文件的行, join 默认使用空格符分割数据并且对比 '第一个字段' 的数据, 如果两个文件相同, 则将两条数据连成一行且第一个字段放在第一位.
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -t 分隔符 | 使用指定的分隔符 |
+| -i | 忽略大小写 |
+| -l FIELD | 数字1, 表示第一个文件使用哪个字段来分析 |
+| -2 FIELD | 表示第二个文件使用哪个字段来分析 |
+
+### 实例
+```bash
+## 比如 /etc/passwd 和 /etc/shadow 文件都是以 : 分割 且 最第一列都是 账号, 所以我们就可以这么处理
+[root@localhost ~]# head -n 5 /etc/passwd /etc/shadow
+==> /etc/passwd <==
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+
+==> /etc/shadow <==
+root:$6$FchKbWuH$xCX0Z5yND.LOe5LUZP.MAN9DfxHGbiXJ6BkfZiuFsfO/fZKU2hToloxpw/QVTqppdAccJrAxO3.iWJUoex8VE1:17958:0:99999:7:::
+bin:*:17246:0:99999:7:::
+daemon:*:17246:0:99999:7:::
+adm:*:17246:0:99999:7:::
+lp:*:17246:0:99999:7:::
+
+
+## 开始使用 join 来连接, 相同字段被放在了第一个字段的位置上
+[root@localhost ~]# join -t ':' /etc/passwd /etc/shadow | head -n 5
+root:x:0:0:root:/root:/bin/bash:$6$FchKbWuH$xCX0Z5yND.LOe5LUZP.MAN9DfxHGbiXJ6BkfZiuFsfO/fZKU2hToloxpw/QVTqppdAccJrAxO3.iWJUoex8VE1:17958:0:99999:7:::
+bin:x:1:1:bin:/bin:/sbin/nologin:*:17246:0:99999:7:::
+daemon:x:2:2:daemon:/sbin:/sbin/nologin:*:17246:0:99999:7:::
+adm:x:3:4:adm:/var/adm:/sbin/nologin:*:17246:0:99999:7:::
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin:*:17246:0:99999:7:::
+
+
+## /etc/passwd 文件的第四个字段为 组ID, 在 /etc/group 中却是第三个字段, 这就需要我们来指定拼接了
+[root@localhost ~]# head -n 5 /etc/passwd /etc/group
+==> /etc/passwd <==
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+
+==> /etc/group <==
+root:x:0:
+bin:x:1:bin,daemon
+daemon:x:2:bin,daemon
+sys:x:3:bin,adm
+adm:x:4:adm,daemon
+
+
+## 按照我们指定的字段来拼接数据
+[root@localhost ~]# join -t ':' -1 4 /etc/passwd -2 3 /etc/group | head -n 5
+join: file 1 is not in sorted order   <== 请注意这个提示
+join: file 2 is not in sorted order   <== 请注意这个提示
+0:root:x:0:root:/root:/bin/bash:root:x:
+1:bin:x:1:bin:/bin:/sbin/nologin:bin:x:bin,daemon
+2:daemon:x:2:daemon:/sbin:/sbin/nologin:daemon:x:bin,daemon
+4:adm:x:3:adm:/var/adm:/sbin/nologin:adm:x:adm,daemon
+7:lp:x:4:lp:/var/spool/lpd:/sbin/nologin:lp:x:daemon
+
+
+## 使用 join 之前, 你需要处理的文件应该是事先经过排序的(sort)处理的, 否则有些对比的项目会被略过. 所以出现提示
+## 关于 /etc/passwd  /etc/shadow  /etc/group 文件的内容以后会分析.
+```
+
 ## paste命令
+join 必须要对比两个文件的数据相关性, 而 paste 就直接将两行拼接在一起且中间使用 [tab]键 隔开.
+
+| 选项 | 作用 |
+| ---- | ----- |
+| -d 分隔符 | 使用指定的分隔符分开 |
+
+### 实例
+```bash
+## 用 空格隔开
+[root@localhost ~]# paste /etc/passwd /etc/shadow | head -n 5
+root:x:0:0:root:/root:/bin/bash	root:$6$FchKbWuH$xCX0Z5yND.LOe5LUZP.MAN9DfxHGbiXJ6BkfZiuFsfO/fZKU2hToloxpw/QVTqppdAccJrAxO3.iWJUoex8VE1:17958:0:99999:7:::
+bin:x:1:1:bin:/bin:/sbin/nologin	bin:*:17246:0:99999:7:::
+daemon:x:2:2:daemon:/sbin:/sbin/nologin	daemon:*:17246:0:99999:7:::
+adm:x:3:4:adm:/var/adm:/sbin/nologin	adm:*:17246:0:99999:7:::
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin	lp:*:17246:0:99999:7:::    <== 中间使用了空格分开
+```
+
 ## expand命令
+将 Tab按键 转化为空格键 
+
+| 选项 | 作用 |
+| ---- | ---- |
+|  -t Num | 一个 Tab键 可以转化为多少个空格, 默认一个 Tab 用 8 个空格键替换 |
+
+### 实例
+```bash
+## Tab 键会用 ^I 显示
+[root@localhost ~]# cat -A /etc/man.config | tail -n 17 | head -n 7 
+.gz^I^I/usr/bin/gunzip -c$
+.bz2^I^I/usr/bin/bzip2 -c -d$
+.lzma^I^I/usr/bin/unlzma -c -d$
+.z^I^I$
+.Z^I^I/bin/zcat$
+.F^I^I$
+.Y^I^I$
+
+## 将 Tab 转换为 空格键, 默认为 8 个空格
+[root@localhost ~]# cat /etc/man.config | tail -n 17 | head -n 7 | col -x
+.gz             /usr/bin/gunzip -c
+.bz2            /usr/bin/bzip2 -c -d
+.lzma           /usr/bin/unlzma -c -d
+.z
+.Z              /bin/zcat
+.F
+.Y
+
+## -t 将 Tab 键转换为 20 个空格
+[root@localhost ~]# cat /etc/man.config | tail -n 17 | head -n 7 | expand -t 20
+.gz                                     /usr/bin/gunzip -c
+.bz2                                    /usr/bin/bzip2 -c -d
+.lzma                                   /usr/bin/unlzma -c -d
+.z                                      
+.Z                                      /bin/zcat
+.F                                      
+.Y
+```
+
+## split命令
+可以把一个大文件依据文件大小或者行数来切割成小文件.
+> split [ options ] FILE PREFIX
+
+| 选项 | 作用 |
+| ----- | ---- |
+| -b Num{bkm} | 切割成指定的文件大小 |
+| -l | 以指定的行数切割 |
+| PREFIX | 前导符, 可作为切割文件的前导文字 |
+
+### 实例
+```bash
+[root@localhost ~]# cp /etc/man.config  .
+[root@localhost ~]# split -l 10 man.config man_test
+[root@localhost ~]# ll man_test*
+-rw-r--r--. 1 root root 258 Mar 16 07:25 man_testaa
+-rw-r--r--. 1 root root 388 Mar 16 07:25 man_testab
+-rw-r--r--. 1 root root 576 Mar 16 07:25 man_testac
+-rw-r--r--. 1 root root 243 Mar 16 07:25 man_testad
+-rw-r--r--. 1 root root 242 Mar 16 07:25 man_testae
+-rw-r--r--. 1 root root 277 Mar 16 07:25 man_testaf
+-rw-r--r--. 1 root root 424 Mar 16 07:25 man_testag
+-rw-r--r--. 1 root root 317 Mar 16 07:25 man_testah
+-rw-r--r--. 1 root root 477 Mar 16 07:25 man_testai
+-rw-r--r--. 1 root root 295 Mar 16 07:25 man_testaj
+-rw-r--r--. 1 root root 209 Mar 16 07:25 man_testak
+-rw-r--r--. 1 root root 215 Mar 16 07:25 man_testal
+-rw-r--r--. 1 root root 460 Mar 16 07:25 man_testam
+-rw-r--r--. 1 root root 236 Mar 16 07:25 man_testan
+-rw-r--r--. 1 root root 297 Mar 16 07:25 man_testao
+-rw-r--r--. 1 root root  26 Mar 16 07:25 man_testap
+[root@localhost ~]# wc -l man_test*
+  10 man_testaa
+  10 man_testab
+  10 man_testac
+  10 man_testad
+  10 man_testae
+  10 man_testaf
+  10 man_testag
+  10 man_testah
+  10 man_testai
+  10 man_testaj
+  10 man_testak
+  10 man_testal
+  10 man_testam
+  10 man_testan
+  10 man_testao
+   2 man_testap
+ 152 total
+
+## 可以切割文件, 那么我们如何合并文件呢?
+[root@localhost ~]# cat man_test** >> count_man.txt
+[root@localhost ~]# wc -l count_man.txt 
+152 count_man.txt
+```
+
+## xargs参数代换
+xargs 可以读入 stdin 的数据并且以 空格符或断行字符 进行分辨, 将 stdin 的数据分割成 arguments. xargs 没有接任何的命令时, 默认以 echo 进行输出.
+> 使用 xargs 的主要目的是因为有些命令不支持管道符, 因此我们可以通过 xargs 来提供该命令提供的 Standard Input.
+>
+> xargs [ options ] command
+
+| 选项 | 作用 |
+| ---- | ---- |
+| -0 | 如果输入的 stdin 含有特殊字符如(`, \)等 还原成一般字符 |
+| -e [eof-str] |  当 xargs 解析到这个字符时停止工作 |
+| -p | 执行每个命令的参数时, 询问用户是否执行操作 |
+| -n Num | 每次 command 执行时, 要使用几个参数 |
+
+### 实例
+```bash
+## 实验数据
+[root@localhost ~]# cut -d ':' -f 1 /etc/passwd | head -n 3
+root
+bin
+daemon
+
+## -n 需要使用 1 个参数
+[root@localhost ~]# cut -d ':' -f 1 /etc/passwd | head -n 3 | xargs -n 1 id
+uid=0(root) gid=0(root) groups=0(root)
+uid=1(bin) gid=1(bin) groups=1(bin),2(daemon),3(sys)
+uid=2(daemon) gid=2(daemon) groups=2(daemon),1(bin),4(adm),7(lp)
+
+## -p 提示
+[root@localhost ~]# cut -d ':' -f 1 /etc/passwd | head -n 3 | xargs -p -n 1 id
+id root ?...y
+id bin ?...uid=0(root) gid=0(root) groups=0(root)
+y
+id daemon ?...uid=1(bin) gid=1(bin) groups=1(bin),2(daemon),3(sys)
+y
+uid=2(daemon) gid=2(daemon) groups=2(daemon),1(bin),4(adm),7(lp)
+
+
+## 我们现在想要查找名字叫做 gkdaxue 的文件并查看权限等信息
+[root@localhost ~]# find / -name gkdaxue
+/tmp/test_zip/gkdaxue
+/home/gkdaxue
+/var/cache/gdm/gkdaxue
+/var/spool/mail/gkdaxue
+[root@localhost ~]# find / -name gkdaxue | ls -l
+total 0                           <== 这是什么鬼? 我不是已经找到了文件, 没有列出来
+## 原因就是 ls 命令不支持管道符, 所有显示的是当前目录下的内容, 那么我们就可以使用 xargs 来处理
+[root@localhost ~]# find / -name gkdaxue | xargs ls -ld
+drwx------. 4 gkdaxue gkdaxue 4096 Mar 11 06:24 /home/gkdaxue
+drwxr-xr-x. 2 root    root    4096 Mar 11 14:01 /tmp/test_zip/gkdaxue
+drwxr-xr-x. 2 gkdaxue gkdaxue 4096 Mar  3 11:45 /var/cache/gdm/gkdaxue
+-rw-rw----. 1 gkdaxue mail       0 Mar 11 05:59 /var/spool/mail/gkdaxue
+```
