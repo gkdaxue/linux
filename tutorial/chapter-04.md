@@ -1243,6 +1243,25 @@ declare -ir sum="600"
 [root@localhost ~]# test[3]=['test3']
 [root@localhost ~]# echo ${test[1]}, ${test[2]}, ${test[3]}
 [test1], [test2], [test3]
+
+## 数组的下标从 0 开始 
+[root@localhost ~]# gkdaxue=(aa bb cc dd)
+[root@localhost ~]# echo ${gkdaxue[0]}
+aa			<== gkdaxue[0]  对应的为  aa
+
+## 查看数组里面所有的元素
+[root@localhost ~]# echo ${gkdaxue[*]}
+aa bb cc dd
+[root@localhost ~]# echo ${gkdaxue[@]}
+aa bb cc dd
+
+## 查看所有下标
+[root@localhost ~]# echo ${!gkdaxue[*]}
+0 1 2 3		<== 数组下标从 0 开始
+
+## 查看数组里面有多少个元素
+[root@localhost ~]# echo ${#gkdaxue[*]}
+4
 ```
 
 ## wc命令
