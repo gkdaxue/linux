@@ -379,6 +379,502 @@ man.config                                             1,1            All
 | :set nonu | 不显示行号 |
 
 # 正则表达式
+正则表达式(Regular Expression)是通过一些特殊的字符排列, 用于查找 替换 删除一行或者多行文字字符串. 是一种字符串处理的标准依据. 它** 以行为单位 ** 来进行字符串的处理行为. 比如 vim, grep, awk, sed 等都支持正则表达式. 正则表达式 和 bash 的 globing 是两种不同的东西.
+
+> 正则表达式的字符串表示方式可以依照不同的严谨度分为 ` 基础正则表达式 ` 和 ` 扩展正则表达式 ` 
+
+## 基础正则表达式
+既然正则表达式是处理字符串的一种方式, 那么语序肯定会到结果有影响, 所以就会造成数据选取结果的区别. 比如 
+> LANG=C : 0 - 9 A - Z a -z 这种编码顺序
+>  
+> LANG=zh_CN : 0 - 9 a A b B c C .... z Z 这种编码顺序.
+
+所以使用正则表达式时, 一定要特别注意语序的区别, 否则可能会造成结果的不同. 所以**我们所有的实验结果都是基于 LANG=C 来进行的**.
+
+还记得我们之前在介绍 globing 是讲的一些特殊符号(专用字符集合), 我们在这里先复习一下.
+
+| 字符 | 含义 |
+| --- | ----- |
+| \[\:alnum\:\] | 任意数字或字母 ( a-z A-Z 0-9 )               |
+| \[\:alpha\:\] | 任意大小写字母  ( a-z A-Z )                   |
+| \[\:digit\:\] | 任意数字, 相当于 0-9, 注意是 0-9 而不是 \[0-9\] |
+| \[\:lower\:\] | 任意小写字母  a-z                        |
+| \[\:upper\:\] | 任意大写字母  A-Z                        |
+| \[\:space\:\] | 空格                                 |
+| \[\:punct\:\] | 标点符号                               |
+| \[\:blank\:\] | 空格键 和 tab键                        |
+
+### 实验环境
+```bash
+## 实验准备工作
+## 1. export LANG=C   避免语系的影响
+## 2. alias grep='grep --color=auto ' 
+## 3. 安装了 unix2dos 和  dos2unix
+## 4. 实验文件 https://github.com/gkdaxue/linux/raw/master/tutorial_document/regular_express.txt
+## 5. 转换为 dos 格式
+[root@localhost ~]# export LANG=C
+[root@localhost ~]# alias grep='grep --color=auto '
+[root@localhost ~]# yum install -y unix2dos  dos2unix wget
+[root@localhost ~]# wget https://github.com/gkdaxue/linux/raw/master/tutorial_document/regular_express.txt
+[root@localhost ~]# file regular_express.txt 
+regular_express.txt: ASCII English text
+[root@localhost ~]# unix2dos regular_express.txt 
+unix2dos: converting file regular_express.txt to DOS format ...
+[root@localhost ~]# file regular_express.txt 
+regular_express.txt: ASCII English text, with CRLF line terminators
+```
+
+### grep常规用法
+```
+## 从文件中找到 the 字符并显示行号
+[root@localhost ~]# grep -n 'the' regular_express.txt 
+8:I can't finish the test.
+12:the symbol '*' is represented as start.
+15:You are the best is mean you are the no. 1.
+16:The world <Happy> is the same with "glad".
+18:google is the best tools for search keyword.
+
+## 从文件中找到 the 字符(不区分大小写)并显示行号
+[root@localhost ~]# grep -in 'the' regular_express.txt 
+8:I can't finish the test.
+9:Oh! The soup taste good.                               <== 大写的 The 也被找了出来
+12:the symbol '*' is represented as start.
+14:The gd software is a library for drafting programs.   <== 大写的 The 也被找了出来
+15:You are the best is mean you are the no. 1.
+16:The world <Happy> is the same with "glad".
+18:google is the best tools for search keyword.
+
+## 如果想要查找没有 the 字符的行并显示行号, 则使用如下所示
+[root@localhost ~]# grep -vn 'the' regular_express.txt 
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+3:Football game is not use feet only.
+4:this dress doesn't fit me.
+5:However, this dress is about $ 3183 dollars.
+6:GNU is free air not free beer.
+7:Her hair is very beauty.
+9:Oh! The soup taste good.
+10:motorcycle is cheap than car.
+11:This window is clear.
+13:Oh!	My god!
+14:The gd software is a library for drafting programs.
+17:I like dog.
+19:goooooogle yes!
+20:go! go! Let's go.
+21:# I am VBird
+22: 
+```
+
+### 利用 \[ ] 来查找字符集合
+**[ ] 里面不论有多少字符, 它都只代表 '一个' 字符**
+
+```
+## 现在查找 test 和 tast 字符出现的位置
+[root@localhost ~]# grep -n 't[ae]st' regular_express.txt 
+8:I can't finish the test.
+9:Oh! The soup taste good.
+
+
+## 利用 [^] 反选来查找字符
+## 如果我们想要查找 'oo' 字符时
+[root@localhost ~]# grep -n 'oo' regular_express.txt 
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+3:Football game is not use feet only.
+9:Oh! The soup taste good.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+
+## oo 的前边不能有 g 的存在
+[root@localhost ~]# grep -n '[^g]oo' regular_express.txt 
+2:apple is my favorite food.
+3:Football game is not use feet only.
+18:google is the best tools for search keyword.      <== 此行虽然有 google不符合但是 tools 符合, 所以显示
+19:goooooogle yes!
+
+## oo 前边不能有小写字符 , - 表示连续编码 比如 a-z  A-Z  0-9 等
+[root@localhost ~]# grep -n '[^a-z]oo' regular_express.txt 
+3:Football game is not use feet only.
+## 还有如下实现方式
+[root@localhost ~]# grep -n '[^[:lower:]]oo' regular_express.txt 
+3:Football game is not use feet only.
+```
+
+### 行首 ^ 与 行尾 $ 字符
+```
+## ^ 注意放在 [] 中 和 放在 [] 之外的含义不同, 自己体会总结
+## 查询还有 the 字符的行并显示行号
+[root@localhost ~]# grep -n 'the' regular_express.txt 
+8:I can't finish the test.
+12:the symbol '*' is represented as start.
+15:You are the best is mean you are the no. 1.
+16:The world <Happy> is the same with "glad".
+18:google is the best tools for search keyword.
+
+## 查找以 the 开头的行并显示行号
+[root@localhost ~]# grep -n '^the' regular_express.txt 
+12:the symbol '*' is represented as start.
+
+## 以小写字符开头的行并显示行号
+[root@localhost ~]# grep -n '^[a-z]' regular_express.txt 
+2:apple is my favorite food.
+4:this dress doesn't fit me.
+10:motorcycle is cheap than car.
+12:the symbol '*' is represented as start.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+20:go! go! Let's go.
+
+## 不想要开头是英文字母, 无论大小写并显示行号
+[root@localhost ~]# grep -n '^[^a-zA-Z]' regular_express.txt 
+1:"Open Source" is a good mechanism to develop programs.
+21:# I am VBird
+```
+
+### 任意一个字符 . 和重复字符 *
+```
+## 以 . 结尾的行并显示行号, . 有特殊意义,所以需要使用 \ 来转义 稍后讲解
+## 那么执行一下命令为啥找不到匹配的数据呢? 因为我们这个文件是从 unix -> dos 所以不是以 . 结尾的
+## Linux 下仅有 LF($) 断行符号, DOS 下则是 (^M$) 断行符号, 导致不能正确识别
+## 所有有的时候查找不到数据一定要仔细想一下原因
+[root@localhost ~]# grep -n '\.$' regular_express.txt 
+[root@localhost ~]# file regular_express.txt
+regular_express.txt: ASCII English text, with CRLF line terminators
+[root@localhost ~]# cat -A regular_express.txt | head -n 5
+"Open Source" is a good mechanism to develop programs.^M$ 
+apple is my favorite food.^M$
+Football game is not use feet only.^M$
+this dress doesn't fit me.^M$
+However, this dress is about $ 3183 dollars.^M$
+[root@localhost ~]# cp regular_express.txt regular_express.txt.unix
+[root@localhost ~]# dos2unix regular_express.txt.unix 
+dos2unix: converting file regular_express.txt.unix to UNIX format ...
+## 转化为 unix 可以成功的找到匹配数据
+[root@localhost ~]# grep -n '\.$' regular_express.txt.unix 
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+3:Football game is not use feet only.
+4:this dress doesn't fit me.
+5:However, this dress is about $ 3183 dollars.
+6:GNU is free air not free beer.
+7:Her hair is very beauty.
+8:I can't finish the test.
+9:Oh! The soup taste good.
+10:motorcycle is cheap than car.
+11:This window is clear.
+12:the symbol '*' is represented as start.
+14:The gd software is a library for drafting programs.
+15:You are the best is mean you are the no. 1.
+16:The world <Happy> is the same with "glad".
+17:I like dog.
+18:google is the best tools for search keyword.
+20:go! go! Let's go.
+[root@localhost ~]# cat -A regular_express.txt.unix | head -n 5
+"Open Source" is a good mechanism to develop programs.$ 
+apple is my favorite food.$
+Football game is not use feet only.$
+this dress doesn't fit me.$
+However, this dress is about $ 3183 dollars.$
+
+## 在重复看一下两者的区别  ^$ 表示为空白行
+[root@localhost ~]# grep -n '^$' regular_express.txt
+[root@localhost ~]# grep -n '^$' regular_express.txt.unix 
+22:
+
+
+## 我们以前看 /etc/man.config 文件发现里面有很多以 # 开头的行, 如果我们只想看不以 # 开头的行应该怎么处理呢?
+[root@localhost ~]# grep -vn '^#' /etc/man.config  | head -n 5
+34:FHS
+43:MANPATH	/usr/man
+44:MANPATH	/usr/share/man
+45:MANPATH	/usr/local/man
+46:MANPATH	/usr/local/share/man
+
+
+## 查找 以g开头 d结尾的四个字符
+[root@localhost ~]# grep -n 'g..d' regular_express.txt
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+16:The world <Happy> is the same with "glad".
+
+## 至少两个 o 以上的字符, 想一下为什么是 ooo*
+[root@localhost ~]# grep -n 'ooo*' regular_express.txt
+1:"Open Source" is a good mechanism to develop programs.
+2:apple is my favorite food.
+3:Football game is not use feet only.
+9:Oh! The soup taste good.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+
+## 字符开头和结尾都是 g 并且两个 g 之间至少存在一个 o
+[root@localhost ~]# grep -n 'goo*g' regular_express.txt
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+
+## 字符开头和结尾都是 g 中间字符可有可无
+[root@localhost ~]# grep -n 'g.*g' regular_express.txt
+1:"Open Source" is a good mechanism to develop programs.
+14:The gd software is a library for drafting programs.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+20:go! go! Let's go.
+```
+
+### 限定范围的字符 {}
+我们从上边可以知道, ` . ` 可以表示任意一个字符 * 可以表示字符出现 0次或多次, 但是我就想要字符出现指定的次数, 这个时候就要用到 {} 符号了, 但是 {} 和 bash 中的 {} 冲突了, 所以我们就要使用转义字符来转义才行.
+> 请回忆一下 bash 中 {} 的作用是什么 ?
+
+```bash
+## 我想要匹配 /etc/passwd 中查找 o 字符出现 2 次的字符
+[root@localhost ~]# grep -n 'o\{2\}' /etc/passwd
+1:root:x:0:0:root:/root:/bin/bash
+5:lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+9:mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+10:uucp:x:10:14:uucp:/var/spool/uucp:/sbin/nologin
+11:operator:x:11:0:operator:/root:/sbin/nologin
+29:postfix:x:89:89::/var/spool/postfix:/sbin/nologin
+
+## 在 regular_express.txt 中 g 后边跟了 2-5个 o 的字符
+[root@localhost ~]# grep -n 'go\{2,5\}' regular_express.txt
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+18:google is the best tools for search keyword.
+19:goooooogle yes!
+
+## 在 regular_express.txt 中 g 后边跟了 2-5个 0  然后在跟了一个 g 的字符
+[root@localhost ~]# grep -n 'go\{2,5\}g' regular_express.txt
+18:google is the best tools for search keyword.
+```
+
+### 总结
+| RE字符 | 含义 |
+| :-----: | ----- |
+| ^word | 以 word 开头的行 |
+| word$ | 以 word 结尾的行(注意文件类型) |
+| . | 任意一个字符 |
+| \ | 用来转义字符 |
+| * | 前一个字符出现的次数为 0次或多次 |
+| \[ list \] | 匹配 list 中的字符 (无论里面有多少个, 只匹配一个) |
+| \[ n1-n2 \] | 匹配字符范围 |
+| [ ^list ] | 不在 list(可能是字符集合或者字符范文) 中的字符 |
+| \{n\} | 指定的字符出现 n 次 |
+| \{n,\m} | 指定字符出现的次数为 n-m 次 |
+| \{n,\} | 指定的字符出现的次数为 至少 n次 |
+
+## 扩展正则表达式
+grep 默认仅支持 ` 基础正则表达式 `, 如果想要使用扩展正则表达式, 可以使用 ` grep -E ` 选项, 不过还是建议使用 egrep 命令.
+
+| RE 符号 | 含义 |
+| :----: | :-----: |
+| + | 前一个RE字符出现 1次或1次以上 |
+| ? | 前一个RE字符出现 0次或1次 |
+| \| | 用 or 的方式找出数个字符 |
+| () | 找出 组 字符串 |
+| ()+ | 多个重复组的判断 |
+
+```bash
+## 准备实验环境
+[root@localhost ~]# alias egrep='egrep --color=auto'
+[root@localhost ~]# rm -rf regular_express.txt
+[root@localhost ~]# mv regular_express.txt.unix regular_express.txt
+[root@localhost ~]# file regular_express.txt 
+regular_express.txt: ASCII English text    <== 确保你的不是 DOS 换行符
+
+
+## 去掉 空白行 和 以 # 开头的行(两种方式)
+[root@localhost ~]# grep -v '^$' /etc/man.config | grep -v '^#'
+FHS
+MANPATH	/usr/man
+MANPATH	/usr/share/man
+MANPATH	/usr/local/man
+MANPATH	/usr/local/share/man
+...........
+## 也可以使用 grep -Ev '^$|^#' /etc/man.config
+[root@localhost ~]# egrep -v '^$|^#' /etc/man.config
+FHS
+MANPATH	/usr/man
+MANPATH	/usr/share/man
+MANPATH	/usr/local/man
+MANPATH	/usr/local/share/man
+...........
+
+## 查找 以 g 开头 以 d 结尾 o 出现一次或以上
+[root@localhost ~]# grep -n 'go\{1,\}d' regular_express.txt 
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+13:Oh!	My god!
+[root@localhost ~]# egrep -n '\go+\d' regular_express.txt 
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+13:Oh!	My god!
+
+## 查找 以 g 开头 以 d 结尾 o 出现 0 次或 1次
+[root@localhost ~]# egrep -n 'go?d' regular_express.txt 
+13:Oh!	My god!
+14:The gd software is a library for drafting programs.
+
+## 查找 gd good dog 出现的行数
+[root@localhost ~]# egrep -n 'gd|good|dog' regular_express.txt 
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+14:The gd software is a library for drafting programs.
+17:I like dog.
+
+## 查找 glad 或者 good 出现的行数
+[root@localhost ~]# egrep -n 'g(la|oo)d' regular_express.txt 
+1:"Open Source" is a good mechanism to develop programs.
+9:Oh! The soup taste good.
+16:The world <Happy> is the same with "glad".
+```
+
+## 相关命令(sed awk)
+### sed命令
+sed是一种流编编器，它是文本处理中非常中的工具，能够完美的配合正则表达式便用, 可以实现对数据的替换  删除  新增  选特定行等功能. **在一般 sed 的用法中，所有来自 STDIN 的数据一般都会被显示到屏幕上.**
+>   sed [ options ]  '动作'  [input-file]    
+
+| 选项 | 作用 |
+| ----- | ---- |
+| -n  | 只有经过sed 特殊处理的那一行(或者动作)才会被列出来 |
+| -e | 直接在指令列模式上进行 sed 的动作编辑 |
+| -f FILE_NAME | 直接将 sed 的动作写到一个文件中 |
+| -r | 支持扩展正则表达式 (默认仅支持基础正则表达式) |
+| -i | 直接修改读取的文件内容，而不是由屏幕输出 (谨慎使用) |
+
+**动作:**
+> '[n1[,n2]]function' : 必须用单引号 ' ' 包起来
+>
+> n1, n2 不一定会存在, 一般代表选择进行动作的行数. 比如 '10,20[动作行为]' 
+
+| function参数 | 含义 |
+| :----: | ---- |
+| a | 新增， a 的后面可以接字串，而这些字串会在新的一行出现(目前的下一行) |
+| c | 取代， c 的后面可以接字串，这些字串可以取代 n1,n2 之间的行 |
+| d | 删除， 因为是删除啊，所以 d 后面通常不接任何参数 |
+| i | 插入， i 的后面可以接字串，而这些字串会在新的一行出现(目前的上一行) |
+| p | 打印， 将选择的数据打印出来, 通常会和 sed -n 一起用 |
+| s | 替换， 直接进行替换的工作 |
+
+```bash
+## 准备环境, 除了 -f 会影响到源文件, 其他操作不会影响到源文件
+[root@localhost ~]# head -n 3 /etc/passwd > passwd 
+[root@localhost ~]# cat passwd 
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+## i 新增一行,在指定行之上添加
+[root@localhost ~]# sed '2i gkdaxue test line' passwd
+root:x:0:0:root:/root:/bin/bash
+gkdaxue test line                   <== 多了此行 在指定行的上面添加
+bin:x:1:1:bin:/bin:/sbin/nologin    <== 指定行
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+## 如果新增多行, 每一行必须要使用反斜杠 \ 来进行新行的添加
+[root@localhost ~]# cat passwd | sed '2i test1 \
+> test2 \
+> test3 '
+root:x:0:0:root:/root:/bin/bash
+test1 
+test2 
+test3 
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+[root@localhost ~]# cat passwd 
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+
+## a : 新增一行 执行行的下面新增一行
+[root@localhost ~]# sed '2a gkdaxue test line' passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin    <== 指定行
+gkdaxue test line					<== 多了此行 在指定行的下面添加
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+
+## d : 删除指定的行, $ 表示最后一行的意思
+[root@localhost ~]# sed '2,$d' passwd 
+root:x:0:0:root:/root:/bin/bash
+
+
+## i : 直接修改源文件内容  谨慎使用
+[root@localhost ~]# sed -i '2i gkdaxue test1' passwd
+[root@localhost ~]# sed -i '2a gkdaxue test2' passwd
+[root@localhost ~]# cat passwd 
+root:x:0:0:root:/root:/bin/bash
+gkdaxue test1        <== 体会一下为什么会是这样的结果
+gkdaxue test2        <== 体会一下为什么会是这样的结果
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+
+## c : 整行的替换
+[root@localhost ~]# sed '2,3c only 4 lines' passwd 
+root:x:0:0:root:/root:/bin/bash
+only 4 lines         <== 替换 2 3 行的内容为 only 4 lines
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+
+## p : 打印的操作, 通常和 -n 连用
+## 之前想获取文件的 10-20行, 就使用 head 和 tail 来操作, 使用 sed 更直接
+[root@localhost ~]# cat -n /etc/passwd | sed  -n '10,20p'
+    10	uucp:x:10:14:uucp:/var/spool/uucp:/sbin/nologin
+    11	operator:x:11:0:operator:/root:/sbin/nologin
+    12	games:x:12:100:games:/usr/games:/sbin/nologin
+    13	gopher:x:13:30:gopher:/var/gopher:/sbin/nologin
+    14	ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
+    15	nobody:x:99:99:Nobody:/:/sbin/nologin
+    16	dbus:x:81:81:System message bus:/:/sbin/nologin
+    17	usbmuxd:x:113:113:usbmuxd user:/:/sbin/nologin
+    18	rpc:x:32:32:Rpcbind Daemon:/var/lib/rpcbind:/sbin/nologin
+    19	rtkit:x:499:499:RealtimeKit:/proc:/sbin/nologin
+    20	avahi-autoipd:x:170:170:Avahi IPv4LL Stack:/var/lib/avahi-autoipd:/sbin/nologin
+
+
+## s : 部分数据的替换工作
+## 格式为 s/被替换的字符/新字符/g
+[root@localhost ~]# sed '1,$s/bin/BIN/g' passwd
+root:x:0:0:root:/root:/BIN/bash
+gkdaxue test1
+gkdaxue test2
+BIN:x:1:1:BIN:/BIN:/sBIN/nologin
+daemon:x:2:2:daemon:/sBIN:/sBIN/nologin
+```
+
+#### 实例
+```bash
+## 获取本机的 IP 地址, IP 地址为 192.168.1.206 我们如何获取
+## ifconfig 查看启用的网卡信息, 以后讲解
+[root@localhost ~]# ifconfig eth0
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:5493 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:2809 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:497815 (486.1 KiB)  TX bytes:310615 (303.3 KiB)
+[root@localhost ~]# ifconfig eth0 | grep 'inet addr'
+          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+[root@localhost ~]# ifconfig eth0 | grep 'inet addr' | sed 's/^.* inet addr://g'
+192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+[root@localhost ~]# ifconfig eth0 | grep 'inet addr' | sed 's/^.* inet addr://g' | sed 's/  Bcast.*$//g'
+192.168.1.206
+```
+
+### awk命令
+sed 常常作用于一整行的处理, awk 则是比较倾向于讲一行分成多个字段来处理. 因此 awk 命令更适合处理小型的数据处理.
+
+
+
+### diff命令
+
+
+
+
+
+
 
 
 
@@ -390,9 +886,35 @@ man.config                                             1,1            All
 | com1 \|\| com2 | 若 cmd1 执行完毕且正确执行($?=0), 则不执行 cmd2 <br> 若 cmd1 执行完毕且为错误($?≠0), 则执行 cmd2  |
 
 ```bash
-## 没有 /tmp/abc
+## linux 的命令是从左往右执行的.
+## 没有 /tmp/abc, 所以没有执行 && 后边的操作
 [root@localhost ~]# ls /tmp/abc && touch /tmp/abc/gkdaxue
-ls: cannot access /tmp/abc: No such file or directory
+ls: cannot access /tmp/abc: No such file or directory   <== 因为没有这个目录, 所以没有执行创建文件的操作
+[root@localhost ~]# mkdir /tmp/abc
+[root@localhost ~]# ls /tmp/abc && touch /tmp/abc/gkdaxue
+[root@localhost ~]# ls /tmp/abc
+gkdaxue
 
+
+## 然后测试 ||
+[root@localhost ~]# rm -rf /tmp/abc/
+[root@localhost ~]# ls /tmp/abc || mkdir /tmp/abc
+ls: cannot access /tmp/abc: No such file or directory   <== 虽然报错了, 但是已经成功创建了 abc 文件夹
+[root@localhost ~]# ll /tmp/abc
+total 0
+```
+**练习题:**
+ls 判断 /tmp/gkdaxue 文件夹是否存在, 存在输出 'exists' 否则输出 'not exists'
+```bash
+ls /tmp/gkdaxue && echo 'exists' || echo 'not exists'
+
+假设我们不小心写成了如下所示, 会有什么影响 ?
+ls /tmp/gkdaxue || echo 'not exists' && echo 'exists'
+1. 当/tmp/gkdaxue 不存在, 则 $? != 0
+2. 那么执行 echo 'exists' 则 $? = 0
+3. 又执行了 echo 'exists'
+
+## 如果判断式有三个, 那么 && 与 || 的顺序通常如下所示, 一定如下所示:
+command1 && command2 || command3
 ```
 
