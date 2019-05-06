@@ -503,7 +503,7 @@ regular_express.txt: ASCII English text, with CRLF line terminators
 ### 行首 ^ 与 行尾 $ 字符
 ```
 ## ^ 注意放在 [] 中 和 放在 [] 之外的含义不同, 自己体会总结
-## 查询还有 the 字符的行并显示行号
+## 查询含有 the 字符的行并显示行号
 [root@localhost ~]# grep -n 'the' regular_express.txt 
 8:I can't finish the test.
 12:the symbol '*' is represented as start.
@@ -525,7 +525,7 @@ regular_express.txt: ASCII English text, with CRLF line terminators
 19:goooooogle yes!
 20:go! go! Let's go.
 
-## 不想要开头是英文字母, 无论大小写并显示行号
+## 不想要开头是英文字母(无论大小写)并显示行号
 [root@localhost ~]# grep -n '^[^a-zA-Z]' regular_express.txt 
 1:"Open Source" is a good mechanism to develop programs.
 21:# I am VBird
@@ -650,11 +650,11 @@ However, this dress is about $ 3183 dollars.$
 | RE字符 | 含义 |
 | :-----: | ----- |
 | ^word | 以 word 开头的行 |
-| word$ | 以 word 结尾的行(注意文件类型) |
+| word$ | 以 word 结尾的行(注意文件类型 Unix or DOS) |
 | . | 任意一个字符 |
 | \ | 用来转义字符 |
 | * | 前一个字符出现的次数为 0次或多次 |
-| \[ list \] | 匹配 list 中的字符 (无论里面有多少个, 只匹配一个) |
+| \[ list \] | 匹配 list 中的字符 (无论里面有多少个字符, 只匹配一个) |
 | \[ n1-n2 \] | 匹配字符范围 |
 | [ ^list ] | 不在 list(可能是字符集合或者字符范文) 中的字符 |
 | \{n\} | 指定的字符出现 n 次 |
