@@ -646,31 +646,84 @@ However, this dress is about $ 3183 dollars.$
 18:google is the best tools for search keyword.
 ```
 
+### 词首 \< 和 词尾 \>
+> **以一个字符开始 以一个字符结尾 中间只要不出现特殊字符 就认为是一个单词. 比如 ro88t.**
+
+```bash
+## 准备实验文件 word_test.txt
+[root@localhost ~]# vim word_test.txt 
+This is root user.
+This is root.
+The users is mroot.
+rooter is cat name.
+chroot is a command.
+mrooter is not a word.
+
+## root 出现在结尾
+[root@localhost ~]# grep 'root\>' word_test.txt 
+This is root user.
+This is root.
+The users is mroot.
+chroot is a command.
+[root@localhost ~]# grep 'root' word_test.txt 
+This is root user.
+This is root.
+The users is mroot.
+rooter is cat name.        <== 此行没有, 没有以 root 结尾
+chroot is a command.
+mrooter is not a word.	   <== 此行没有, 没有以 root 结尾
+
+## root 出现在词首
+[root@localhost ~]# grep '\<root' word_test.txt 
+This is root user.
+This is root.
+rooter is cat name.
+
+## 只想匹配 root 这个单词, 自行比较一下.
+[root@localhost ~]# grep '\<root\>' word_test.txt 
+This is root user.
+This is root.
+[root@localhost ~]# grep 'root' word_test.txt 
+This is root user.
+This is root.
+The users is mroot.
+rooter is cat name.
+chroot is a command.
+mrooter is not a word.
+```
+
 ### 总结
 | RE字符 | 含义 |
 | :-----: | ----- |
 | ^word | 以 word 开头的行 |
 | word$ | 以 word 结尾的行(注意文件类型 Unix or DOS) |
+| ^$ | 空白行 |
 | . | 任意一个字符 |
 | \ | 用来转义字符 |
 | * | 前一个字符出现的次数为 0次或多次 |
+| \\? | 前一个RE字符出现 0次或1次 |
 | \[ list \] | 匹配 list 中的字符 (无论里面有多少个字符, 只匹配一个) |
 | \[ n1-n2 \] | 匹配字符范围 |
 | [ ^list ] | 不在 list(可能是字符集合或者字符范文) 中的字符 |
+| \\( \\) | 找出 组 字符串 或 后向引用 |
 | \\\{n\\\} | 指定的字符出现 n 次 |
 | \\\{n,m\\\} | 指定字符出现的次数为 n-m 次 |
 | \\\{n,\\\} | 指定的字符出现的次数为 至少 n次 |
+| \\< 或 \\b | 锚定词首, 其后面的任意字符必须作为单词首部出现 (词首) |
+| \\> 或 \\b | 锚定词尾, 其前边的任意字符必须作为单词尾部出现 (词尾)|
 
 ## 扩展正则表达式
 grep 默认仅支持 ` 基础正则表达式 `, 如果想要使用扩展正则表达式, 可以使用 ` grep -E ` 选项, 不过还是建议使用 egrep 命令.
+> **grep -E = egrep**
 
 | RE 符号 | 含义 |
 | :----: | :-----: |
 | + | 前一个RE字符出现 1次或1次以上 |
-| \\? | 前一个RE字符出现 0次或1次 |
+| ? | 前一个RE字符出现 0次或1次 |
+| {m,n} | 匹配次数, 同基本正则表达式 不需要转义 |
 | \| | 用 or 的方式找出数个字符 |
-| () | 找出 组 字符串 |
-| ()+ | 多个重复组的判断 |
+| ( ) | 找出 组 字符串 或 后向引用 不需要转义|
+| ( )+ | 多个重复组的判断 |
 
 ```bash
 ## 准备实验环境
@@ -725,6 +778,42 @@ MANPATH	/usr/local/share/man
 1:"Open Source" is a good mechanism to develop programs.
 9:Oh! The soup taste good.
 16:The world <Happy> is the same with "glad".
+```
+
+### ()的后向引用
+> \1 : 引用第一个括号中匹配到的内容, 然后还有 \2  \3 等等.
+
+```bash
+## 我想要匹配前边为 l 开头 e 结尾中间两个字符, 然后后边为 前一个匹配到的字符后边加上r
+## 如前边匹配到 love, 那么后边就要求是 lover, 即使满足 (l 开头 e 结尾中间两个字符) 也不行
+[root@localhost ~]# vim test3.txt
+He love his lover.
+She like her lover.
+He like his liker.
+She love her liker.
+[root@localhost ~]# grep 'l..e' test3.txt 
+He love his lover.
+She like her lover.
+He like his liker.
+She love her liker.
+## 使用这种方式, 匹配的会有问题
+[root@localhost ~]# grep 'l..e.*l..e' test3.txt 
+He love his lover.
+She like her lover.
+He like his liker.
+She love her liker.
+## 前后要求匹配一致的
+[root@localhost ~]# grep '\(l..e\).*\1' test3.txt
+He love his lover.
+He like his liker.
+## 前后匹配一致并且加上 r 的
+[root@localhost ~]# grep '\(l..e\).*\1r' test3.txt
+He love his lover.
+He like his liker.
+
+## 行中存在一个数字且必须以该数字结尾的行
+[root@localhost ~]# grep '\([0-9]\).*\1$' /etc/inittab 
+#   5 - X11
 ```
 
 ## 相关命令(sed awk)
