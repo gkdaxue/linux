@@ -833,6 +833,8 @@ sed是一种流编编器，它是文本处理中非常中的工具，能够完�
 > '[n1[,n2]]function' : 必须用单引号 ' ' 包起来
 >
 > n1, n2 不一定会存在, 一般代表选择进行动作的行数. 比如 '10,20[动作行为]' 
+> 
+> sed 后边如果有超过两个以上的动作时, 每个动作前都要加上 -e 才行.
 
 | function参数 | 含义 |
 | :----: | ---- |
@@ -952,20 +954,234 @@ eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34
 192.168.1.206
 ```
 
-### awk命令
-sed 常常作用于一整行的处理, awk 则是比较倾向于讲一行分成多个字段来处理. 因此 awk 命令更适合处理小型的数据处理.
+### printf命令
+将数据进行格式化输出, 使数据更加的直观形象. 各个字段之间可以使用 Tab键或者空格分割开.
+> printf 'FORMAT' 数据内容
 
+| FROMAT | 作用 |
+| :---: | ---- |
+| \\n | 换行  |
+| \\t | 水平的制表符(Tab) |
+| %ns | n 为数字, s 表示 string , 即 n 个字符 |
+| %ni | n 为数字, i 表示 integer, 即 n 个整数 |
+| %N.nf | N和n都是数字, f 表示 float(浮点), 表示共需要N位数,但小数点保留n位小数 小数点也算一位. <br> 比如 %8.2f 为 xxxxx.xx 形式. 总共为8位, 小数点后保留2位小数 |
+
+#### 实例
+```bash
+## 实验材料
+[root@localhost ~]# sed -n '1,5p' /etc/passwd > printf_test.txt
+[root@localhost ~]# cat printf_test.txt 
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+
+## 可以看到显示的效果不够直观
+[root@localhost ~]# cat printf_test.txt | cut -d ':' -f 1,3,4 | sed 's/:/ /g'
+root 0 0
+bin 1 1
+daemon 2 2
+adm 3 4
+lp 4 7
+
+## 格式化后的效果
+[root@localhost ~]# printf "%10s %10s %10s\n" $(cat printf_test.txt | cut -d ':' -f 1,3,4 | sed 's/:/ /g')
+      root          0          0
+       bin          1          1
+    daemon          2          2
+       adm          3          4
+        lp          4          7
+
+## 加上一个标题出来
+[root@localhost ~]# printf '%10s %10s %10s \n' 'User' 'UID' 'GID' && printf "%10s %10s %10s\n" $(cat printf_test.txt | cut -d ':' -f 1,3,4 | sed 's/:/ /g')
+      User        UID        GID 
+      root          0          0
+       bin          1          1
+    daemon          2          2
+       adm          3          4
+        lp          4          7
+```
+
+### awk命令
+sed 常常作用于一整行的处理, awk 则是比较倾向于将一行划分成多个字段来处理. 因此 awk 命令更适合处理小型的数据处理. **awk 主要处理每一行的字段内的数据, 而默认的字段分隔符为 空格和[Tab] 键.** awk 可以处理后续的文件或者接收前个命令的 STDOUT.
+> ** awk [options] '[pattern] 条件判断 {动作1} ....' FILE_NAME**
+> 
+> **awk 后续所有动作必须只能使用单引号, 文字部分都要使用双引号.**
+
+| 选项 | 作用 |
+| :---: | ----- |
+| -F 分隔符 | 用于指定输入的分隔符 (默认为 tab和空格) |
+
+
+#### 实例
+```bash
+## 比如我想要实现 打印用户的 UID 和账户名 中间用空格分开显示 并按照升序方式排列出来
+## -F 分割开后, 会把每部分分别赋值给 $1 $2 $3 ...... 变量
+[root@localhost ~]# cat /etc/passwd | head -n 5
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+[root@localhost ~]# awk -F ':' '{print $3 "\t" $1}' /etc/passwd | sort -n
+0	root
+1	bin
+2	daemon
+3	adm
+4	lp
+5	sync
+6	shutdown
+7	halt
+.....
+
+## $0 代表处理的一整行数据
+[root@localhost ~]# awk -F ':' '{print $0}' /etc/passwd | head -n 5
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+```
+**awk 处理步骤:**
+> 1. 读取第一行, 然后把第一行分别赋值给 $0, $1, $2..........
+> 2. 依据条件类型的显示, 判断是否需要进行后续的操作
+> 3. 做完所有的条件类型和动作
+> 4. 判断是否还有后续行, 有则重复 1-3 步骤, 直到所有的数据都被读取完成.
+
+**所以我们可以看出 : awk 是以行为处理的单位, 每次处理一行, 然后以字段作为最小的处理单位进行处理.**
+
+#### awk 内置变量
+| 变量 | 含义 |
+| :---: | ----- |
+| $0 | 代表处理的每行数据 |
+| NF | 每一行($0)拥有的字段总数 |
+| NR | 目前 awk 处理的是第几行数据 |
+| FS | 输入字段分隔符, 默认为空格 |
+
+```bash
+## 使用 /etc/passwd 文件 显示目前在第几行 总共有多少个字段 用户名是什么
+root@localhost ~]# awk -F ':' '{print NR "\t" NF "\t" $1}' /etc/passwd | head -n 5
+1	7	root
+2	7	bin
+3	7	daemon
+4	7	adm
+5	7	lp
+```
+
+#### awk 的逻辑运算符
+| 运算符 | 含义 |
+| :---: | ----- |
+| > | 大于 |
+| < | 小于 |
+| >= | 大于或等于 |
+| <= | 小于或等于 |
+| == | 等于 |
+| != | 不等于 |
+
+**pattern 有两种特殊的模式 :**
+> BEGIN : 命令在处理文本之前执行
+>
+> END : 命令在处理文本之后执行
+
+```bash
+## 我们想要 UID 小于等于 5以下的用户 UID以及账号名
+[root@localhost ~]# awk '{FS=":"} $3 <=5 {print $3 "\t" $1}' /etc/passwd
+	root:x:0:0:root:/root:/bin/bash
+1	bin
+2	daemon
+3	adm
+4	lp
+5	sync
+
+## 结果我们发现, 第一行没有处理, 因为当我们读取第一行时, 默认还是使用空格分割的
+## 定义的 FS 只能从 第二行开始生效. 这个时候我们就需要用到 BEGIN 了.
+[root@localhost ~]# awk 'BEGIN {FS=":"} $3 <=5 {print $3 "\t" $1}' /etc/passwd
+0	root     <== 第一行正常处理了
+1	bin
+2	daemon
+3	adm
+4	lp
+5	sync
+
+## 然后我们尝试使用 END 来操作一下
+## 准备实验环境
+[root@localhost ~]# sed -n '1,8p' /etc/passwd > passwd
+[root@localhost ~]# sed -i '1i test:x:1000:1000' passwd
+[root@localhost ~]# sed -i '1c account:password:uid:gid' passwd
+[root@localhost ~]# cat passwd 
+account:password:uid:gid
+test:x:1000:1000
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+sync:x:5:0:sync:/sbin:/bin/sync
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt
+
+## 统计所有用户的 UID 和 GID 之和
+[root@localhost ~]# awk -F ':' 'NR==1 {printf "%10s %10s %10s %10s\n", $1, $3, $4, "Num" } NR>=2 {total = $3 + $4 ; printf "%10s %10s %10s %10s\n", $1, $3, $4, total }' passwd 
+   account        uid        gid        Num
+      test       1000       1000       2000
+      root          0          0          0
+       bin          1          1          2
+    daemon          2          2          4
+       adm          3          4          7
+        lp          4          7         11
+      sync          5          0          5
+  shutdown          6          0          6
+      halt          7          0          7
+[root@localhost ~]# awk 'BEGIN {FS=":"} NR==1 {printf "%10s %10s %10s %10s\n", $1, $3, $4, "Num" } NR>=2 {total = $3 + $4 ; printf "%10s %10s %10s %10s\n", $1, $3, $4, total }' passwd 
+   account        uid        gid        Num
+      test       1000       1000       2000
+      root          0          0          0
+       bin          1          1          2
+    daemon          2          2          4
+       adm          3          4          7
+        lp          4          7         11
+      sync          5          0          5
+  shutdown          6          0          6
+      halt          7          0          7
+```
+
+#### 总结
+> 1. 所有 awk 的工作,即 {} 内的动作,如果需要有多个命令辅助时, 可以使用分号 ';' 间隔
+> 2. 逻辑运算中, 需要用到 等于的情况, 要使用 '=='
+> 3. 格式化时, printf 必须加上 '\\n' 才能换行
+> 4. 与 bash 和 shell 中的变量不同, awk 中的变量前边不需要加上 $ 符号
 
 
 ### diff命令
+主要用在比较两个文件的区别并且是**以行为单位来比较**的.
+```bash
+## 实验环境
+[root@localhost ~]# sed -n '1,3p' /etc/passwd > diff1.txt
+[root@localhost ~]# sed -n '1,3p' /etc/passwd > diff2.txt
+[root@localhost ~]# cat diff1.txt
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
 
+## 未修改之前比较一下, 都一样
+[root@localhost ~]# diff diff1.txt diff2.txt 
 
+## 然后修改 diff2.txt 文件
+[root@localhost ~]# sed -i '1s/root/ROOT/g' diff2.txt 
+[root@localhost ~]# cat diff2.txt 
+ROOT:x:0:0:ROOT:/ROOT:/bin/bash      <== 此行已经被改变
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
 
-
-
-
-
-
+## 发现了不同的部分
+[root@localhost ~]# !diff
+diff diff1.txt diff2.txt 
+1c1
+< root:x:0:0:root:/root:/bin/bash
+---
+> ROOT:x:0:0:ROOT:/ROOT:/bin/bash
+```
 
 # shell script
 
@@ -983,7 +1199,6 @@ ls: cannot access /tmp/abc: No such file or directory   <== 因为没有这个�
 [root@localhost ~]# ls /tmp/abc && touch /tmp/abc/gkdaxue
 [root@localhost ~]# ls /tmp/abc
 gkdaxue
-
 
 ## 然后测试 ||
 [root@localhost ~]# rm -rf /tmp/abc/
