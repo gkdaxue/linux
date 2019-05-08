@@ -1273,8 +1273,20 @@ Mon Mar  4 14:13:43 CST 2019
 
 ### 加减乘除
 ```bash
-## 我们之前学过了使用 declare 来定义变量的类型, 当变量定义成为整数时才能进行加减运算.
+## 我们之前学过了使用 declare 和 let 来定义变量的类型, 当变量定义成为整数时才能进行加减运算.
 ## bash shell 默认仅支持整数的计算, 我们也可以使用 $(( 计算式 )) 来进行数值的计算
+## 默认为字符串
+[root@localhost ~]# aa=5+6
+[root@localhost ~]# echo $aa
+5+6              <== 所以不是我们预想的 11
+[root@localhost ~]# declare -i aa
+[root@localhost ~]# aa=5+6
+[root@localhost ~]# echo $aa
+11               <== 显示正确的结果
+[root@localhost ~]# let bb=5+6
+[root@localhost ~]# echo $bb
+11               <== 使用 let 也可以 
+
 
 ## 用户输入两个数值, 我们进行除法运算
 [root@localhost ~]# vim sh04.sh
@@ -1604,6 +1616,132 @@ Input Y/y/N/n : fadf
 error
 ```
 
-### if...then
+### 条件判断
+如果我们想要判断执行一条命令, 我们可以使用 && 与 || , 但是如果我们想要执行一堆命令, 我们就可以使用 if...then 来帮忙了
+```
+## 注意事项
+## 1. 用 ﹏ 符号来表示空格
+## 2. if 和 []  以及 [] 的两边各有一个空格
+
+## 如果我有多个条件表达式要判断, 那么我们就可以使用如下两种方式(两个条件都满足):
+1. [﹏条件表达式1﹏-a﹏条件表达式2﹏] 可以改为 [﹏条件表达式1﹏] && [﹏条件表达式2﹏]
+2. [﹏条件表达式1﹏&&﹏条件表达式2﹏]
+当然还有 -o 以及 || 表示只要满足其一即可.
+```
+
+#### 单个条件判断
+```bash
+## 相当于, 如果.... 就 ......
+if﹏[﹏条件表达式﹏]; then
+   条件表达式成立时, 需要执行的一系列命令
+fi
 
 
+## 判断 /tmp 目录下是否存在 gkdaxue 文件, 不存在则创建
+[root@localhost ~]# vim test14.sh
+#!/bin/bash
+DIR='/tmp/gkdaxue'
+ls -ld $DIR
+if [ ! -e "${DIR}" ]; then
+  mkdir $DIR
+  ls -ld  $DIR
+fi
+
+[root@localhost ~]# bash test14.sh
+ls: cannot access /tmp/gkdaxue: No such file or directory
+drwxr-xr-x. 2 root root 4096 Mar  5 19:25 /tmp/gkdaxue
+```
+
+#### 双重条件判断
+```bash
+## 相当于如果 .....就 ....  否则 就.....
+if﹏[﹏条件表达式﹏]; then
+   条件表达式成立时, 需要执行的一系列命令
+else
+   条件表达式不成立时, 需要执行的一系列命令
+fi
+
+
+## 如果用户 gkdaxue 不存在, 则创建这个用户, 存在则提示该用户已存在
+[root@localhost ~]# vim test15.sh
+#!/bin/bash
+id gkdaxue
+if [ $? -eq 0 ]; then
+  echo 'gkdaxue is exists'
+else
+  useradd gkdaxue
+  id gkdaxue
+fi
+[root@localhost ~]# bash test15.sh
+id: gkdaxue: No such user         <== 说明此用不存在
+uid=500(gkdaxue) gid=500(gkdaxue) groups=500(gkdaxue)
+[root@localhost ~]# bash test15.sh
+uid=500(gkdaxue) gid=500(gkdaxue) groups=500(gkdaxue)
+gkdaxue is exists
+```
+
+#### 多重条件判断
+```bash
+if﹏[﹏条件表达式1﹏];then
+   条件表达式1成立时, 需要执行的一系列命令
+elfi﹏[﹏条件表达式2﹏];then
+   条件表达式2成立时, 需要执行的一系列命令
+.....
+else
+   上诉条件都不成立时执行
+fi
+
+## 让用户输入 y/Y/n/N 中的一个, 
+## 1. 输入 y/Y 输出 Yes
+## 2. 输入 n/N 输出 No
+## 3. 输入其他的, 则输出 Error
+[root@localhost ~]# vim test16.sh
+#!/bin/bash
+read -p "Input Y/y/N/n : " input_char
+if [ "${input_char}" == 'Y' ] || [ "${input_char}" == 'y' ];then
+   echo 'Yes'
+elif [ "${input_char}" == 'N' -o "${input_char}" == 'n' ];then
+   echo 'No'
+else
+   echo 'Error'
+fi
+
+[root@localhost ~]# bash test16.sh
+Input Y/y/N/n :  y
+Yes
+[root@localhost ~]# bash test16.sh
+Input Y/y/N/n :  Y
+Yes
+[root@localhost ~]# bash test16.sh
+Input Y/y/N/n :  n
+No
+[root@localhost ~]# bash test16.sh
+Input Y/y/N/n :  N
+No
+[root@localhost ~]# bash test16.sh
+Input Y/y/N/n :  
+Error
+```
+
+#### 练习题
+```bash
+1. 判断指定的端口是否开启 (netstat -tlpn)
+[root@localhost ~]# netstat -tln
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address               Foreign Address             State      
+tcp        0      0 0.0.0.0:111                 0.0.0.0:*                   LISTEN      
+tcp        0      0 0.0.0.0:36179               0.0.0.0:*                   LISTEN      
+tcp        0      0 0.0.0.0:22                  0.0.0.0:*                   LISTEN      
+tcp        0      0 127.0.0.1:631               0.0.0.0:*                   LISTEN      
+tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN      
+tcp        0      0 :::32998                    :::*                        LISTEN      
+tcp        0      0 :::111                      :::*                        LISTEN      
+tcp        0      0 :::22                       :::*                        LISTEN      
+tcp        0      0 ::1:631                     :::*                        LISTEN      
+tcp        0      0 ::1:25                      :::*                        LISTEN  
+
+
+
+```
+
+### 
