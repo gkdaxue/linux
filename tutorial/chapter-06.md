@@ -1184,6 +1184,147 @@ diff diff1.txt diff2.txt
 ```
 
 # shell script
+shell script 就是纯文本文件, 让这个文件来帮我们一次执行多个命令 或者使用一些运算和逻辑判断来帮我们达到某些功能. 所以我们需要事先了解一下编写 shell script 的规则:
+> 1. 命令的执行是从上往下, 从左往右开始执行的.
+> 2. 命令 选项 参数之间至少要有一个空格, 多余的空格会被忽略.
+> 3. 空白行也会被忽略, Tab键的空白也会作为空格来处理.
+> 4. 以 # 开头的行不在第一行中表示注释会被忽略, 在第一行表示声明 shell 的作用.
+> 5. 如果读取到一个 Enter, 就会尝试开始执行该行命令.
+> 6. 如果一行的内容太多, 那么可以使用 \\[Enter] 来扩展为下一行.
+
+**一般在编写 shell 脚本时应该包含以下的内容:**
+> 1. 脚本的功能
+> 2. 脚本的版本 作者信息
+> 3. 用到的变量说明
+> 4. 声明使用的 shell 
+> 5. 各个部分的功能注释
+> 6. 实际执行的脚本内容
+
+**脚本执行的方式(脚本需要具有 rx 权限):**
+> 绝对路径/相对路径执行
+>
+> 放到 PATH 环境变量中执行  
+>
+> 以 shell 进程执行, 如 bash FILE_NAME.sh
+
+## 脚本练习
+
+### Hello World
+```bash
+## 名称无所谓, 以 sh 为后缀名只是表示这是一个脚本仅此而已.
+[root@localhost ~]# vim sh01.sh
+#!/bin/bash
+# bash test file              
+echo 'Hello world!'
+
+## "#" 在第一行表示声明的意思, 声明使用 /bin/bash 这个 shell. 在其余行表示注释不执行代码
+## 建议在使用时设置好 PATH 环境变量, 防止命令不在 PATH 变量路径中, 就可以设置 PATH 变量或者手动指定命令的绝对路径也可.
+
+## bash 方式执行
+[root@localhost ~]# bash sh01.sh 
+Hello world!
+
+## 绝对路径/相对路径 执行
+[root@localhost ~]# ./sh01.sh
+-bash: ./sh01.sh: Permission denied   <== 为什么没有权限呢? 因为需要 rx 权限
+[root@localhost ~]# chmod +x sh01.sh
+[root@localhost ~]# ./sh01.sh 
+Hello world!
+```
+
+### 人机交互
+```bash
+## 要求用户输入他的姓和名, 然后打印出来用户的名字
+[root@localhost ~]# vim sh02.sh
+#!/bin/bash
+read -p 'first name : ' -t 10 first_name
+read -p 'last name  : ' -t 10 last_name
+echo "${first_name} ${last_name}" 
+[root@localhost ~]# bash sh02.sh 
+first name : zhang
+last name  : san
+zhang san
+```
+
+### 日志文件
+```bash
+## 创建 前一天 今天  明天 三个文件
+## 比如今天是 20080808, 那么三个文件就是 20080807.log 20080808.log  20080809.log
+[root@localhost ~]# vim sh03.sh
+#!/bin/bash
+date1=$(date -d '1 day ago' '+%Y%m%d') # 前一天的日期
+date2=$(date '+%Y%m%d')                # 当前日期
+date3=$(date -d '+1 day' '+%Y%m%d')    # 后一天日期
+
+file1="${date1}.log"
+file2="${date2}.log"
+file3="${date3}.log"
+
+touch ${file1} ${file2} ${file3}
+
+[root@localhost ~]# bash sh03.sh
+[root@localhost ~]# date
+Mon Mar  4 14:13:43 CST 2019
+[root@localhost ~]# ll
+-rw-r--r--. 1 root root   0 Mar  4 14:13 20190303.log
+-rw-r--r--. 1 root root   0 Mar  4 14:13 20190304.log
+-rw-r--r--. 1 root root   0 Mar  4 14:13 20190305.log
+```
+
+### 加减乘除
+```bash
+## 我们之前学过了使用 declare 来定义变量的类型, 当变量定义成为整数时才能进行加减运算.
+## bash shell 默认仅支持整数的计算, 我们也可以使用 $(( 计算式 )) 来进行数值的计算
+
+## 用户输入两个数值, 我们进行除法运算
+[root@localhost ~]# vim sh04.sh
+#!/bin/bash
+read -p 'first number  : ' first_num
+read -p 'second number : ' second_num
+echo $(( $first_num/$second_num ))
+
+[root@localhost ~]# bash sh04.sh
+first number  : 13
+second number : 3
+4
+```
+
+## 不同脚本执行方式的区别
+不同的脚本执行方式会造成不一样的结果, 可能会对 bash 的环境影响最大. 脚本执行方式除了我们之前说的方式外, 还有 source 和 . 方式来执行. 然后我们来分析一下不同执行方式之间的区别.
+
+### 直接执行脚本
+这种方式包含我们之前说的 ` 绝对/相对路径 ` ` . ` 以及 `放到 PATH 环境变量设置的目录中 ` 还有 `  bash `等方式来执行, 该脚本都会在子进程的 bash 内执行的. 并且子进程完成后, 子进程中的各项变量或操作将会被销毁而不会传回到父进程中.
+
+```bash
+[root@localhost ~]# cat sh02.sh 
+#!/bin/bash
+read -p 'first name : ' -t 10 first_name
+read -p 'last name  : ' -t 10 last_name
+echo "${first_name} ${last_name}"
+[root@localhost ~]# bash sh02.sh
+first name : 111
+last name  : 222
+111 222
+
+## -u 如果使用未定义的变量, 则会提示错误
+[root@localhost ~]# set -u
+[root@localhost ~]# echo $first_name $last_name
+-bash: first_name: unbound variable
+```
+当我们使用直接执行脚本来处理的话, 系统会给与一个新的 bash 来让我们操作, 我们所有的操作都是在子进程中进行, 子进程完后后数据被销毁, 也不会回传到父进程中. 所以自然不能输出.
+
+### source 来操作脚本
+```bash
+[root@localhost ~]# source sh02.sh
+first name : 111
+last name  : 222
+111 222
+[root@localhost ~]# echo $first_name $last_name
+111 222
+```
+这种方式我们却可以获取到变量, 说明是在父进程中执行没有打开新的 shell, 所以我们修改完配置文件后, 为啥使用 source 加载后的设置会立即生效的原因.
+
+## && 和 ||
 
 | 符号 | 作用 |
 | ---- | ---- |
@@ -1221,4 +1362,242 @@ ls /tmp/gkdaxue || echo 'not exists' && echo 'exists'
 ## 如果判断式有三个, 那么 && 与 || 的顺序通常如下所示, 一定如下所示:
 command1 && command2 || command3
 ```
+
+## test命令的测试功能
+如果我们想要监测某个文件或者文件相关的属性是, 那么我们就可以使用 test 命令, test 命令不会输出信息, 但是我们可以通过 $? 或 && 或 || 来显示结果.
+
+| 符号 | 含义 |
+| :----: | ---- |
+| 文件类型判断 | <br> |
+| -e | 判断文件是否存在 |
+| -f | 是否是一个文件 |
+| -d | 是否是一个目录 |
+| -b | 是否是块设备 |
+| -c | 是否是字符设备 |
+| -s | 是否是 Socket 文件 |
+| -l | 是否是链接文件 |
+| 文件权限检测 | <br> |
+| -r | 是否有可读权限 |
+| -w | 是否有可写权限 |
+| -x | 是否有可执行权限 |
+| -u | 是否有 SUID 属性 |
+| -g | 是否有 SGID 属性 |
+| -k | 是否有 SBIT 属性 |
+| -s | 是否非空白文件 |
+| 数值逻辑判断, 如 test n1 -eq n2 | <br> |
+| -eq | n1 n2 是否相等 |
+| -ne | n1 n2 是否不相等 |
+| -gt | n1 大于 n2 |
+| -lt | n1 小于 n2 |
+| -ge | n1 大于等于 n2 |
+| -le | n1 小于等于 n2 |
+| 字符串判断 | <br> |
+| -z string | 判断字符串是否空字符串, 则为 true |
+| str1 = str2 | str1 是否等于 str2, 相等则为 true (等号两边有空格) |
+| str1 != str2 | str1 是否等于 str2, 不相等则为 true (等号两边有空格) |
+| 多重条件判断 | <br> |
+| -a | 两个条件同时满足 返回 true, 如 test -r file1 -a test -x file1 |
+| -o | 满足任何一个条件 返回 true, 如 test -r file1 -o test -x file1 |
+| ! | 非, 如 test ! -x file 当 file1不具有 x 权限时 返回 true | 
+| 两个文件比较 test file1 -nt file2 | <br> |
+| -nt | 判断 file1 是否比 file2 新 |
+| -ot | 判断 file1 是否比 file2 旧 |
+| -ef | 判断 file1 file2 是否为同一个文件 (是否指向同一个 inode) |
+
+### 实例
+```bash
+## 查看 /home 下 是否存在 gkdaxue 用户的家目录
+## test 执行结果不会显示任何信息, 但是我们可以通过 $? 来判断
+[root@localhost ~]# ll /home
+drwx------. 2 root root 16384 Mar  3 11:31 lost+found
+[root@localhost ~]# test -e /home/gkdaxue
+[root@localhost ~]# echo $?
+1        <== 说明不存在
+
+
+## 编写一个脚本, 
+## 1. 让用户输入一个文件名, 判断用户是否输入文件名
+## 2. 判断用户输入文件是否存在, 文件不存在则输出 'File Not Exists' 文件存在则判断是一个文件还是目录 
+## 3. 如果是目录输出 'File is directory', 如果是文件则输出 'File is regular file'
+## 4. 判断对这个文件的权限, 并输出权限信息.
+[root@localhost ~]# useradd gkdaxue
+[root@localhost ~]# passwd gkdaxue
+Changing password for user gkdaxue.
+New password: 
+BAD PASSWORD: it is too short
+BAD PASSWORD: is too simple
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ mkdir test_dir
+[gkdaxue@localhost ~]$ touch test_file
+[gkdaxue@localhost ~]$ vim test_file.sh
+#!/bin/bash
+## 不要使用 root 用户来运行此文件, 否则可能会导致判断不准确
+## 因为 root 在很多权限限制上面无效
+
+## 提示用户输入文件名称
+read -p 'Input File Name : ' file_name
+
+## 判断用户是否输入文件名, 没有输入则提示并退出
+test -z $file_name && echo 'Your Must Input File Name' && exit 0
+
+## 判断文件是否存在, 不存在则提示并退出
+test ! -e $file_name && echo 'File Not Exists' && exit 0
+
+## 判断文件类型
+test -f $file_name && echo "${file_name} is regulare file"
+test -d $file_name && echo "${file_name} is directory"
+
+## 判断文件的权限信息
+test -r $file_name && echo 'readble'
+test -w $file_name && echo 'writeable'
+test -x $file_name && echo 'executable'
+
+
+## 开始试验
+[gkdaxue@localhost ~]$ ll
+total 8
+drwxrwxr-x. 2 gkdaxue gkdaxue 4096 Mar  5 14:08 test_dir
+-rw-rw-r--. 1 gkdaxue gkdaxue    0 Mar  5 14:09 test_file
+-rw-r--r--. 1 gkdaxue gkdaxue  754 Mar  5 14:07 test_file.sh
+[gkdaxue@localhost ~]$ bash test_file.sh
+Input File Name : 
+Your Must Input File Name
+[gkdaxue@localhost ~]$ bash test_file.sh
+Input File Name : test
+File Not Exists
+[gkdaxue@localhost ~]$ bash test_file.sh 
+Input File Name : test_dir
+test_dir is directory
+readble
+writeable
+executable
+[gkdaxue@localhost ~]$ bash test_file.sh
+Input File Name : test_file
+test_file is regulare file
+readble
+writeable
+```
+
+## shell script 的默认变量
+我们知道命令可以带参数, 脚本也可以提示我们输入参数, 那么如果我们想在脚本执行的时候跟上参数, 而不是提示输入参数, 那么是否可行呢? 当然可行啦. 格式如下
+```bash
+script_name     parm1   parm2  parm3  ...
+    $0            $1     $2      $3      <== 我们可以在脚本中使用 $1 $2.... 来获取参数值
+
+$# : 脚本后边有多少个参数
+$@ : 所有的参数, 每个变量都是独立的(用双引号括起来的) "$1" "$2" "$3"
+$* : 所有的参数, 为 $1#$2#$3... (#为分隔符,默认为空格)
+$@ 和 $* 还是有点区别的, 所以记住 $@ 就好了
+$0 : 脚本名称
+$1 : 脚本后的第一个参数
+....................
+```
+
+### 实例
+```bash
+## 编写一个脚本, 要求如下
+## 1. 输出脚本的名称, 参数个数 
+## 2. 参数个数必须大于等于2个, 否则提示错误
+## 3. 先输出全部参数, 在输出第一个参数和第二个参数
+[root@localhost ~]# vim test12.sh
+#!/bin/bash
+[ "$#" -lt 2 ] && echo 'You mush input more then 2 parameter' && exit 0
+echo 'Script Name  : ' $0
+echo 'Script Param : ' $@
+echo 'Param 1      : ' $1
+echo 'Param 2      : ' $2 
+
+## 实验
+[root@localhost ~]# bash test12.sh
+You mush input more then 2 parameter
+[root@localhost ~]# bash test12.sh one
+You mush input more then 2 parameter
+[root@localhost ~]# bash test12.sh one two
+Script Name  :  test12.sh
+Script Param :  one two
+Param 1      :  one
+Param 2      :  two 
+```
+
+### shift : 参数变量号码偏移
+shift 后边可以跟上一个数字, 表示拿掉最前边的那么多个参数.
+```bash
+[root@localhost ~]# vim test13.sh
+#!/bin/bash
+echo 'Total Param : ' $#
+echo 'Param       : ' $@
+shift 1
+echo 'Total Param : ' $#
+echo 'Param       : ' $@
+shift 1
+echo 'Total Param : ' $#
+echo 'Param       : ' $@
+[root@localhost ~]# bash test13.sh one two three four five six server
+Total Param :  7
+Param       :  one two three four five six server
+Total Param :  6
+Param       :  two three four five six server
+Total Param :  5
+Param       :  three four five six server
+```
+
+## 条件判断式
+### 判断符号 \[ \]
+
+可以利用判断符号 ` [] ` 来进行数据的判断, 中括号的使用方法基本上和 test 一致. 使用此符号注意事项:
+> 1. 中括号的两端都需要空格符来分割
+> 2. 中括号内的变量最好都用双引号包含起来
+> 3. 中括号内的常量最好都用单引号或双引号包含起来
+
+```bash
+## 使用 test 判断 $HOME 变量是否为空
+[root@localhost ~]# echo $HOME
+/root
+[root@localhost ~]# test -z $HOME && echo 'not null'
+
+## 使用 [] 来操作
+[root@localhost ~]# [ -z "$HOME" ] && echo 'not null'
+
+## 如果不用引号操作的后果
+[root@localhost ~]# name='gkdaxue test user'
+[root@localhost ~]# [ $name = "gkdaxue" ]
+-bash: [: too many arguments    <== 相当于 gkdaxue test user = gkdaxue 导致的问题
+[root@localhost ~]# [ "${name}" = 'gkdaxue' ] 
+[root@localhost ~]# echo $?
+1
+
+
+## 练习题
+## 让用户输入 y/Y/n/N 字符, 然后判断用户输入的是 y/Y/n/N 还是其他的
+## 1. 用户输入 y/Y  输出 yes, 输入 n/N  则输出 no
+## 2. 输入其他之外的字符, 则输出 error
+[root@localhost ~]# vim test11.sh 
+#!/bin/bash
+read -p "Input Y/y/N/n : " input_char
+[ "$input_char" == 'Y' -o "$input_char" == 'y' ] && echo 'Yes' && exit 0
+[ "$input_char" == 'N' -o "$input_char" == 'n' ] && echo 'No'  && exit 0 
+echo "error" && exit 0
+
+## 实验
+[root@localhost ~]# bash test11.sh
+Input Y/y/N/n : y
+Yes
+[root@localhost ~]# bash test11.sh
+Input Y/y/N/n : Y
+Yes
+[root@localhost ~]# bash test11.sh
+Input Y/y/N/n : n
+No
+[root@localhost ~]# bash test11.sh
+Input Y/y/N/n : N
+No
+[root@localhost ~]# bash test11.sh
+Input Y/y/N/n : fadf
+error
+```
+
+### if...then
+
 
