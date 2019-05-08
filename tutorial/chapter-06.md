@@ -1296,15 +1296,20 @@ second number : 3
 这种方式包含我们之前说的 ` 绝对/相对路径 ` ` . ` 以及 `放到 PATH 环境变量设置的目录中 ` 还有 `  bash `等方式来执行, 该脚本都会在子进程的 bash 内执行的. 并且子进程完成后, 子进程中的各项变量或操作将会被销毁而不会传回到父进程中.
 
 ```bash
-[root@localhost ~]# cat sh02.sh 
+## echo $$ : 表示输出当前的进程 ID
+[root@localhost ~]# echo $$
+14582      <== 当前进程的ID
+[root@localhost ~]# vim sh002.sh 
 #!/bin/bash
 read -p 'first name : ' -t 10 first_name
 read -p 'last name  : ' -t 10 last_name
 echo "${first_name} ${last_name}"
-[root@localhost ~]# bash sh02.sh
+echo $$
+[root@localhost ~]# bash sh002.sh
 first name : 111
 last name  : 222
 111 222
+14587        <== 进程 ID 变了,变为了子进程的 ID       
 
 ## -u 如果使用未定义的变量, 则会提示错误
 [root@localhost ~]# set -u
@@ -1315,10 +1320,11 @@ last name  : 222
 
 ### source 来操作脚本
 ```bash
-[root@localhost ~]# source sh02.sh
+[root@localhost ~]# source sh002.sh
 first name : 111
 last name  : 222
 111 222
+14582       <== 还是父进程的 ID 没有改变
 [root@localhost ~]# echo $first_name $last_name
 111 222
 ```
