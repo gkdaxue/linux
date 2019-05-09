@@ -1995,6 +1995,28 @@ $1 is
 ## 所以使用函数时, 一定要注意 $1 $2 $0 的意思
 ```
 
+# exit
+exit 可以用来退出脚本, 也可以用来定义退出是返回的状态码, 如果脚本没有明确的定义状态码, 那么最后执行的一条命令的状态码即为脚本的退出状态码
+```bash
+[root@localhost ~]# vim test26.sh 
+#!/bin/bash
+echo 'test'
+[root@localhost ~]# bash test26.sh
+test
+[root@localhost ~]# echo $?
+0      <== 没有定义退出状态码, 所以退出码就是最后一条命令执行的状态码(0或非0的数字)
+
+
+[root@localhost ~]# vim test27.sh
+#!/bin/bash
+echo 'test'
+exit 26
+[root@localhost ~]# bash test27.sh
+test
+[root@localhost ~]# echo $?
+26    <== 输出的就是我们自己定义的状态码, 类似于 http 中的状态码 200 301 404 502 等
+```
+
 # shell 中如何进行算术运算
 我们之前说过, 在 shell 中数据的类型都是字符, 那么我们如何进行数值的运算呢? 今天我们来总结一下
 ```bash
