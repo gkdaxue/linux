@@ -1995,5 +1995,36 @@ $1 is
 ## 所以使用函数时, 一定要注意 $1 $2 $0 的意思
 ```
 
-# 
+# shell 中如何进行算术运算
+我们之前说过, 在 shell 中数据的类型都是字符, 那么我们如何进行数值的运算呢? 今天我们来总结一下
+```bash
+[root@localhost ~]# A=3
+[root@localhost ~]# B=6
+[root@localhost ~]# echo $A+$B
+3+6       <== 并不是我们想要的结果 9
+
+## 第一种方式 : let
+users=`grep '^gkdaxue' /etc/shadow`
+if [ -z "${users}" ]; then
+   echo "${users} not exists"
+   exit 0
+fi
+
+## 第二种方式 : $[算术运算表达式]
+[root@localhost ~]# D=$[$A+$B]
+[root@localhost ~]# echo $D
+9
+
+## 第三种方式 : $((算术运算表达式))
+[root@localhost ~]# F=$(($A+$B))
+[root@localhost ~]# echo $F
+9
+
+## 第四种方法 : expr 算术运算表达式
+## 表达式中各操作数及运算符之间要有空格, 而且还要使用命令引用
+[root@localhost ~]# G=`expr $A + $B`
+[root@localhost ~]# echo $G
+9
+```
+
 
