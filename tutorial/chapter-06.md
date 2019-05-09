@@ -1620,19 +1620,18 @@ error
 如果我们想要判断执行一条命令, 我们可以使用 && 与 || , 但是如果我们想要执行一堆命令, 我们就可以使用 if...then 来帮忙了
 ```
 ## 注意事项
-## 1. 用 ﹏ 符号来表示空格
-## 2. if 和 []  以及 [] 的两边各有一个空格
+## 1. if 和 []  以及 [] 的两边各有一个空格
 
 ## 如果我有多个条件表达式要判断, 那么我们就可以使用如下两种方式(两个条件都满足):
-1. [﹏条件表达式1﹏-a﹏条件表达式2﹏] 可以改为 [﹏条件表达式1﹏] && [﹏条件表达式2﹏]
-2. [﹏条件表达式1﹏&&﹏条件表达式2﹏]
+1. [ 条件表达式1 -a 条件表达式2 ] 可以改为 [ 条件表达式1 ] && [ 条件表达式2 ]
+2. [ 条件表达式1 && 条件表达式2 ]
 当然还有 -o 以及 || 表示只要满足其一即可.
 ```
 
-#### 单个条件判断
+#### 单分支条件判断
 ```bash
 ## 相当于, 如果.... 就 ......
-if﹏[﹏条件表达式﹏]; then
+if [ 条件表达式 ]; then
    条件表达式成立时, 需要执行的一系列命令
 fi
 
@@ -1652,10 +1651,10 @@ ls: cannot access /tmp/gkdaxue: No such file or directory
 drwxr-xr-x. 2 root root 4096 Mar  5 19:25 /tmp/gkdaxue
 ```
 
-#### 双重条件判断
+#### 双分支条件判断
 ```bash
 ## 相当于如果 .....就 ....  否则 就.....
-if﹏[﹏条件表达式﹏]; then
+if [ 条件表达式 ]; then
    条件表达式成立时, 需要执行的一系列命令
 else
    条件表达式不成立时, 需要执行的一系列命令
@@ -1680,11 +1679,11 @@ uid=500(gkdaxue) gid=500(gkdaxue) groups=500(gkdaxue)
 gkdaxue is exists
 ```
 
-#### 多重条件判断
+#### 多分支条件判断
 ```bash
-if﹏[﹏条件表达式1﹏];then
+if [ 条件表达式1 ];then
    条件表达式1成立时, 需要执行的一系列命令
-elfi﹏[﹏条件表达式2﹏];then
+elfi [ 条件表达式2 ];then
    条件表达式2成立时, 需要执行的一系列命令
 .....
 else
@@ -1723,25 +1722,278 @@ Input Y/y/N/n :
 Error
 ```
 
-#### 练习题
+### case...esac判断
+case语句是在多个范围内匹配数据，若匹配成功则执行相关命令并结束整个条件测试；而如果数据不在所列出的范围内，则会去执行星号（*）中所定义的默认命令。
 ```bash
-1. 判断指定的端口是否开启 (netstat -tlpn)
-[root@localhost ~]# netstat -tln
-Active Internet connections (only servers)
-Proto Recv-Q Send-Q Local Address               Foreign Address             State      
-tcp        0      0 0.0.0.0:111                 0.0.0.0:*                   LISTEN      
-tcp        0      0 0.0.0.0:36179               0.0.0.0:*                   LISTEN      
-tcp        0      0 0.0.0.0:22                  0.0.0.0:*                   LISTEN      
-tcp        0      0 127.0.0.1:631               0.0.0.0:*                   LISTEN      
-tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN      
-tcp        0      0 :::32998                    :::*                        LISTEN      
-tcp        0      0 :::111                      :::*                        LISTEN      
-tcp        0      0 :::22                       :::*                        LISTEN      
-tcp        0      0 ::1:631                     :::*                        LISTEN      
-tcp        0      0 ::1:25                      :::*                        LISTEN  
+## 程序段最后的 ;; 表示该程序段的结束
+## 变量可能是用户执行脚本后输入的 或者 是脚本的参数传递过来的($1.....)
+case "$变量名" in
+	模式1)
+		代码块
+		;;
+	模式2)
+		代码块
+		;;
+	......
+	*)
+		不符合以上所有匹配所执行的代码块
+		;;
+esac
 
+## 判断用户输入的是 字母 数字 还是其他
+[root@localhost ~]# vim test17.sh
+#!/bin/bash
+read -p '请输入一个字符 : ' input_char
+case "${input_char}" in
+     [a-z]|[A-Z])
+	  echo '字母'
+	  ;;
+     [0-9])
+	  echo '数字'
+	  ;;
+     *)
+	  echo '其他的字符'
+   	  ;;
+esac
 
-
+[root@localhost ~]# bash test17.sh
+请输入一个字符 : a
+字母
+[root@localhost ~]# bash test17.sh
+请输入一个字符 : 9
+数字
+[root@localhost ~]# bash test17.sh
+请输入一个字符 : ^[[20~
+其他的字符
+[root@localhost ~]# bash test17.sh
+请输入一个字符 : 555       <== 因为我们只判断一个字符, 所以不能匹配 被认为是其他
+其他的字符
 ```
 
-### 
+## 循环
+我们之前讲了判断这些, 那么如果我想不断地执行某些代码, 到达设置的条件就不在执行, 那么就需要用到我们所说的循环.
+
+### while..do..done
+```bash
+## 条件不满足退出循环
+while [ 条件判断式 ]; do
+	条件表达式满足时执行的代码
+done
+
+## 当用户输入 quit 后退出程序, 否则就打印输入的内容
+[root@localhost ~]# vim test18.sh 
+#!/bin/bash
+input_char=''
+while [ "${input_char}" != 'quit' ]; do
+   read -p 'Input quit then exit this program : ' input_char
+   echo "Your input ${input_char}"
+done
+echo 'Exists this program'
+
+[root@localhost ~]# bash test18.sh 
+Input quit then exit this program : hello
+Your input hello
+Input quit then exit this program : anything is ok
+Your input anything is ok
+Input quit then exit this program : bye
+Your input bye
+Input quit then exit this program : quit
+Your input quit
+Exists this program
+```
+
+### until..do..done
+```bash
+## 条件满足时退出程序
+until [ 条件表达式 ]; do
+	当条件表达式不满足时执行的代码块
+done
+
+
+## 当用户输入 quit 时 退出程序
+[root@localhost ~]# vim test19.sh 
+#!/bin/bash
+input_char=''
+until [ "${input_char}" == 'quit' ]; do
+   read -p 'Input quit then exit this program : ' input_char
+   echo "Your input ${input_char}"
+done
+echo 'Exists this program'
+
+[root@localhost ~]# bash test19.sh 
+Input quit then exit this program : hello
+Your input hello
+Input quit then exit this program : are you ok ?
+Your input are you ok ?
+Input quit then exit this program : quit
+Your input quit
+Exists this program
+```
+
+### for..do...done
+```bash
+## for 循环更偏向于已经知道要执行多少次循环代码, 而 while 和 until 则是符合条件则进行某些操作
+for var in col1 col2 col3..; do
+   代码块(我们可以 $var 来使用变量)
+done
+
+## 练习1 : 打印从 1-9 个数字
+[root@localhost ~]# vim test20.sh
+#!/bin/bash
+# seq 为连续的意思, 从 1-9
+for num in $(seq 1 9); do  
+    echo $num
+done
+
+[root@localhost ~]# bash test20.sh 
+1
+2
+3
+4
+5
+6
+7
+8
+9
+
+## 练习2 : 打印系统中存在的所有用户
+[root@localhost ~]# vim test21.sh 
+#!/bin/bash
+for users in $(cut -d ':' -f 1 /etc/passwd); do
+    echo $users
+done
+
+[root@localhost ~]# bash test21.sh
+root
+bin
+daemon
+adm
+lp
+.....
+```
+
+此外, for 还有一种写法, 针对数值来进行操作.
+```bash
+for ((变量初始值; 条件; 步长)); do
+	代码块
+done
+
+初始值 : 某个变量的值
+条件   : 不满足这个条件, 则退出循环
+步长   : 变量每次增加的数值
+
+## 统计 1-20 数字相加的和
+[root@localhost ~]# vim test22.sh
+#!/bin/bash
+s=0
+for ((i=1; i<=20; i=i+1)); do
+    s=$(( $s+$i ))
+done
+echo $s
+
+[root@localhost ~]# bash test22.sh
+210
+```
+
+## function(函数)
+函数的作用是干嘛呢? 就是让我们自己定义一个命令 这个命令里面定义了一些常用的功能, 我们只要调用这个命令, 就可以使用自动执行函数中所有的命令.
+> 因为 **shell script 的执行方式是由上而下, 从左到右**, 因此在 shell script中 定义函数一定在程序的最前边, 方便后边进行调用
+
+```bash
+function Function_Name(){
+	函数的代码块, 调用这个函数, 就会执行这个程序中的所有代码块.
+}
+
+
+## 打印 一个九九乘法表
+[root@localhost ~]# vim test23.sh 
+#!/bin/bash
+for ((i=1; i<=9; i=i+1)); do
+    for ((j=1; j<=$i; j=j+1)); do
+        printf "%2s * %2s = %2s  " ${j} ${i} $(( $j * $i ))
+    done
+    echo ''
+done
+[root@localhost ~]# bash test23.sh 
+ 1 *  1 =  1  
+ 1 *  2 =  2   2 *  2 =  4  
+ 1 *  3 =  3   2 *  3 =  6   3 *  3 =  9  
+ 1 *  4 =  4   2 *  4 =  8   3 *  4 = 12   4 *  4 = 16  
+ 1 *  5 =  5   2 *  5 = 10   3 *  5 = 15   4 *  5 = 20   5 *  5 = 25  
+ 1 *  6 =  6   2 *  6 = 12   3 *  6 = 18   4 *  6 = 24   5 *  6 = 30   6 *  6 = 36  
+ 1 *  7 =  7   2 *  7 = 14   3 *  7 = 21   4 *  7 = 28   5 *  7 = 35   6 *  7 = 42   7 *  7 = 49  
+ 1 *  8 =  8   2 *  8 = 16   3 *  8 = 24   4 *  8 = 32   5 *  8 = 40   6 *  8 = 48   7 *  8 = 56   8 *  8 = 64  
+ 1 *  9 =  9   2 *  9 = 18   3 *  9 = 27   4 *  9 = 36   5 *  9 = 45   6 *  9 = 54   7 *  9 = 63   8 *  9 = 72   9 *  9 = 81 
+
+## 然后需求又变了, 打印两个九九乘法表, 那么你会怎么做? 在复制一遍? 这就需要用到我们说的 function 的功能
+[root@localhost ~]# vim test24.sh 
+#!/bin/bash
+# 定义了一个 nine_nine 函数, 然后我们就可以重复来使用,而不用把代码重新复制一遍
+function nine_nine(){
+ for ((i=1; i<=9; i=i+1)); do
+     for ((j=1; j<=$i; j=j+1)); do
+         printf "%2s * %2s = %2s  " ${j} ${i} $(( $j * $i ))
+     done
+     echo ''
+ done
+}
+nine_nine
+echo '--------------------'
+nine_nine
+
+[root@localhost ~]# bash test24.sh 
+ 1 *  1 =  1  
+ 1 *  2 =  2   2 *  2 =  4  
+ 1 *  3 =  3   2 *  3 =  6   3 *  3 =  9  
+ 1 *  4 =  4   2 *  4 =  8   3 *  4 = 12   4 *  4 = 16  
+ 1 *  5 =  5   2 *  5 = 10   3 *  5 = 15   4 *  5 = 20   5 *  5 = 25  
+ 1 *  6 =  6   2 *  6 = 12   3 *  6 = 18   4 *  6 = 24   5 *  6 = 30   6 *  6 = 36  
+ 1 *  7 =  7   2 *  7 = 14   3 *  7 = 21   4 *  7 = 28   5 *  7 = 35   6 *  7 = 42   7 *  7 = 49  
+ 1 *  8 =  8   2 *  8 = 16   3 *  8 = 24   4 *  8 = 32   5 *  8 = 40   6 *  8 = 48   7 *  8 = 56   8 *  8 = 64  
+ 1 *  9 =  9   2 *  9 = 18   3 *  9 = 27   4 *  9 = 36   5 *  9 = 45   6 *  9 = 54   7 *  9 = 63   8 *  9 = 72   9 *  9 = 81
+--------------------
+ 1 *  1 =  1  
+ 1 *  2 =  2   2 *  2 =  4  
+ 1 *  3 =  3   2 *  3 =  6   3 *  3 =  9  
+ 1 *  4 =  4   2 *  4 =  8   3 *  4 = 12   4 *  4 = 16  
+ 1 *  5 =  5   2 *  5 = 10   3 *  5 = 15   4 *  5 = 20   5 *  5 = 25  
+ 1 *  6 =  6   2 *  6 = 12   3 *  6 = 18   4 *  6 = 24   5 *  6 = 30   6 *  6 = 36  
+ 1 *  7 =  7   2 *  7 = 14   3 *  7 = 21   4 *  7 = 28   5 *  7 = 35   6 *  7 = 42   7 *  7 = 49  
+ 1 *  8 =  8   2 *  8 = 16   3 *  8 = 24   4 *  8 = 32   5 *  8 = 40   6 *  8 = 48   7 *  8 = 56   8 *  8 = 64  
+ 1 *  9 =  9   2 *  9 = 18   3 *  9 = 27   4 *  9 = 36   5 *  9 = 45   6 *  9 = 54   7 *  9 = 63   8 *  9 = 72   9 *  9 = 81
+```
+
+其实 function 也是拥有内置变量的, 它的变量和 shell script 类似, 函数名称 $0, 后续参数 $1 $2.....,  但是在函数中的 $0 和 $1 与 shell script 中的是不同的.
+
+```bash
+[root@localhost ~]# vim test25.sh
+#!/bin/bash
+function test_param(){
+    echo '$1 is ' $1  # 注意这个 $1 到底代表谁
+}
+
+case "$1" in
+    'one')
+	test_param 1
+        ;;
+     'two')
+        test_param 2
+        ;;
+     'three')
+        test_parm
+        ;;
+esac
+
+[root@localhost ~]# bash test25.sh one
+$1 is  1
+[root@localhost ~]# bash test25.sh tow  # <== 为啥没有输出内容, 想一下
+[root@localhost ~]# bash test25.sh two
+$1 is  2
+[root@localhost ~]# bash test25.sh three
+$1 is 
+
+## 所以使用函数时, 一定要注意 $1 $2 $0 的意思
+```
+
+# 
+
