@@ -2265,3 +2265,530 @@ chmod 2770 /srv/projecta
 ## 因为 ACL 的权限设置不会被子目录所继承, 所以需要使用 d:u:myuser1:rx 来操作
 setfacl -m d:u:myuser1:rx /srv/projecta
 ```
+
+# 系统管理常用命令
+## dd命令
+它能够让用户按照指定大小和个数的数据块来复制文件的内容。Linux系统中有一个名为/dev/zero的设备文件，因为这个文件不会占用系统存储空间，但却可以提供无穷无尽的数据，因此可以使用它作为dd命令的输入文件，来生成一个指定大小的文件。
+> dd if="input file" of="output file" count=number bs=block size
+
+| 选项 | 作用 |
+| ----- | ----- |
+| if |	输入的文件名称 |
+| of | 输出的文件名称 |
+| bs | 设置每个块的大小 |
+| count | 复制多少个块 | 
+
+### 实例
+```bash
+## 比如我想要复制一个 500M的文件, 有多种方式 
+## bs=100M  count=5  ; bs=250M  count=2 等
+[root@localhost ~]# dd if=/dev/zero of=test.txt bs=100M count=5
+5+0 records in
+5+0 records out
+524288000 bytes (524 MB) copied, 2.51087 s, 209 MB/s
+[root@localhost ~]# ll -h test.txt 
+-rw-r--r--. 1 root root 150M Mar 14 07:34 test.txt
+```
+
+## ps命令
+ps命令用于查看系统中的进程状态
+> ps [ options ]
+
+| 选项 | 作用 |
+| :---: | ---- |
+| -a | 显示所有进程（包括其他用户的进程） |
+| -u | 用户以及其他详细信息 |
+| -x | 显示没有控制终端的进程 |
+| -F | 显示完整格式的进程信息 |
+| -H | 以进程层级格式显示进程相关信息 |
+
+**在Linux系统中，有5种常见的进程状态，分别为运行、中断、不可中断、僵死与停止**
+> R（运行）：进程正在运行或在运行队列中等待。
+>
+> S（中断）：进程处于休眠中，当某个条件形成后或者接收到信号时，则脱离该   状态。
+> 
+> D（不可中断）：进程不响应系统异步信号，即便用kill命令也不能将其中断。
+> 
+> Z（僵死）：进程已经终止，但进程描述符依然存在, 直到父进程调用wait4()系统函数后将进程释放。
+> 
+> T（停止）：进程收到停止信号后停止运行。
+
+### 实例
+```bash
+进程状态中包含的其他符号
+	+ : 前台进程
+	l : 多线程进程
+	N : 低优先级线程
+	< : 高优先级进程
+	s : session leader
+
+[root@localhost ~]# ps aux
+USER : 进程属主 
+PID  : 进程ID 
+%CPU : 占据CPU百分比 
+%MEM : 占据内存百分比
+RSS  : Virtual memory Size(虚拟内存大小) 虚拟内存集 Resident Size, 常驻内存集 单位是KB(不能放到交换分区中)
+TTY     : 所在终端  
+STAT    : 进程状态
+START   : 启动时间
+TIME    : 运行占据CPU的累积时长
+COMMAND : 命令
+
+USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root          1  0.0  0.1  19368  1636 ?        Ss   Mar03   0:01 /sbin/init
+root          2  0.0  0.0      0     0 ?        S    Mar03   0:00 [kthreadd]
+root          3  0.0  0.0      0     0 ?        S    Mar03   0:00 [migration/0]
+root          4  0.0  0.0      0     0 ?        S    Mar03   0:00 [ksoftirqd/0]
+root          5  0.0  0.0      0     0 ?        S    Mar03   0:00 [stopper/0]
+root          6  0.0  0.0      0     0 ?        S    Mar03   0:00 [watchdog/0]
+root          7  0.0  0.0      0     0 ?        S    Mar03   1:49 [events/0]
+root          8  0.0  0.0      0     0 ?        S    Mar03   0:00 [events/0]
+root          9  0.0  0.0      0     0 ?        S    Mar03   0:00 [events_long/0]
+root         10  0.0  0.0      0     0 ?        S    Mar03   0:00 [events_power_ef]
+root         11  0.0  0.0      0     0 ?        S    Mar03   0:00 [cgroup]
+root         12  0.0  0.0      0     0 ?        S    Mar03   0:00 [khelper]
+root         13  0.0  0.0      0     0 ?        S    Mar03   0:00 [netns]
+root         14  0.0  0.0      0     0 ?        S    Mar03   0:00 [async/mgr]
+.....
+
+## -F :显示完整格式的进程信息
+[root@localhost ~]# ps -F
+UID   : 用户名 
+PID   : 进程ID 
+PPID  : 父进程ID 
+C     : 运行的CPU编号 
+SZ    : 使用的内存大小
+PSR   : Resident Size, 常驻内存集 单位是KB(不能放到交换分区中) 
+STIME : 启动时间 
+TTY   : 终端 
+TIME  : 运行占据CPU的累积时长	 
+CMD   : 命令
+
+UID         PID   PPID  C    SZ   RSS PSR STIME TTY          TIME CMD
+root      16152  16148  0 27124  1920   0 Mar06 pts/0    00:00:00 -bash
+root      18775  16152  0 27565  1148   0 11:23 pts/0    00:00:00 ps -F
+
+
+## -a : 与终端相关的进程
+[root@localhost ~]# ps -a
+   PID TTY          TIME CMD
+ 18793 pts/0    00:00:00 ps
+
+## -x : 与终端无关的进程
+## 细心的同学应该发现了, 我有的选项前没有给上 - , 因为 ps 命令可以不跟上 - 也不会报错.
+[root@localhost ~]# ps x
+   PID TTY      STAT   TIME COMMAND
+     1 ?        Ss     0:01 /sbin/init
+     2 ?        S      0:00 [kthreadd]
+     3 ?        S      0:00 [migration/0]
+     4 ?        S      0:00 [ksoftirqd/0]
+     5 ?        S      0:00 [stopper/0]
+     6 ?        S      0:00 [watchdog/0]
+     7 ?        S      1:49 [events/0]
+     8 ?        S      0:00 [events/0]
+     9 ?        S      0:00 [events_long/0]
+    10 ?        S      0:00 [events_power_ef]
+    11 ?        S      0:00 [cgroup]
+    12 ?        S      0:00 [khelper]
+    13 ?        S      0:00 [netns]
+    14 ?        S      0:00 [async/mgr]
+...
+
+## -u : 和用户相关的进程
+[root@localhost ~]# ps u
+USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root       2026  0.0  0.0   4068   544 tty2     Ss+  Mar03   0:00 /sbin/mingetty /dev/tty2
+root       2028  0.0  0.0   4068   544 tty3     Ss+  Mar03   0:00 /sbin/mingetty /dev/tty3
+root       2030  0.0  0.0   4068   540 tty4     Ss+  Mar03   0:00 /sbin/mingetty /dev/tty4
+root       2032  0.0  0.0   4068   544 tty5     Ss+  Mar03   0:00 /sbin/mingetty /dev/tty5
+root       2040  0.0  0.0   4068   540 tty6     Ss+  Mar03   0:00 /sbin/mingetty /dev/tty6
+root       3248  0.0  0.1 108360  1768 tty1     Ss+  Mar03   0:00 -bash
+root      16152  0.0  0.1 108496  1920 pts/0    Ss   Mar06   0:00 -bash
+root      18799  0.0  0.1 110256  1152 pts/0    R+   11:32   0:00 ps u
+
+## -H : 以进程层级格式显示进程相关信息
+[root@localhost ~]# ps -efH
+UID         PID   PPID  C STIME TTY          TIME CMD
+......
+root          1      0  0 Mar03 ?        00:00:01 /sbin/init           <== 第一个被启动起来的进程
+root        572      1  0 Mar03 ?        00:00:00   /sbin/udevd -d     <== 第一个进程的子进程
+root       2039    572  0 Mar03 ?        00:00:00     /sbin/udevd -d
+root       2332    572  0 Mar03 ?        00:00:00     /sbin/udevd -d
+.....
+```
+
+## pstree命令
+以树状图的形式显示进程信息
+
+| 选项 | 作用 |
+| :--: | ---- |
+| -p | 显示 PID |
+| -n | 根据 PID 排序 |
+
+### 实例
+```bash
+[root@localhost ~]# pstree
+init─┬─NetworkManager───{NetworkManager}
+     ├─abrtd
+     ├─acpid
+     ├─atd
+     ├─auditd───{auditd}
+     ├─automount───4*[{automount}]
+     ├─certmonger
+     ├─console-kit-dae───63*[{console-kit-da}]
+     ├─crond
+........
+
+## -p : 显示 PID 号码
+[root@localhost ~]# pstree -p
+init(1)─┬─NetworkManager(1589)───{NetworkManager}(2622)
+        ├─abrtd(1922)
+        ├─acpid(1685)    <== 发现不是按照 pid 排序的
+        ├─atd(1964)
+        ├─auditd(1470)───{auditd}(1471)
+        ├─automount(1778)─┬─{automount}(1779)
+        │                 ├─{automount}(1780)
+        │                 ├─{automount}(1795)
+        │                 └─{automount}(1798)
+        ├─certmonger(1980)
+        ├─console-kit-dae(2072)─┬─{console-kit-da}(2073)
+        │                       .........................
+        ├─crond(1949)
+.....
+
+## -n : 按照 PID 号码排序
+[root@localhost ~]# pstree -n -p
+init(1)─┬─udevd(572)─┬─udevd(2039)
+        │            └─udevd(2332)
+        ├─auditd(1470)───{auditd}(1471)
+        ├─rsyslogd(1504)─┬─{rsyslogd}(1505)
+        │                ├─{rsyslogd}(1506)
+        │                └─{rsyslogd}(1507)
+        ├─rpcbind(1555)
+        ├─dbus-daemon(1575)───{dbus-daemon}(1576)
+        ├─NetworkManager(1589)───{NetworkManager}(2622)
+        ├─modem-manager(1594)
+        ├─rpc.statd(1615)
+        ├─wpa_supplicant(1637)
+        ├─cupsd(1653)
+        ├─acpid(1685)
+        ├─hald(1697)─┬─hald-runner(1698)─┬─hald-addon-inpu(1743)
+        │            │                   └─hald-addon-acpi(1753)
+        │            └─{hald}(1699)
+        ├─automount(1778)─┬─{automount}(1779)
+...........
+```
+
+## uptime命令
+uptime命令真的很棒，它可以显示当前系统时间、系统已运行时间、启用终端数量以及平均负载值等信息。平均负载值指的是系统在最近1分钟、5分钟、15分钟内的压力情况；负载值越低越好，尽量不要长期超过1，在生产环境中不要超过5。
+
+```bash
+[root@localhost ~]# uptime
+11:47:07                       : 当前系统时间
+up 3 days, 21:05               : 系统运行时长, 不到1天(hours:mins), 不到一个小时(num min)
+2 users                        : 登录终端数 
+load average: 0.00, 0.00, 0.00 : 系统在过去的1分钟、5分钟和15分钟内的平均负载
+
+ 11:47:07 up 3 days, 21:05,  2 users,  load average: 0.00, 0.00, 0.00  
+```
+
+## free命令
+显示系统的内存状态
+> free [ options ]
+
+| 选项 | 作用 |
+| :--: | --- |
+| -b	| 以Byte为单位显示内存使用情况 | 
+| -k	| 以KB为单位显示内存使用情况 | 
+| -t	| 显示内存总和列 | 
+| -o	| 不显示缓冲区调节列 | 
+| -m	| 以MB为单位显示内存使用情况 | 
+| --si  | 	使用 1000为换算单位不是 1024 | 
+| -g	| 以GB为单位显示内存使用情况 | 
+| -h	| 人性化显示(自动选择单位) | 
+| -s Refersh_Time | 持续观察内存使用状况 | 
+| -c  NUM	| 自动执行NUM次, 需要和-s一起使用 | 
+
+### 实例
+```bash
+[root@localhost ~]# free 
+total(内存总量) 			: /proc/meminfo文件中的 MemTotal和SwapTotal的值
+used(已用量) 			: {Mem|Swap}Total - {Mem|Swap}Free 
+free(可用量) 			: /proc/meminfo文件中的 MemFree 和 SwapFree 的值
+shared(进程共享的内存量) 	: /proc/meminfo文件中的 Shmem
+                          (内核2.6.32上可用,不可用则显示为零)
+buffers(磁盘缓存的内存量) : /proc/meminfo文件中的 Buffers 的值
+cached(缓存的内存量) 		: /proc/meminfo文件中 Cached - Shme
+
+             total       used       free   shared  buffers   cached
+Mem:       1870760    1394920     475840    17312     9056   896284
+-/+ buffers/cache:     489580    1381180
+Swap:      1048572         28    1048544
+
+
+--------------------- 尝试从 /proc/meminfo 来获取到 free 命令的内容 --------------------------------
+1. 因为这个内存是实时变化的, 所以只能拷贝一份出来研究并查看, /proc/meminfo,得到如下信息, 信息有删减
+---------- total -----------
+MemTotal:        1870760 kB			
+SwapTotal:       1048572 kB			
+ 
+---------- used -----------
+MemUsed:   MemTotal(1870760) - MemFree(475840) = 1394920
+SwapUsed:  SwapTotal(1048572) - SwapFree(1048544) = 28
+ 
+---------- free -----------
+MemFree:          475840 kB
+SwapFree:        1048544 kB
+ 
+--------- shared ----------
+Shmem:             17312 kB
+ 
+--------- buffers ---------
+Buffers:            9056 kB
+ 
+--------- cached ----------
+MemCached: Cached(913596) - Shmem(17312) = 896284
+ 
+ 
+2. 整理得出 
+             total       used       free   shared  buffers   cached
+Mem:       1870760    1394920     475840    17312     9056   896284
+Swap:      1048572         28    1048544
+
+我们和free命令发现少了中间的一行  -/+ buffers/cache , 接下来我们讲解这行的含义
+
+(-buffers/cache) used内存数：第一行Mem行中的 used – buffers – cached
+	-buffers/cache used = 1394920 - 9056 - 896284 = 489580
+	-buffers/cache反映的是被程序实实在在吃掉的内存
+(+buffers/cache) free内存数: 第一行Mem行中的 free + buffers + cached
+	+buffers/cache free = 475840 + 9056 + 896284 = 1381180
+	+buffers/cache反映的是可以挪用的内存总数
+
+3. 最后可以得出
+
+             total       used       free    shared   buffers    cached
+Mem:       1870760    1394920     475840     17312      9056    896284
+-/+ buffers/cache:     489580    1381180
+Swap:      1048572         28    1048544
+---------------------------------------------------------------------------------------
+
+## -s 持续的查看 每 3 秒自动打印一遍, 需要自己手动停止
+[root@localhost ~]# free -s 3
+             total       used       free    shared   buffers    cached
+Mem:       1870760    1397600     473160     17312      9056    896344
+-/+ buffers/cache:     492200    1378560
+Swap:      1048572         28    1048544
+ 
+             total       used       free    shared   buffers    cached
+Mem:       1870760    1397608     473152     17312      9056    896344
+-/+ buffers/cache:     492208    1378552
+Swap:      1048572         28    1048544
+ 
+             total       used       free    shared   buffers    cached
+Mem:       1870760    1397608     473152     17312      9056    896344
+-/+ buffers/cache:     492208    1378552
+Swap:      1048572         28    1048544
+ 
+^C
+
+## -c -s 连用, 总共打印三次, 每次打印间隔 3 s
+[root@localhost ~]# free -c 3 -s 3
+             total       used       free    shared   buffers    cached
+Mem:       1870760    1397232     473528     17312      9056    896352
+-/+ buffers/cache:     491824    1378936
+Swap:      1048572         28    1048544
+ 
+             total       used       free    shared   buffers    cached
+Mem:       1870760    1397240     473520     17312      9056    896352
+-/+ buffers/cache:     491832    1378928
+Swap:      1048572         28    1048544
+ 
+             total       used       free    shared   buffers    cached
+Mem:       1870760    1397240     473520     17312      9056    896352
+-/+ buffers/cache:     491832    1378928
+Swap:      1048572         28    1048544
+
+## -k 以kb显示大小
+[root@localhost ~]# free -k
+             total       used       free    shared   buffers    cached
+Mem:       1870760    1397508     473252     17312      9056    896344
+-/+ buffers/cache:     492108    1378652
+Swap:      1048572         28    1048544
+
+## -h : 人性化显示(自动选择单位)
+[root@localhost ~]# 
+             total       used       free    shared   buffers    cached
+Mem:          1.8G       1.3G       462M       16M      8.8M      875M
+-/+ buffers/cache:       480M       1.3G
+Swap:         1.0G        28K       1.0G
+```
+
+## top命令
+ps命令提供了进程信息, 但是只是显示瞬间的信息, 而 top 则是动态地监视进程活动与系统负载等信息, **默认是按照占用CPU(%CPU)的大小排序, 是上一个刷新周期所占用的CPU的统计数据**, 是动态过程下一个周期内可能就发生了变化.
+> top [ options ]
+
+| 选项 | 作用 |
+| -d Refresh_Time | 指定刷新时间间隔, 默认为3s |
+| -b | 分批次显示信息, 而不总是显示第一屏 |
+| -n NUM | 显示多少批次 |
+
+**top 内置命令**
+
+| 选项 | 作用 |
+| :---: | --- |
+| P | 按照占据CPU的百分比排序 |
+| M | 按照占据内存的百分比排序 |
+| T | 按照累积占用CPU时间排序 |
+| l | (小写L)控制 top 命令行中的 top 行的显示和隐藏 |
+| t | 控制 top 命令中 Tasks 和 %Cpu(s) 行的显示和隐藏 |
+| m | 控制 top 命令中 KiB Mem 和 KiB Swap 行的显示和隐藏 |
+| k PID | 终止指定的进程 PID |
+| s | 更改刷新时间间隔, 默认是3s |
+| q | 退出 top 命令行显示的页面信息 |
+
+### 实例
+```bash
+[root@localhost ~]# top
+第一行 系统负载:
+	top                            : 运行的命令
+	12:37:14                       : 系统时间 
+	up 3 days, 21:55               : 运行时间 
+	2 users                        : 登录终端数
+	load average: 0.00, 0.00, 0.00 : 系统负载（三个数值分别为1分钟、5分钟、15分钟内的平均值，数值越小意味着负载越低）
+
+第二行 进程信息: 
+	Tasks: 144 total : 进程总数
+	1 running        : 运行中的进程数
+	143 sleeping     : 睡眠中的进程数
+	0 stopped        : 停止的进程数
+	0 zombie         : 僵死的进程数
+
+第三行 Cpu(s): 
+	0.0%us   : 用户占用资源百分比
+ 	0.0%sy   : 系统内核占用资源百分比
+	0.0%ni   : 改变过优先级的进程资源百分比
+	99.9%id  : 空闲的资源百分比等
+	0.0%wa   : IO等待占用CPU的百分比
+	0.0%hi   : 硬中断（Hardware interruption）占用CPU的百分比
+	0.0%si   : 软中断（Software interruption）占用CPU的百分比
+	0.0%st   : 被偷走的比率
+
+第四行 内存信息:
+	1870760k total : 物理内存总量
+	1394920k used  : 内存使用量
+	475840k free   : 内存空闲量
+	9056k buffers  : 作为内核缓存的内存量
+
+第五行 swap信息:
+	1023996k total : 虚拟内存总量
+	0k used        : 虚拟内存使用量
+	1023996k free  : 虚拟内存空闲量
+	190088k cached : 已被提前加载的内存量
+
+top - 12:37:14 up 3 days, 21:55,  2 users,  load average: 0.00, 0.00, 0.00
+Tasks: 144 total,   1 running, 143 sleeping,   0 stopped,   0 zombie
+Cpu(s):  0.0%us,  0.0%sy,  0.0%ni, 99.9%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
+Mem:   1870760k total,   1394920k used,   475840k free,    9056k buffers
+Swap:  1023996k total,        0k used,  1023996k free,   190088k cached
+
+PID     : PID进程号
+USER    : 用户 
+PR      : 优先级 
+NI      : nice值 
+VIRT    : 虚拟内存集 
+RES     : 常驻内存集 
+SHR     : 共享内存大小 
+S       : 进程状态 
+%CPU    : 占用CPU百分比
+%MEM    : 占用内存百分比 
+TIME+   : 累积运行时长 
+COMMAND : 命令
+
+   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+     1 root      20   0 19368 1636 1304 S  0.0  0.2   0:01.61 init
+     2 root      20   0     0    0    0 S  0.0  0.0   0:00.01 kthreadd
+     3 root      RT   0     0    0    0 S  0.0  0.0   0:00.00 migration/0
+     4 root      20   0     0    0    0 S  0.0  0.0   0:00.06 ksoftirqd/0
+     5 root      RT   0     0    0    0 S  0.0  0.0   0:00.00 stopper/0
+     6 root      RT   0     0    0    0 S  0.0  0.0   0:00.30 watchdog/0
+     7 root      20   0     0    0    0 S  0.0  0.0   1:50.92 events/0
+     8 root      20   0     0    0    0 S  0.0  0.0   0:00.00 events/0
+     9 root      20   0     0    0    0 S  0.0  0.0   0:00.00 events_long/0
+    10 root      20   0     0    0    0 S  0.0  0.0   0:00.00 events_power_ef
+    11 root      20   0     0    0    0 S  0.0  0.0   0:00.00 cgroup
+    12 root      20   0     0    0    0 S  0.0  0.0   0:00.00 khelper
+    13 root      20   0     0    0    0 S  0.0  0.0   0:00.00 netns
+    14 root      20   0     0    0    0 S  0.0  0.0   0:00.00 async/mgr
+    15 root      20   0     0    0    0 S  0.0  0.0   0:00.00 pm
+    16 root      20   0     0    0    0 S  0.0  0.0   0:01.06 sync_supers
+    17 root      20   0     0    0    0 S  0.0  0.0   0:00.02 bdi-default
+    18 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kintegrityd/0
+......
+
+## 剩余的内置命令可以自己试验体会作用
+```
+
+## pidof命令
+pidof命令用于查询某个指定服务进程的PID值
+> pid
+
+### 实例
+```bash
+[root@localhost ~]# pidof sshd
+16148 1822
+
+[root@localhost ~]# ps aux | grep sshd
+root       1822  0.0  0.1  66260  1208 ?        Ss   Mar03   0:00 /usr/sbin/sshd
+root      16148  0.0  0.4 102104  4160 ?        Ss   Mar06   0:00 sshd: root@pts/0 
+root      19211  0.0  0.0 103332   840 pts/0    S+   13:48   0:00 grep sshd
+```
+
+## watch命令
+watch是一个非常实用的命令，可以帮你监测一个命令的运行结果，省得你一遍遍的手动运行,可以拿它来监测命令结果的变化, 按 ctrl + c 停止刷新并退出
+> watch [ optioins ] COMMAND
+
+| 选项 | 作用 |
+| :---: | ---- |
+| -n |	指定指令执行的间隔时间(秒) |
+| -t |	不显示标题 |
+| -d |	高亮显示指令输出信息不同之处 |
+| -g |	结果有改变时退出循环执行 | 
+
+### 实例
+```bash
+## 默认两秒刷新一次 
+[root@localhost ~]# watch free
+Every 10.0s: free                            Thu Mar  7 14:17:35 2019  <== 可以发现这个时间会变动
+
+             total	 used       free     shared    buffers     cached
+Mem:	   1004112     456656     547456        472	 81216     190196
+-/+ buffers/cache:     185244     818868
+Swap:	   1023996          0    1023996
+
+## -n 5s 刷新一次   -d 高亮显示不同的部分
+[root@localhost ~]# watch -n 5 -d free
+Every 10.0s: free                                Thu Mar  7 14:19:36 2019
+
+             total	 used       free     shared    buffers     cached
+Mem:	   1004112     456640     547472        472	 81220     190196
+-/+ buffers/cache:     185224     818888
+Swap:	   1023996          0    1023996
+
+## 不显示标题
+[root@localhost ~]# watch -n 5 -d -t free
+             total	 used       free     shared    buffers     cached
+Mem:	   1004112     456532     547580        472	 81220     190204
+-/+ buffers/cache:     185108     819004
+Swap:	   1023996          0    1023996
+```
+
+## ifconfig命令
+
+
+
+## netstat命令
+
+
+
+
+
