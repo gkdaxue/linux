@@ -2305,7 +2305,7 @@ ps命令用于查看系统中的进程状态
 **在Linux系统中，有5种常见的进程状态，分别为运行、中断、不可中断、僵死与停止**
 > R（运行）：进程正在运行或在运行队列中等待。
 >
-> S（中断）：进程处于休眠中，当某个条件形成后或者接收到信号时，则脱离该   状态。
+> S（中断）：进程处于休眠中，当某个条件形成后或者接收到信号时，则脱离该状态。
 > 
 > D（不可中断）：进程不响应系统异步信号，即便用kill命令也不能将其中断。
 > 
@@ -2327,8 +2327,8 @@ USER : 进程属主
 PID  : 进程ID 
 %CPU : 占据CPU百分比 
 %MEM : 占据内存百分比
-RSS  : Virtual memory Size(虚拟内存大小) 虚拟内存集 Resident Size, 常驻内存集 单位是KB(不能放到交换分区中)
-TTY     : 所在终端  
+RSS  : Virtual Memory Size(虚拟内存大小) 虚拟内存集 Resident Size, 常驻内存集 单位是KB(不能放到交换分区中)
+TTY     : 所在终端 ( ? 表示不依赖于任何终端)  
 STAT    : 进程状态
 START   : 启动时间
 TIME    : 运行占据CPU的累积时长
@@ -2645,6 +2645,8 @@ ps命令提供了进程信息, 但是只是显示瞬间的信息, 而 top 则是
 | k PID | 终止指定的进程 PID |
 | s | 更改刷新时间间隔, 默认是3s |
 | q | 退出 top 命令行显示的页面信息 |
+| h | 获取帮助信息 |
+| f | 自定义显示的字段信息 |
 
 ### 实例
 ```bash
@@ -2783,12 +2785,166 @@ Swap:	   1023996          0    1023996
 ```
 
 ## ifconfig命令
+ifconfig命令用来查看和配置网络接口. 默认用来查看处于活动状态的接口地址.
+```bash
+ifconfig                                                : 查看所有处于活动状态的接口地址
+ifconfig -a                                             : 查看所有接口地址
+ifconfig INTERFACE                                      : 查看特定的接口信息
+ifconfig INTERFACE [up|down]                            : 启用或禁用特定的接口
+ifconfig INTERFACE { IP/MASK掩码长度 | IP netmask MASK } : 临时切换 IP 地址
 
+## ifconfig 查看所有处于活动状态的接口地址
+[root@localhost ~]# ifconfig
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:299474 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:67333 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:24609986 (23.4 MiB)  TX bytes:7437392 (7.0 MiB)
 
+## ifconfig -a 查看所有的接口地址
+[root@localhost ~]# ifconfig -a
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:299507 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:67349 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:24612925 (23.4 MiB)  TX bytes:7439448 (7.0 MiB)
+
+lo        Link encap:Local Loopback   <== 已经被禁用, 所以使用 ifconfig 无法显示
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          LOOPBACK  MTU:65536  Metric:1
+          RX packets:32 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:32 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:2352 (2.2 KiB)  TX bytes:2352 (2.2 KiB)
+
+## 查看特定的网卡接口 lo 信息
+[root@localhost ~]# ifconfig lo
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          LOOPBACK  MTU:65536  Metric:1
+          RX packets:32 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:32 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:2352 (2.2 KiB)  TX bytes:2352 (2.2 KiB)
+
+## 这里启用 lo 这个网卡接口
+[root@localhost ~]# ifconfig lo up
+[root@localhost ~]# ifconfig
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:299700 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:67445 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:24629978 (23.4 MiB)  TX bytes:7449894 (7.1 MiB)
+
+lo        Link encap:Local Loopback    <== 因为我们现在已经启用了, 所以使用 ifconfig 命令可以看到
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:32 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:32 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:2352 (2.2 KiB)  TX bytes:2352 (2.2 KiB)
+
+## 给网卡临时切换 IP 地址 (重启失效), 如果使用 ssh 连接到服务器会自动断开链接.
+## 因为网卡的 IP 地址已经改变. 所以需要使用新的 IP 地址来连接.
+[root@localhost ~]# ifconfig eth0 192.168.1.207/24
+[root@localhost ~]# ifconfig eth0
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.207  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:300510 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:67730 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:24706520 (23.5 MiB)  TX bytes:7481628 (7.1 MiB)
+```
 
 ## netstat命令
+显示网络连接  路由表  接口统计 等信息.
 
+### 显示网络连接
 
+| 选项 | 作用 |
+| :---: | ----- |
+| -t | tcp 协议相关 |
+| -u | udp 协议相关 |
+| -w | raw socket 相关 |
+| -l | 处于监听状态 |
+| -a | 所有状态 |
+| -n | 以数字格式显示 IP 和 端口 |
+| -e | 扩展格式 |
+| -p | 显示相关的进程和程序 |
 
+> 常用的组合有 : -tan  -uan  -tnl  -unl  -tulpn
+
+```bash
+[root@localhost ~]# netstat -tulpn
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address               Foreign Address             State       PID/Program name   
+tcp        0      0 0.0.0.0:111                 0.0.0.0:*                   LISTEN      1555/rpcbind        
+tcp        0      0 0.0.0.0:36179               0.0.0.0:*                   LISTEN      1615/rpc.statd      
+tcp        0      0 0.0.0.0:22                  0.0.0.0:*                   LISTEN      1822/sshd           
+tcp        0      0 127.0.0.1:631               0.0.0.0:*                   LISTEN      1653/cupsd          
+tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN      1908/master         
+tcp        0      0 :::32998                    :::*                        LISTEN      1615/rpc.statd      
+tcp        0      0 :::111                      :::*                        LISTEN      1555/rpcbind        
+tcp        0      0 :::22                       :::*                        LISTEN      1822/sshd           
+tcp        0      0 ::1:631                     :::*                        LISTEN      1653/cupsd          
+tcp        0      0 ::1:25                      :::*                        LISTEN      1908/master         
+udp        0      0 0.0.0.0:57043               0.0.0.0:*                               1615/rpc.statd      
+udp        0      0 0.0.0.0:111                 0.0.0.0:*                               1555/rpcbind        
+udp        0      0 0.0.0.0:882                 0.0.0.0:*                               1555/rpcbind        
+udp        0      0 0.0.0.0:631                 0.0.0.0:*                               1653/cupsd          
+udp        0      0 127.0.0.1:943               0.0.0.0:*                               1615/rpc.statd      
+udp        0      0 :::36198                    :::*                                    1615/rpc.statd      
+udp        0      0 :::111                      :::*                                    1555/rpcbind        
+udp        0      0 :::882                      :::*                                    1555/rpcbind   
+```
+
+### 显示路由表
+
+| 选项 | 作用 |
+| :---: | ----- |
+| -r | 显示内核路由表 |
+| -n | 数字形式 |
+
+```bash
+[root@localhost ~]# netstat -rn
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+192.168.1.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
+```
+
+### 显示接口统计数据
+> netstat { options }
+
+| 选项 | 作用 |
+| :---: | ---- |
+| -i | 所有接口 |
+| -IINTERFACE | 查看特定接口 INTERFACE 和 I 之间没有空格 | 
+
+```bash
+## -i 查看所有接口
+[root@localhost ~]# netstat -i
+Kernel Interface table
+Iface       MTU Met    RX-OK RX-ERR RX-DRP RX-OVR    TX-OK TX-ERR TX-DRP TX-OVR Flg
+eth0       1500   0   302246      0      0      0    68214      0      0      0 BMRU
+lo        65536   0       34      0      0      0       34      0      0      0 LRU
+
+## -IINTERFACE : 查看特定接口
+[root@localhost ~]# netstat -Ieth0
+Kernel Interface table
+Iface       MTU Met    RX-OK RX-ERR RX-DRP RX-OVR    TX-OK TX-ERR TX-DRP TX-OVR Flg
+eth0       1500   0   302346      0      0      0    68261      0      0      0 BMRU
+```
 
 
