@@ -818,34 +818,73 @@ He like his liker.
 
 ## 相关命令(sed awk)
 ### sed命令
-sed是一种流编编器，它是文本处理中非常中的工具，能够完美的配合正则表达式便用, 可以实现对数据的替换  删除  新增  选特定行等功能. **在一般 sed 的用法中，所有来自 STDIN 的数据一般都会被显示到屏幕上.**
+sed是一种流编编器，它是文本处理中非常中的工具，能够完美的配合正则表达式便用, 可以实现对数据的替换  删除  新增  选特定行等功能. 
+**sed 默认不编辑原文件, 仅对模式空间中的数据进行处理, 处理完成后, 显示模式空间中的数据到屏幕.**
+
 >   sed [ options ]  '动作'  [input-file]    
 
 | 选项 | 作用 |
 | ----- | ---- |
 | -n  | 只有经过sed 特殊处理的那一行(或者动作)才会被列出来 |
-| -e | 直接在指令列模式上进行 sed 的动作编辑 |
-| -f FILE_NAME | 直接将 sed 的动作写到一个文件中 |
+| -e SCRIPT1 -e SCRIPT2 ...| 可以同时执行多个脚本 |
+| -f FILE_NAME | 把 Script 保存到文件中, 然后读取文件进行修改 |
 | -r | 支持扩展正则表达式 (默认仅支持基础正则表达式) |
-| -i | 直接修改读取的文件内容，而不是由屏幕输出 (谨慎使用) |
+| -i | 直接修改原文件 (谨慎使用) |
 
-**动作:**
-> '[n1[,n2]]function' : 必须用单引号 ' ' 包起来
+**动作几种形式:**
+> 1. '[n1[,n2]]FUNCTION' : 必须用单引号 ' ' 包起来 (n1, n2 不一定会存在, 一般代表选择进行动作的行数)
 >
-> n1, n2 不一定会存在, 一般代表选择进行动作的行数. 比如 '10,20[动作行为]' 
+> 2. Line_numFUNCTION : 精确匹配某行
+>      
+> 2. /RegExp/FUNCTION : 支持正则表达式 
+>
+> 3. /pattern1/,/pattern2/FUNCTION : 第一次被 parttern1 匹配到的行开始 到 第一次被 pattern2 匹配到的行结束
+>
+> 4. StartLine,+nFUNCTION : 从 StartLine 开始, 向后的 N 行
+>
+> sed 后边如果有超过两个以上的动作时, 每个动作前都要加上 -e 才行
 > 
-> sed 后边如果有超过两个以上的动作时, 每个动作前都要加上 -e 才行.
+> $ 表示最后一行
 
-| function参数 | 含义 |
+| FUNCTION参数 | 含义 |
 | :----: | ---- |
 | a | 新增， a 的后面可以接字串，而这些字串会在新的一行出现(目前的下一行) |
 | c | 取代， c 的后面可以接字串，这些字串可以取代 n1,n2 之间的行 |
 | d | 删除， 因为是删除啊，所以 d 后面通常不接任何参数 |
 | i | 插入， i 的后面可以接字串，而这些字串会在新的一行出现(目前的上一行) |
 | p | 打印， 将选择的数据打印出来, 通常会和 sed -n 一起用 |
-| s | 替换， 直接进行替换的工作 |
+| s /pattern/string/ | 替换， 只替换每行中匹配到的第一个 |
+| s /pattern/string/g | 替换， 替换行中所有匹配到的 |
+| r FILE | 将 FILE 内容添加到符合条件的行 |
+| w FILE | 将符合条件的行写入到 FILE 中 |
+> 其中的 / 也可以用其他符号, 如 # 来替换, 这样我们遇到 / 就可以不用在进行转义了, 如 s#pattern#string#g
+
+
+**修饰符 :**
+比如我们使用 s 是后边跟上的 g 就是修饰符, 具体如下 :
+
+| 修饰符 | 作用 |
+| :--: | ---- |
+| g  | 全局替换 |
+| i | 忽略字符大小写 |
 
 ```bash
+## 我们先使用 p 来打印以上几种动作的表示方式
+[root@localhost ~]# sed -n '1,2p' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+[root@localhost ~]# sed -n '1p' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+[root@localhost ~]# sed -n '/^root/p' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+[root@localhost ~]# sed -n '/^root/,/^bin/p' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+[root@localhost ~]# sed -n '1,+1p' /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+
+
 ## 准备环境, 除了 -f 会影响到源文件, 其他操作不会影响到源文件
 [root@localhost ~]# head -n 3 /etc/passwd > passwd 
 [root@localhost ~]# cat passwd 
@@ -923,18 +962,47 @@ daemon:x:2:2:daemon:/sbin:/sbin/nologin
     20	avahi-autoipd:x:170:170:Avahi IPv4LL Stack:/var/lib/avahi-autoipd:/sbin/nologin
 
 
-## s : 部分数据的替换工作
-## 格式为 s/被替换的字符/新字符/g
-[root@localhost ~]# sed '1,$s/bin/BIN/g' passwd
-root:x:0:0:root:/root:/BIN/bash
-gkdaxue test1
-gkdaxue test2
-BIN:x:1:1:BIN:/BIN:/sBIN/nologin
-daemon:x:2:2:daemon:/sBIN:/sBIN/nologin
+## s : 部分数据的替换工作 格式为 : s/被替换的字符/新字符/[g]
+[root@localhost ~]# cat /etc/passwd | head -n 1
+root:x:0:0:root:/root:/bin/bash
+[root@localhost ~]# sed '1 s/root/ROOT/' /etc/passwd | head -n 1
+ROOT:x:0:0:root:/root:/bin/bash
+[root@localhost ~]# sed '1 s/root/ROOT/g' /etc/passwd | head -n 1
+ROOT:x:0:0:ROOT:/ROOT:/bin/bash
+
+
+## r FILE : 将文件内容添加到符合条件的行
+[root@localhost ~]# cat /etc/issue
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+[root@localhost ~]# cat /etc/fstab 
+.....
+UUID=356ce5e4-c782-44cb-9447-1e7f0e04e7d1 /boot                   ext4    defaults        1 2
+/dev/mapper/server-myhome /home                   ext4    defaults        1 2
+UUID=fb2c6429-d1fa-4a77-a4db-d2bb899fb552 /tmp                    ext4    defaults        1 2
+.....
+
+[root@localhost ~]# sed '/^\//r /etc/issue' /etc/fstab
+....
+UUID=356ce5e4-c782-44cb-9447-1e7f0e04e7d1 /boot                   ext4    defaults        1 2
+/dev/mapper/server-myhome /home                   ext4    defaults        1 2
+## 以下三行是我们添加的
+CentOS release 6.9 (Final)
+Kernel \r on an \m
+
+UUID=fb2c6429-d1fa-4a77-a4db-d2bb899fb552 /tmp                    ext4    defaults        1 2
+.....
+
+## w FILE : 将符合条件的行写入到 FILE 文件中
+[root@localhost ~]# sed -n '/^\//w test.txt' /etc/fstab 
+[root@localhost ~]# cat test.txt 
+/dev/mapper/server-myhome /home                   ext4    defaults        1 2
 ```
 
 #### 实例
 ```bash
+## 练习题1
 ## 获取本机的 IP 地址, IP 地址为 192.168.1.206 我们如何获取
 ## ifconfig 查看启用的网卡信息, 以后讲解
 [root@localhost ~]# ifconfig eth0
@@ -952,6 +1020,22 @@ eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34
 192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
 [root@localhost ~]# ifconfig eth0 | grep 'inet addr' | sed 's/^.* inet addr://g' | sed 's/  Bcast.*$//g'
 192.168.1.206
+
+## 练习题2
+1. 删除 /etc/grub.conf 文件中行首的空白符
+   sed -r 's#^[[:space:]]+##g' /etc/grub.conf 
+2. 替换 /etc/inittab 文件中 "id:5:initdefault:" 数字 5 -> 3, 如果是 3 则变成 5
+   sed -r 's#(id:)[0-9](:initdefault:)#\13\2#g' /etc/inittab
+3. 删除 /etc/inittab 文件中的空白行
+   sed '/^$/d' /etc/initab
+4. 删除 /etc/inittab 文件中开头的 # 号
+   sed 's/^#//g' /etc/inittab
+5. 删除 /etc/inittab 文件中以 # 开头后边跟上若干空白字符 行中的 #开头以及后边的空白字符
+   sed -r 's/^#[[:space:]]+//g' /etc/inittab 
+6. 删除 /etc/inittab 文件中以 空白字符后跟上#号的行中的 空白字符以及#号
+   sed -r 's/^[[:space:]]+#//g' /etc/inittab 
+7. 取出一个文件路径的目录名称
+   echo '/etc/sysconfig/' | sed -r 's#^(/.*/)[^/]+/?#\1#g'
 ```
 
 ### printf命令
