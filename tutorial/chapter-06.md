@@ -168,9 +168,11 @@ Num 表示数字的意思, 不是单词, 也不是字符串.
 | :r FILE_NAME | 读取 FILE_NAME 的内容并追加到光标所在行的后面 |
 | :Num1,Num2 w FILE_NAME | 将 Num1 到 Num2 行的内容保存为 FILE_NAME 文件 |
 | :! Command | 暂时离开 Vim 环境到命令行模式下执行 Command 命令并显示结果 |
+| :NUM | 跳转到第 NUM 行 |
 | :set nu | 显示行号 |
 | :set nonu | 不显示行号 |
-| :NUM | 跳转到第 NUM 行 |
+| :set ai | 设置自动缩进 |
+| :set noai | 取消自动缩进 |
 
 **还有一些变形模式, 如下:**
 > 1. :5,$s/word1/word2/g : 从第 5 行到最后一样把所有的 word1 替换成 word2
@@ -326,9 +328,12 @@ MANPATH_MAP	/usr/bin/mh		    /usr/share/man
 
 | 按键 | 作用 |
 | ---- | ---- |
-| :n | 编辑下一个文件 |
-| :N | 编辑上一个文件 |
+| :n | 切换到下一个文件 |
+| :N | 切换到上一个文件 |
 | :files | 列出目前这个 vim 打开的所有文件 |
+| :first | 切换到第一个文件 |
+| :last | 切换到最后一个文件 |
+| :qa | 退出所有文件 |
 
 #### 实例
 ```bash
@@ -345,6 +350,10 @@ MANPATH_MAP	/usr/bin/mh		    /usr/share/man
 
 ### 多窗口功能
 如果两个文件我们需要对比来比较其中的差异, 难道我们还需要来回跑到每个文件中来对比吗, 当然不需要.
+> vim -o File1 ... : 水平显示多个窗口
+> 
+> vim -O File1 ... : 垂直显示多个窗口
+
 ```bash
 [root@localhost ~]# vim man.config
 MANPATH_MAP     /bin                    /usr/share/man
@@ -393,9 +402,14 @@ man.config                                             1,1            All
 | 选项 | 作用 |
 | ---- | ---- |
 | :sp [FILE_ANME] | FILE_NAME 可以省略, 如果省略表示两个窗口为同一个文件的内容 |
-| ctrl + w 然后在按 j | 跳转到下面一个窗口 |
+| ctrl + w 然后再按 s | 水平拆分窗口(直接拆分原文件) |
 | ctrl + w 然后再按 k | 跳转到上面一个窗口 |
+| ctrl + w 然后在按 j | 跳转到下面一个窗口 |
+| ctrl + w 然后在按 v | 垂直拆分窗口(直接差分原文件) |
+| ctrl + w 然后再按 h | 跳转到左边窗口 |
+| ctrl + w 然后再按 l(小写L) | 跳转到右边窗口 |
 | :q | 退出当前窗口 |
+| :qa | 退出所有窗口 |
 
 ## Vim 环境设置(\~/.vimrc)和记录文件(\~/.viminfo)
 当我们编辑完一个文件后正常退出, 当我们第二次进入的时候发现光标还是停留在了我们上次修改完成后退出的地方. 这是因为 Vim 会主动将我们做过的行为记录下俩, 这个记录被保存在 ~/.viminfo 文件中.
