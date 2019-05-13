@@ -37,7 +37,7 @@ vim 共分为 3 种模式, 分别是 命令模式(Command mode), 输入模式(In
 gkdaxue  <== 光标在这里跳动, 然后输入 gkdaxue
 ~
 ~
-~                                                                                                                  
+~  
 -- INSERT --                                               0,1           All
    表明现在是编辑模式
 
