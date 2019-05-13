@@ -14,7 +14,13 @@ vim 共分为 3 种模式, 分别是 命令模式(Command mode), 输入模式(In
 ![vim_three_mode](https://github.com/gkdaxue/linux/raw/master/image/chapter_A6_0001.png)
 
 在每次运行Vim编辑器时，默认进入命令模式，此时需要先切换到输入模式后再进行文档编写工作，而每次在编写完文档后需要先返回命令模式，然后再进入末行模式，执行文档的保存或退出操作。在Vim中，无法直接从输入模式切换到末行模式。有的时候会看到 vi , 那么 vi 和 vim 什么关系呢? vim 可以看做 vi 的升级版本功能更强大. 
-> vim FILE_NAME
+> vim [options] FILE_NAME
+
+| 选项 | 作用 |
+| :----: | ---- |
+| +   | 打开文件并定位到最后一行 |
+| +NUM | 打开文件并定位到 NUM 行 |
+| +/PATTERN | 打开文件并定位到第一次被 PATTERN 匹配到的行的行首 |
 
 ```bash
 ## 默认进入命令模式
