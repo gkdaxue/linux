@@ -1666,6 +1666,7 @@ bzip2: Input file gkdaxue is a directory.
 | -v | 显示压缩或解压过程 |
 | -f FILE_NAME | 被处理(压缩/解压缩)的文件名, 必须放到参数的最后一位 |
 | -p | 保留原始的权限和属性, 常用于备份重要的配置文件 |
+| -P(大写) | 文件名使用绝对名称，不移除文件名称前的 " / "号 |
 | --exclude=FILE_NAME | 打包时不包含 FILE_NAME 目录|
 
 ### 实例
