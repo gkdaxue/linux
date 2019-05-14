@@ -2291,7 +2291,7 @@ setfacl -m d:u:myuser1:rx /srv/projecta
 ```
 
 ## ps命令
-ps命令用于查看系统中的进程状态
+ps命令用于查看系统中的进程状态, 所以**它仅仅只能表示当前系统某一个时刻的进程信息**.
 > ps [ options ]
 
 | 选项 | 作用 |
@@ -2301,6 +2301,10 @@ ps命令用于查看系统中的进程状态
 | -x | 显示没有控制终端的进程 |
 | -F | 显示完整格式的进程信息 |
 | -H | 以进程层级格式显示进程相关信息 |
+| 显示格式 | <br> |
+| l | 显示详细信息 |
+| j | 工作的格式显示 |
+| -f | 更完整的信息输出 |
 
 **在Linux系统中，有5种常见的进程状态，分别为运行、中断、不可中断、僵死与停止**
 > R（运行）：进程正在运行或在运行队列中等待。
@@ -2315,6 +2319,27 @@ ps命令用于查看系统中的进程状态
 
 ### 实例
 ```bash
+## 只查看自己的bash相关进程
+[root@localhost ~]# ps -l
+F      : 进程标志(Process flags)
+         	4 : 此进程的权限为 root
+         	1 : 此子进程仅可进行复制(fork)而无法实际执行(exec)
+S      : 进程的状态
+UID    : 拥有者ID
+PID    : 进程PID
+PPID   : 此进程的父进程的PID
+C      : CPU使用率
+PRI/NI : 被CPU执行的优先级, 数字越小代表该进程越快被CPU执行
+ADDR/SZ/WCHAN : 与内存有关.
+TTY    : 登录的终端
+TIME   : 花费CPU运行的时间
+CMD    : 命令
+
+F S   UID    PID   PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
+4 S     0  35678  35674  0  80   0 - 27124 do_wai pts/0    00:00:00 bash
+4 R     0  35870  35678  0  80   0 - 27037 -      pts/0    00:00:00 ps
+
+
 进程状态中包含的其他符号
 	+ : 前台进程
 	l : 多线程进程
@@ -2339,16 +2364,6 @@ root          1  0.0  0.1  19368  1636 ?        Ss   Mar03   0:01 /sbin/init
 root          2  0.0  0.0      0     0 ?        S    Mar03   0:00 [kthreadd]
 root          3  0.0  0.0      0     0 ?        S    Mar03   0:00 [migration/0]
 root          4  0.0  0.0      0     0 ?        S    Mar03   0:00 [ksoftirqd/0]
-root          5  0.0  0.0      0     0 ?        S    Mar03   0:00 [stopper/0]
-root          6  0.0  0.0      0     0 ?        S    Mar03   0:00 [watchdog/0]
-root          7  0.0  0.0      0     0 ?        S    Mar03   1:49 [events/0]
-root          8  0.0  0.0      0     0 ?        S    Mar03   0:00 [events/0]
-root          9  0.0  0.0      0     0 ?        S    Mar03   0:00 [events_long/0]
-root         10  0.0  0.0      0     0 ?        S    Mar03   0:00 [events_power_ef]
-root         11  0.0  0.0      0     0 ?        S    Mar03   0:00 [cgroup]
-root         12  0.0  0.0      0     0 ?        S    Mar03   0:00 [khelper]
-root         13  0.0  0.0      0     0 ?        S    Mar03   0:00 [netns]
-root         14  0.0  0.0      0     0 ?        S    Mar03   0:00 [async/mgr]
 .....
 
 ## -F :显示完整格式的进程信息
