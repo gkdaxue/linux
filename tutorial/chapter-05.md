@@ -2527,11 +2527,11 @@ load average: 0.00, 0.00, 0.00 : 系统在过去的1分钟、5分钟和15分钟�
 ### 实例
 ```bash
 [root@localhost ~]# free
-total(内存总量)			: /proc/meminfo文件中的 MemTotal和SwapTotal的值
+total(内存总量)		: /proc/meminfo文件中的 MemTotal和SwapTotal的值
 used(已用量)				: {Mem|Swap}Total - {Mem|Swap}Free 
 free(可用量)				: /proc/meminfo文件中的 MemFree 和 SwapFree 的值
 shared(进程共享的内存量)	: /proc/meminfo文件中的 Shmem (内核2.6.32上可用,不可用则显示为零)
-buffers(磁盘缓存的内存量)	: /proc/meminfo文件中的 Buffers 的值
+buffers(磁盘缓存的内存量)		: /proc/meminfo文件中的 Buffers 的值
 cached(缓存的内存量)		: /proc/meminfo文件中 Cached - Shme
 
              total       used       free   shared  buffers   cached
