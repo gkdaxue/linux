@@ -2897,14 +2897,42 @@ eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34
 | -u | udp 协议相关 |
 | -w | raw socket 相关 |
 | -l | 处于监听状态 |
-| -a | 所有状态 |
-| -n | 以数字格式显示 IP 和 端口 |
+| -a | 所有状态(所有的连接 监听 Socket数据都列出来) |
+| -n | 以数字格式显示 IP 和 端口 不列出进程的服务名称 |
 | -e | 扩展格式 |
 | -p | 显示相关的进程和程序 |
 
 > 常用的组合有 : -tan  -uan  -tnl  -unl  -tulpn
 
 ```bash
+[root@localhost ~]# netstat
+Proto           : 网络的数据包协议
+Recv-Q          : 表示收到的数据已经在本地接收缓冲，但是还有多少没有被进程取走
+Send-Q          : 对方没有收到的数据或者说没有Ack的,还是本地缓冲区
+Local Address   : 本机的 IP 以及端口情况
+Foreign Address : 远程的 IP 以及端口情况
+State           : 连接状态, ESTABLISHED(建立)   LISTEN(监听)
+Active Internet connections (w/o servers)
+Proto Recv-Q Send-Q Local Address               Foreign Address             State      
+tcp        0     52 192.168.1.206:ssh           192.168.1.11:11126          ESTABLISHED 
+
+Proto  : 一般是 unix
+RefCnt : 连接到此 socket 的进程数量
+Flags  : 连接的标识
+Type   : socket 访问的类型, 主要有 确认连接的STREAM 和 不需要确认的 DGRAM 两种 
+State  : 连接的状态, 若为 CONNECTED 则表示多个进程之间已经建立连接
+I-Node : I-Node 编号
+Path   : 连接到此 socket 的相关程序的路径 或者为 相关数据输出的路径
+Active UNIX domain sockets (w/o servers)
+Proto RefCnt Flags       Type       State         I-Node Path
+unix  13     [ ]         DGRAM                    13646  /dev/log
+unix  2      [ ]         DGRAM                    14584  @/org/freedesktop/hal/udev_event
+unix  2      [ ]         DGRAM                    10554  @/org/kernel/udev/udevd
+unix  2      [ ]         DGRAM                    59014  
+unix  2      [ ]         DGRAM                    51683  
+unix  3      [ ]         STREAM     CONNECTED     15821  /var/run/dbus/system_bus_socket
+...................
+
 [root@localhost ~]# netstat -tulpn
 Active Internet connections (only servers)
 Proto Recv-Q Send-Q Local Address               Foreign Address             State       PID/Program name   
