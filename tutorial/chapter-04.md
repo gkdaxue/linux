@@ -1967,3 +1967,107 @@ drwxr-xr-x. 2 root    root    4096 Mar 11 14:01 /tmp/test_zip/gkdaxue
 drwxr-xr-x. 2 gkdaxue gkdaxue 4096 Mar  3 11:45 /var/cache/gdm/gkdaxue
 -rw-rw----. 1 gkdaxue mail       0 Mar 11 05:59 /var/spool/mail/gkdaxue
 ```
+
+# screen不间断会话
+当我们远程连接到主机上时, 当远程连接被关闭后, 那么在远程主机上运行的命令也被中断, 如果我们正在使用命令来打包文件，或者正在使用脚本安装某个服务程序，中途是绝对不能关闭在本地打开的终端窗口或断开网络链接的，甚至是网速的波动都有可能导致任务中断，此时只能重新进行远程链接并重新开始任务. 那么我们就可以使用 screen 来解决.
+screen是一款能够实现多窗口远程控制的开源服务程序，简单来说就是为了解决网络异常中断或为了同时控制多个远程终端窗口而设计的程序。用户还可以使用screen服务程序同时在多个远程会话中自由切换，能够做到实现如下功能 :
+> 会话恢复：即便网络中断，也可让会话随时恢复，确保用户不会失去对远程会话的控制。
+>
+> 多窗口：每个会话都是独立运行的，拥有各自独立的输入输出终端窗口，终端窗口内显示过的信息也将被分开隔离保存，以便下次使用时依然能看到之前的操作记录。
+>
+> 会话共享：当多个用户同时登录到远程服务器时，便可以使用会话共享功能让用户之间的输入输出信息共享。
+
+## 安装
+```bash
+[root@localhost ~]# yum install -y screen
+Loaded plugins: fastestmirror, refresh-packagekit, security
+Setting up Install Process
+base                                                    | 3.7 kB     00:00
+base/primary_db                                         | 4.7 MB     00:02
+extras                                                  | 3.4 kB     00:00
+.....
+Running Transaction
+  Installing : screen-4.0.3-19.el6.x86_64               1/1
+  Verifying  : screen-4.0.3-19.el6.x86_64               1/1
+
+Installed:
+  screen.x86_64 0:4.0.3-19.el6
+
+Complete!
+```
+
+## 管理远程会话
+screen命令能做的事情非常多, 如下所示：
+
+| 选项 | 作用 |
+| :---: | ---- |
+| -S  Session_Name | 创建会话窗口 |
+| -d   | 将指定会话进行离线处理 | 
+| -r  Session_Name | 恢复指定会话 | 
+| -x  | 一次性恢复所有的会话 |
+| -ls | 显示当前已有的会话 |
+| -wipe  | 把目前无法使用的会话删除 |
+
+```bash
+## 创建一个名称为backup的会话窗口。
+## 在命令行中敲下这条命令的一瞬间，屏幕会快速闪动一下，这时就已经进入screen服务会话中了，在里面运行的任何操作都会被后台记录下来。
+[root@localhost ~]# screen -S backup
+
+## 看着好像什么不一样, 那么我们就使用 screen -ls 来查看一下
+[root@localhost ~]# screen -ls
+There is a screen on:
+        3283.backup     (Attached)
+1 Socket in /var/run/screen/S-root.
+
+## 如果我们想退出会话怎么操作呢?
+[root@localhost ~]# exit
+[screen is terminating]
+
+## 然后我们来创建一个会话, 模拟断网的情况存在
+[root@localhost ~]# screen -S gkdaxue
+[root@localhost ~]# tail -f /var/log/messages
+Mar 20 09:34:13 localhost NetworkManager[1708]: <info> wpa_supplicant started
+Mar 20 09:34:14 localhost acpid: starting up
+Mar 20 09:34:14 localhost acpid: 1 rule loaded
+Mar 20 09:34:14 localhost acpid: waiting for events: event logging is off
+Mar 20 09:34:14 localhost acpid: client connected from 1892[68:68]
+Mar 20 09:34:14 localhost acpid: 1 client rule loaded
+Mar 20 09:34:25 localhost automount[1917]: problem reading master map, maximum wait exceeded
+Mar 20 09:34:25 localhost automount[1917]: automount: warning: could not read at least one map source after waiting, continuing ...
+Mar 20 09:34:26 localhost abrtd: Init complete, entering main loop
+Mar 20 12:56:48 localhost yum[3066]: Installed: screen-4.0.3-19.el6.x86_64
+   <== 光标在这里跳动, 因为使用了 -f 参数
+
+## 然后强制关闭当前终端, 在重新打开一个新的终端
+[root@localhost ~]# screen -ls
+There is a screen on:
+	3299.gkdaxue	(Detached)
+1 Socket in /var/run/screen/S-root.    <== 可以看到我们之前的依然在
+
+## 恢复一下, 发现还存在, 并没有因为终端的关闭而被关闭.
+[root@localhost ~]# screen -r gkdaxue
+
+[root@localhost ~]# tail -f /var/log/messages
+Mar 20 09:34:13 localhost NetworkManager[1708]: <info> wpa_supplicant started
+Mar 20 09:34:14 localhost acpid: starting up
+Mar 20 09:34:14 localhost acpid: 1 rule loaded
+Mar 20 09:34:14 localhost acpid: waiting for events: event logging is off
+Mar 20 09:34:14 localhost acpid: client connected from 1892[68:68]
+Mar 20 09:34:14 localhost acpid: 1 client rule loaded
+Mar 20 09:34:25 localhost automount[1917]: problem reading master map, maximum wait exceeded
+Mar 20 09:34:25 localhost automount[1917]: automount: warning: could not read at least one map source after waiting, continuing ...
+Mar 20 09:34:26 localhost abrtd: Init complete, entering main loop
+Mar 20 12:56:48 localhost yum[3066]: Installed: screen-4.0.3-19.el6.x86_64
+     <== 发现存在, 并没有因为终端的关闭而被关闭.
+```
+
+## 会话共享功能(相同用户)
+```bash
+## 第一个打开的终端上, 执行以下命令
+[root@localhost ~]# screen -S problem
+
+## 然后在打开一个新的终端, 然后执行以下命令
+[root@localhost ~]# screen -x
+
+然后你在任何一个终端上执行的命令, 两个终端都可以同步的显示出来
+```
