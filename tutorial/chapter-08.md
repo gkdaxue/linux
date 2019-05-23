@@ -535,13 +535,59 @@ r : 代表顶层目录(root directory)
 F : 代表文件被打开, 正在等待响应中
 m : 可能为分享的动态函数库
 
+## 看一下有没有使用 /proc 这个目录的进程, 结果发现没有
+[root@localhost ~]# fuser -uv /proc/
+## 然后在查看一下使用到 /proc 目录下文件的进程
+[root@localhost ~]# fuser -mvu /proc
+                     USER        PID ACCESS COMMAND
+/proc:               root       1582 f.... (root)rsyslogd
+                     root       1779 f.... (root)acpid
+                     haldaemon   1796 f.... (haldaemon)hald
 ```
 
+## lsof命令
+fuser 是由 文件/设备 去找到使用使用该 文件/设备 的进程, lsof 则是找到某个进程所 打开/使用 的文件/设备.
+> lsof [ options ]
 
+| 选项 | 作用 |
+| :----: | ------ |
+| -a | 需要满足多个条件才显示出结果 |
+| -u User_Name | 列出 User_Name 用户相关进程打开的文件 |
+| +d Dir_Name | 找出某个目录下已经被打开的文件 |
 
+```bash
+## 列出当前系统上所有已经被打开的文件与设备
+[root@localhost ~]# lsof | less
+COMMAND     PID      USER   FD      TYPE             DEVICE SIZE/OFF       NODE NAME
+init          1      root  cwd       DIR                8,5     4096          2 /
+init          1      root  rtd       DIR                8,5     4096          2 /
+init          1      root  txt       REG                8,5   150352        450 /sbin/init
+init          1      root  mem       REG                8,5    66432        139 /lib64/libnss_files-2.12.so
+init          1      root  mem       REG                8,5  1930416       7269 /lib64/libc-2.12.so
+.....
 
+## 仅列出 root 用户所打开的文件和设备
+[root@localhost ~]# lsof -u root | less
+COMMAND     PID USER   FD      TYPE             DEVICE SIZE/OFF       NODE NAME
+init          1 root  cwd       DIR                8,5     4096          2 /
+init          1 root  rtd       DIR                8,5     4096          2 /
+init          1 root  txt       REG                8,5   150352        450 /sbin/init
+init          1 root  mem       REG                8,5    66432        139 /lib64/libnss_files-2.12.so
+init          1 root  mem       REG                8,5  1930416       7269 /lib64/libc-2.12.so
+init          1 root  mem       REG                8,5    93320       2041 /lib64/libgcc_s-4.4.7-20120601.so.1
+init          1 root  mem       REG                8,5    47760       7272 /lib64/librt-2.12.so
+.....
 
-
+## 列出 /dev 目录下打开的文件和设备
+[root@localhost ~]# lsof +d /dev
+COMMAND     PID      USER   FD   TYPE             DEVICE SIZE/OFF  NODE NAME
+init          1      root    0u   CHR                1,3      0t0  4601 /dev/null
+init          1      root    1u   CHR                1,3      0t0  4601 /dev/null
+init          1      root    2u   CHR                1,3      0t0  4601 /dev/null
+udevd       575      root    0u   CHR                1,3      0t0  4601 /dev/null
+udevd       575      root    1u   CHR                1,3      0t0  4601 /dev/null
+.......
+```
 
 # 特殊文件 /proc/* 
 我们之前说过所有的进程都是在内存中的, 而内存当中的数据又都会写入到 /proc/* 这个目录下, 所有我们可以直接来查看 /proc 这个目录当中的文件.
@@ -589,4 +635,4 @@ dr-x------. 2 root root 0 Mar 11 16:26 fd
 | /proc/mounts | 系统已经挂载的数据 |
 | /proc/partitions | 显示分区列表, 类似 fdisk -l 命令, 显示内容有所不同 |
 
-# 
+# 计划任务服务程序
