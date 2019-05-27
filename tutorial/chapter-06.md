@@ -343,6 +343,9 @@ MANPATH_MAP	/usr/bin/mh		    /usr/share/man
   1 %a   "man.config"                   line 1
   2 #    "man_test.txt"                 line 1
 
+%a : 表示为 active, 当前正在打开的文件
+#  : 上一个打开的文件
+
 先回到 man.config 文件, 按 V 键使用行选择功能, 然后 y 复制, 
 然后 :n 进入到下一个文件 man_test.txt 按 G 然后 按 p 即可.
 ```
