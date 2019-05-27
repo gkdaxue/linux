@@ -1946,7 +1946,7 @@ QTDIR=/usr/lib64/qt-3.3
 QTINC=/usr/lib64/qt-3.3/include
 SSH_TTY=/dev/pts/1
 USER=gkdaxue                 <== 还是原来用户
-PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/gkdaxue/bin                          
+PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/gkdaxue/bin
 MAIL=/var/spool/mail/gkdaxue <== 还是原来用户
 PWD=/home/gkdaxue            <== 还是原来用户
 LANG=en_US.UTF-8
@@ -2950,25 +2950,25 @@ unix  3      [ ]         STREAM     CONNECTED     15821  /var/run/dbus/system_bu
 
 [root@localhost ~]# netstat -tulpn
 Active Internet connections (only servers)
-Proto Recv-Q Send-Q Local Address               Foreign Address             State       PID/Program name   
-tcp        0      0 0.0.0.0:111                 0.0.0.0:*                   LISTEN      1555/rpcbind        
-tcp        0      0 0.0.0.0:36179               0.0.0.0:*                   LISTEN      1615/rpc.statd      
-tcp        0      0 0.0.0.0:22                  0.0.0.0:*                   LISTEN      1822/sshd           
-tcp        0      0 127.0.0.1:631               0.0.0.0:*                   LISTEN      1653/cupsd          
-tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN      1908/master         
-tcp        0      0 :::32998                    :::*                        LISTEN      1615/rpc.statd      
-tcp        0      0 :::111                      :::*                        LISTEN      1555/rpcbind        
-tcp        0      0 :::22                       :::*                        LISTEN      1822/sshd           
-tcp        0      0 ::1:631                     :::*                        LISTEN      1653/cupsd          
-tcp        0      0 ::1:25                      :::*                        LISTEN      1908/master         
-udp        0      0 0.0.0.0:57043               0.0.0.0:*                               1615/rpc.statd      
-udp        0      0 0.0.0.0:111                 0.0.0.0:*                               1555/rpcbind        
-udp        0      0 0.0.0.0:882                 0.0.0.0:*                               1555/rpcbind        
-udp        0      0 0.0.0.0:631                 0.0.0.0:*                               1653/cupsd          
-udp        0      0 127.0.0.1:943               0.0.0.0:*                               1615/rpc.statd      
-udp        0      0 :::36198                    :::*                                    1615/rpc.statd      
-udp        0      0 :::111                      :::*                                    1555/rpcbind        
-udp        0      0 :::882                      :::*                                    1555/rpcbind   
+Proto Recv-Q Send-Q Local Address               Foreign Address             State       PID/Program name
+tcp        0      0 0.0.0.0:111                 0.0.0.0:*                   LISTEN      1555/rpcbind
+tcp        0      0 0.0.0.0:36179               0.0.0.0:*                   LISTEN      1615/rpc.statd
+tcp        0      0 0.0.0.0:22                  0.0.0.0:*                   LISTEN      1822/sshd
+tcp        0      0 127.0.0.1:631               0.0.0.0:*                   LISTEN      1653/cupsd
+tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN      1908/master
+tcp        0      0 :::32998                    :::*                        LISTEN      1615/rpc.statd
+tcp        0      0 :::111                      :::*                        LISTEN      1555/rpcbind
+tcp        0      0 :::22                       :::*                        LISTEN      1822/sshd
+tcp        0      0 ::1:631                     :::*                        LISTEN      1653/cupsd
+tcp        0      0 ::1:25                      :::*                        LISTEN      1908/master
+udp        0      0 0.0.0.0:57043               0.0.0.0:*                               1615/rpc.statd
+udp        0      0 0.0.0.0:111                 0.0.0.0:*                               1555/rpcbind
+udp        0      0 0.0.0.0:882                 0.0.0.0:*                               1555/rpcbind
+udp        0      0 0.0.0.0:631                 0.0.0.0:*                               1653/cupsd
+udp        0      0 127.0.0.1:943               0.0.0.0:*                               1615/rpc.statd
+udp        0      0 :::36198                    :::*                                    1615/rpc.statd
+udp        0      0 :::111                      :::*                                    1555/rpcbind
+udp        0      0 :::882                      :::*                                    1555/rpcbind
 ```
 
 ### 显示路由表
@@ -3008,4 +3008,121 @@ Iface       MTU Met    RX-OK RX-ERR RX-DRP RX-OVR    TX-OK TX-ERR TX-DRP TX-OVR 
 eth0       1500   0   302346      0      0      0    68261      0      0      0 BMRU
 ```
 
+## last命令
+显示近期用户或终端的登录情况, 执行last命令时，它会读取/var/log目录下名称为wtmp的文件，并把该文件记录的登录系统或终端的用户名单全部显示出来. 
+> last [ options ]
 
+| 选项 | 作用 |
+| :----: | ----- |
+| -n Num | 显示 Num 行记录 |
+| User_Name/tty | 显示指定 用户/终端 的登录信息 |
+
+```bash
+[root@localhost ~]# last
+用户名    终端         登录IP/内核       登录时间            退出时间    
+root     pts/0        192.168.1.11     Sun Mar 24 17:24   still logged in
+root     pts/2        192.168.1.11     Wed Mar 20 14:23 - 14:30  (00:06)    
+root     pts/1        192.168.1.11     Wed Mar 20 14:22 - 17:24 (4+03:02)   
+root     pts/3        192.168.1.11     Wed Mar 20 14:20 - 14:22  (00:01)    
+gkdaxue  pts/0        :pts/2:S.0       Wed Mar 20 14:20 - 14:23  (00:02)    
+gkdaxue  pts/3        :pts/2:S.0       Wed Mar 20 14:16 - 14:20  (00:03)    
+root     pts/0        192.168.1.11     Wed Mar 20 14:16 - 14:20  (00:04)    
+gkdaxue  pts/3        :pts/2:S.0       Wed Mar 20 14:14 - 14:16  (00:01)
+......
+
+still logged in : 尚未退出
+down            : 直到正常关键
+crash           : 直到强制关机
+
+## 显示 5  条记录
+[root@localhost ~]# last -n 5
+root     pts/0        192.168.1.11     Sun Mar 24 17:24   still logged in   
+root     pts/2        192.168.1.11     Wed Mar 20 14:23 - 14:30  (00:06)    
+root     pts/1        192.168.1.11     Wed Mar 20 14:22 - 17:24 (4+03:02)   
+root     pts/3        192.168.1.11     Wed Mar 20 14:20 - 14:22  (00:01)    
+gkdaxue  pts/0        :pts/2:S.0       Wed Mar 20 14:20 - 14:23  (00:02)    
+
+wtmp begins Sun Mar  3 11:42:59 2019
+
+## 显示指定用户的 5  条记录
+[root@localhost ~]# last -n 5 gkdaxue
+gkdaxue  pts/0        :pts/2:S.0       Wed Mar 20 14:20 - 14:23  (00:02)    
+gkdaxue  pts/3        :pts/2:S.0       Wed Mar 20 14:16 - 14:20  (00:03)    
+gkdaxue  pts/3        :pts/2:S.0       Wed Mar 20 14:14 - 14:16  (00:01)    
+gkdaxue  pts/2        192.168.1.11     Wed Mar 20 14:14 - 14:23  (00:08)    
+gkdaxue  pts/1        192.168.1.11     Sun Mar 10 11:04 - 11:43  (00:38)    
+
+wtmp begins Sun Mar  3 11:42:59 2019
+
+## 显示指定终端的 5 条记录
+[root@localhost ~]# last -n 5 pts/0
+root     pts/0        192.168.1.11     Sun Mar 24 17:24   still logged in   
+gkdaxue  pts/0        :pts/2:S.0       Wed Mar 20 14:20 - 14:23  (00:02)    
+root     pts/0        192.168.1.11     Wed Mar 20 14:16 - 14:20  (00:04)    
+root     pts/0        192.168.1.11     Wed Mar 20 14:09 - 14:16  (00:07)    
+root     pts/0        192.168.1.11     Wed Mar 20 09:35 - 14:09  (04:33)    
+
+wtmp begins Sun Mar  3 11:42:59 2019
+```
+
+## lastlog命令
+检查用户上次登录时间
+> last [ options ]
+
+| 选项 | 作用 |
+| :----: | ----- |
+| -u UID | 查询指定用户的登录信息 |
+
+```bash
+[root@localhost ~]# lastlog
+用户名            终端     来源IP           最后登录的时间            
+Username         Port     From             Latest
+root             pts/0    192.168.1.11     Sun Mar 24 17:24:23 +0800 2019
+bin                                        **Never logged in**
+daemon                                     **Never logged in**
+adm                                        **Never logged in**
+lp                                         **Never logged in**
+........
+tcpdump                                    **Never logged in**
+gkdaxue          pts/2    192.168.1.11     Wed Mar 20 14:14:13 +0800 2019
+
+## 查询指定用户的登录信息
+[root@localhost ~]# lastlog -u 0
+Username         Port     From             Latest
+root             pts/0    192.168.1.11     Sun Mar 24 17:24:23 +0800 2019
+```
+
+## traceroute命令
+traceroute命令会显示出本机与其他服务器之间的全部路由，既可以有助于准确判断故障位置，也可以通过显示的时间、IP等信息了解数据的流向.
+
+```bash
+[root@localhost ~]# traceroute www.baidu.com
+traceroute to www.baidu.com (180.97.33.108), 30 hops max, 60 byte packets
+ 1  192.168.1.1 (192.168.1.1)  0.621 ms  0.568 ms  0.531 ms
+ 2  100.69.128.1 (100.69.128.1)  2.265 ms  4.463 ms  4.429 ms
+ 3  58.217.22.149 (58.217.22.149)  3.646 ms  3.612 ms  3.484 ms
+ 4  58.217.58.113 (58.217.58.113)  5.789 ms  4.989 ms  5.711 ms
+ 5  202.102.69.198 (202.102.69.198)  8.834 ms 202.102.73.146 (202.102.73.146)  5.572 ms 202.102.73.158 (202.102.73.158)  10.084 ms
+ 7  180.97.32.26 (180.97.32.26)  5.822 ms 180.97.32.74 (180.97.32.74)  7.084 ms 180.97.32.78 (180.97.32.78)  6.286 ms
+.......
+```
+
+## ping命令
+通常用来测试与目标主机的连通性, 通过发送ICMP ECHO_REQUEST数据包到网络主机（send ICMP ECHO_REQUEST to network hosts），并显示响应情况，这样我们就可以根据它输出的信息来确定目标主机是否可访问（但这不是绝对的）。有些服务器为了防止通过ping探测到，通过防火墙设置了禁止ping或者在内核参数中禁止ping，这样就不能通过ping确定该主机是否还处于开启状态。**linux下ping不会自动终止,需要按ctrl+c终止或使用 -c 选项**.
+> ping [ options ] hostname/ip_address
+
+| 选项 | 作用 |
+| :----: | ----- |
+| -c Num | 发送 Num 次数据 |
+| -w timeout | 设置超时时间 |
+
+```bash
+[root@localhost ~]# ping -c 3 -w 2 www.baidu.com
+PING www.a.shifen.com (180.97.33.108) 56(84) bytes of data.
+64 bytes from 180.97.33.108: icmp_seq=1 ttl=56 time=4.91 ms
+64 bytes from 180.97.33.108: icmp_seq=2 ttl=56 time=5.30 ms
+
+--- www.a.shifen.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 2005ms
+rtt min/avg/max/mdev = 4.911/5.106/5.302/0.208 ms
+```
