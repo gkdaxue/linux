@@ -1253,6 +1253,21 @@ gkdaxue users  <== 发现有效用户组已经变回原来的
 > ```
 
 # 用户用户组管理
+## hostname命令
+设置或者修改主机名
+> hostname [ options ]
+
+| 选项 | 作用 |
+| :-----: | ----- |
+| -f  | 显示 FQDN(全限定域名) |
+
+```bash
+[root@localhost ~]# hostname
+localhost.localdomain
+[root@localhost ~]# hostname -f
+localhost
+```
+
 ## id命令
 用来显示用户的 UID, GID 组名等账号属性信息.
 > id [USER_NAME]
