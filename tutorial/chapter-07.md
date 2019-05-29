@@ -1078,7 +1078,7 @@ Number  Start   End     Size    Type      File system  Flags
 ## 因为我们主分区+扩展分区已经4个了, 所以只有创建一个逻辑分区了, 确保 /dev/sdb 无挂载信息
 [root@localhost ~]# df -hT | grep sdb
 [root@localhost ~]# parted /dev/sdb mkpart logical ext2 21.5GB 26.5GB
-Information: You may need to update /etc/fstab.   <== 因为新增了分区, 提示可能需要更新此文件                      
+Information: You may need to update /etc/fstab.   <== 因为新增了分区, 提示可能需要更新此文件
 
 [root@localhost ~]# parted /dev/sdb print
 Model: VMware, VMware Virtual S (scsi)
