@@ -23,7 +23,7 @@
 
     **磁盘分区**就是指定分区的起始与结束柱面. 指定分区的柱面范围被记录第一个扇区的分区表中. 但是分区表仅仅只有 64bytes, 一个分区要占用 16bytes, 因此最多只能记录四条分区的信息, 这四条记录我们称之为 **主分区或者扩展分区**, 可以在扩展分区上划分出来逻辑分区, (逻辑分区的大小最大为扩展分区的大小) **只有逻辑分区和主分区可以被格式化.**
 
-**分区知识复习 : **
+**分区知识复习 :**
 > 1. 主分区与扩展分区最多可以有4个(硬盘限制)
 > 2. 扩展分区最多只能有一个 (操作系统的限制)
 > 3. 逻辑分区是由扩展分区划分出来的, 逻辑分区的编号从 5 开始.
@@ -536,7 +536,7 @@ hard link 只是在某个目录下新建一个 **文件名连接到某 inode 号
 anaconda-ks.cfg      ->  7249  --> 文件内容
 anaconda-ks.cfg.hard ->  7249  --> 文件内容 
 ```
-**缺点 : **
+**缺点 :**
 > 1. 不能跨文件系统(因为指向 inode, 在别的文件系统中相同的 inode 可能指向的是别的文件, 指向错误)
 > 2. 不能链接到目录
 
@@ -583,7 +583,15 @@ cat: anaconda-ks.cfg.soft: No such file or directory
 > 3. 对文件系统进行检验
 > 4. 创建挂载点(mount point), 然后挂载上来, 设置挂载参数(开机启动 读写 acl 等) 设置对应配置文件
 
-### 磁盘分区 : fdisk命令
+# 磁盘分区
+磁盘分区有两个格式:
+> MBR：MBR分区表(即主引导记录) 所支持的最大卷 2T，最多4个主分区或3个主分区加一个扩展分区
+>  
+> GPT：GPT（即GUID分区表）。是未来磁盘分区的主要形式, 每个磁盘最多支持128个分区。支持大于2T的分区，最大卷可达18EB。
+
+**稍后会添加两块硬盘 : /dev/sdb 做 MBR 分区, /dev/sdc 做 GPT 分区.**
+
+## fdisk命令
 新建/修改/删除 磁盘分区的操作, 分区是针对整个磁盘的, 而不是针对某个分区.
 **fdisk 命令无法处理大于 2TB 以上的磁盘分区, 大于2TB的硬盘, 我们可以使用 parted 命令, 稍后讲解**
 
@@ -650,11 +658,11 @@ Disk identifier: 0x000bbc41                             <== 磁盘标识
 /dev/sda8            1812        1939     1024000           83   Linux
 ```
 
-然后我们现在开始新增一块磁盘, 防止操作失误损坏到系统盘, 先把系统关机, 添加完成后开启系统 步骤如下 :
+然后我们现在开始新增两块磁盘, 防止操作失误损坏到系统盘, 先把系统关机, 添加完成后开启系统 步骤如下 :
 
 ![create_new_disk](https://github.com/gkdaxue/linux/raw/master/image/chapter_A7_0004_create_new_disk.gif)
 
-添加完成后, 然后我们来复习之前所说的关于设备文件命名的问题, 我现在新增的一块硬盘, 使用的 scsi接口 形式, 那么它在系统中会被如何命名呢? (/dev/sdb)
+添加完成后, 然后我们来复习之前所说的关于设备文件命名的问题, 我现在新增的一块硬盘, 使用的 scsi接口 形式, 那么它在系统中会被如何命名呢? (/dev/sdb, /dev/sdc)
 ```bash
 [root@localhost ~]# fdisk -l /dev/sdb
 
@@ -733,7 +741,7 @@ Command (m for help): q
 [root@localhost ~]# 
 ```
 
-#### 增加磁盘分区(/dev/sdb)
+### 增加磁盘分区(/dev/sdb)
 ```bash
 [root@localhost ~]# fdisk /dev/sdb
 Command (m for help): n
@@ -793,7 +801,7 @@ Disk identifier: 0x60e98ef6
 ## 我们还没有写入磁盘分区表中, 接下来做删除分区的实验.
 ```
 
-#### 删除磁盘分区(/dev/sdb)
+### 删除磁盘分区(/dev/sdb)
 接上一步, 我们现在有一个扩展分区和逻辑分区, 突然发现我们弄错了, 那么我们现在操作一下, 先删除错误分区, 在新建正确的分区.
 > 三个主分区每个分区大小为 5G, 然后一个逻辑分区的大小为5G.
 
@@ -891,12 +899,153 @@ brw-rw----. 1 root disk 8, 19 Mar 10 08:22 /dev/sdb3
 brw-rw----. 1 root disk 8, 20 Mar 10 08:22 /dev/sdb4
 brw-rw----. 1 root disk 8, 21 Mar 10 08:22 /dev/sdb5
 ```
-#### 总结
+### 总结
 > 1. 1-4 号分区编号有剩余且没有扩展分区, 那么会有 Primary/Extended 选项存在
 > 2. 1-4 号分区编号有剩余且有扩展分区, 那么会出现 Primary/Logical 选项存在且 Primary 可以手动指明主分区编号
 > 3. 1-4 号分区编号无剩余且有扩展分区, 那么只有 Logical 选项, 不让指定分区编号
 
-### 磁盘分区 : parted命令
+## gdisk命令
+如果硬盘的大小大于 2T, 那么无法使用 MBR 格式的分区, 只能使用 GPT, 然后我们使用 gdisk 命令来创建 GPT 分区类型. **使用此方式, 我们必须先安装一下 gdisk 软件才可以使用此种方式.** 选项和 fdisk 命令一致.
+
+### 安装软件
+```bash
+## 安装一下 gdisk 软件
+[root@localhost ~]# yum install -y gdisk
+Loaded plugins: fastestmirror, refresh-packagekit, security
+Setting up Install Process
+Loading mirror speeds from cached hostfile
+ * base: mirrors.aliyun.com
+ * extras: mirrors.aliyun.com
+ * updates: mirrors.aliyun.com
+Resolving Dependencies
+--> Running transaction check
+---> Package gdisk.x86_64 0:0.8.10-1.el6 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+============================================================================
+ Package         Arch         Version         Repository                   Size
+============================================================================
+Installing:
+ gdisk           x86_64       0.8.10-1.el6    base                         167 k
+
+Transaction Summary
+============================================================================
+Install       1 Package(s)
+
+Total download size: 167 k
+Installed size: 619 k
+Downloading Packages:
+gdisk-0.8.10-1.el6.x86_64.rpm                           | 167 kB     00:00
+Running rpm_check_debug
+Running Transaction Test
+Transaction Test Succeeded
+Running Transaction
+  Installing : gdisk-0.8.10-1.el6.x86_64               1/1 
+  Verifying  : gdisk-0.8.10-1.el6.x86_64               1/1 
+
+Installed:
+  gdisk.x86_64 0:0.8.10-1.el6        
+
+Complete!
+```
+
+### 创建GPT分区(/dev/sdc)
+```bash
+[root@localhost ~]# gdisk /dev/sdc
+GPT fdisk (gdisk) version 0.8.10
+
+Partition table scan:
+  MBR: not present
+  BSD: not present
+  APM: not present
+  GPT: not present
+
+Creating new GPT entries.
+
+Command (? for help): ?      <== 输入 ? 查看 帮助信息, 发现和之前的差不多
+b	back up GPT data to a file
+c	change a partition's name
+d	delete a partition
+i	show detailed information on a partition
+l	list known partition types
+n	add a new partition
+o	create a new empty GUID partition table (GPT)
+p	print the partition table
+q	quit without saving changes
+r	recovery and transformation options (experts only)
+s	sort partitions
+t	change a partition's type code
+v	verify disk
+w	write table to disk and exit
+x	extra functionality (experts only)
+?	print this menu
+
+## 创建一个 100M 和 1G 的分区
+Command (? for help): n
+Partition number (1-128, default 1):      <== 并没有提示我们说是创建主分区还是扩展分区的问题并且数字是 1-128
+First sector (34-41943006, default = 2048) or {+-}size{KMGTP}: 
+Last sector (2048-41943006, default = 41943006) or {+-}size{KMGTP}: +100M
+Current type is 'Linux filesystem'
+Hex code or GUID (L to show codes, Enter = 8300): 
+Changed type of partition to 'Linux filesystem'
+
+Command (? for help): n
+Partition number (2-128, default 2): 
+First sector (34-41943006, default = 206848) or {+-}size{KMGTP}: 
+Last sector (206848-41943006, default = 41943006) or {+-}size{KMGTP}: +1G
+Current type is 'Linux filesystem'
+Hex code or GUID (L to show codes, Enter = 8300): 
+Changed type of partition to 'Linux filesystem'
+
+Command (? for help): p
+Disk /dev/sdc: 41943040 sectors, 20.0 GiB
+Logical sector size: 512 bytes
+Disk identifier (GUID): 3F4B1051-12CF-438F-B53E-0F0FC87D4266
+Partition table holds up to 128 entries
+First usable sector is 34, last usable sector is 41943006
+Partitions will be aligned on 2048-sector boundaries
+Total free space is 39641021 sectors (18.9 GiB)
+
+Number  Start (sector)    End (sector)  Size       Code  Name
+   1            2048          206847   100.0 MiB   8300  Linux filesystem
+   2          206848         2303999   1024.0 MiB  8300  Linux filesystem
+Command (? for help): w
+
+Final checks complete. About to write GPT data. THIS WILL OVERWRITE EXISTING
+PARTITIONS!!
+
+Do you want to proceed? (Y/N): 
+OK; writing new GUID partition table (GPT) to /dev/sdc.
+The operation has completed successfully.
+```
+### 查看磁盘分区
+```bash
+[root@localhost ~]# gdisk -l /dev/sdc
+GPT fdisk (gdisk) version 0.8.10
+
+Partition table scan:
+  MBR: protective
+  BSD: not present
+  APM: not present
+  GPT: present
+
+Found valid GPT with protective MBR; using GPT.
+Disk /dev/sdc: 41943040 sectors, 20.0 GiB
+Logical sector size: 512 bytes
+Disk identifier (GUID): 3F4B1051-12CF-438F-B53E-0F0FC87D4266
+Partition table holds up to 128 entries
+First usable sector is 34, last usable sector is 41943006
+Partitions will be aligned on 2048-sector boundaries
+Total free space is 39641021 sectors (18.9 GiB)
+
+Number  Start (sector)    End (sector)  Size       Code  Name
+   1            2048          206847   100.0 MiB   8300  Linux filesystem
+   2          206848         2303999   1024.0 MiB  8300  Linux filesystem
+```
+
+## parted命令
 fdisk 命令无法支持高于 2TB 以上的分区, 这个时候就需要使用 parted 命令来处理. parted 命令可以使用一行命令来完成分区, 是一个非常好用的命令.
 > parted DEVICE_NAME [命令 [参数]]
 
@@ -906,7 +1055,7 @@ fdisk 命令无法支持高于 2TB 以上的分区, 这个时候就需要使用 
 删除分区     : rm [partition] 
 ```
 
-#### 实例
+### 实例
 ```bash
 ## 打印分区表信息
 [root@localhost ~]# parted /dev/sdb print
@@ -963,7 +1112,79 @@ Number  Start   End     Size    Type      File system  Flags
  5      16.1GB  21.5GB  5379MB  logical
 ```
 
-### 磁盘格式化 : mkfs 命令
+## lsblk命令
+显示块设备信息.
+> lsblk [ options ] [ device ]
+
+| 选项 | 作用 |
+| :---: | ----- |
+| -d | 仅列出磁盘本身, 不列出分区数据 |
+| -f | 同时列出磁盘的文件系统信息 |
+| -m | 同事显示该设备在 /dev/ 下面的权限信息 |
+| -t | 列出该设备的详细信息 |
+
+```bash
+## 不理解的内容, 可以忽略即可, 只是为了做实验, 以后会讲解
+[root@localhost ~]# mkdir /tmp/mount_test1
+[root@localhost ~]# mkfs.ext4 -L 'gkdaxue' /dev/sdc1
+[root@localhost ~]# mount /dev/sdc1 /tmp/mount_test1/
+
+## 列出磁盘的分区数据
+[root@localhost ~]# lsblk /dev/sdc
+名称   主设备号:次设备号   是否为可卸载设备   容量   是否为只读设备  类型   挂载点 
+NAME     MAJ:MIN         RM               SIZE   RO            TYPE   MOUNTPOINT
+sdc      8:32            0                20G    0             disk 
+├─sdc1   8:33            0                100M   0             part /tmp/mount_test1
+└─sdc2   8:34            0                1G     0             part 
+
+## 只显示磁盘本身
+[root@localhost ~]# lsblk -d /dev/sdc
+NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+sdc    8:32   0  20G  0 disk 
+
+## 列出块设备的文件系统信息
+[root@localhost ~]# lsblk -f /dev/sdc
+NAME   FSTYPE LABEL   UUID                                 MOUNTPOINT
+sdc                                                        
+├─sdc1 ext4   gkdaxue 55969e98-43fc-4bd2-b050-9e1b382e8892 /tmp/mount_test1
+└─sdc2   
+
+## 列出权限信息
+[root@localhost ~]# lsblk -m /dev/sdc
+NAME    SIZE OWNER GROUP MODE
+sdc      20G root  disk  brw-rw----
+├─sdc1  100M root  disk  brw-rw----
+└─sdc2    1G root  disk  brw-rw----
+
+## 列出磁盘的详细数据
+[root@localhost ~]# lsblk -t /dev/sdc
+NAME   ALIGNMENT MIN-IO OPT-IO PHY-SEC LOG-SEC ROTA SCHED RQ-SIZE   RA
+sdc            0    512      0     512     512    1 cfq       128  128
+├─sdc1         0    512      0     512     512    1 cfq       128  128
+└─sdc2         0    512      0     512     512    1 cfq       128  128
+```
+
+## blkid命令
+blkid命令对查询设备上所采用文件系统类型进行查询。blkid主要用来对系统的块设备（包括交换分区）所使用的文件系统类型、LABEL、UUID等信息进行查询。要使用这个命令必须安装e2fsprogs软件包。
+
+```bash
+[root@localhost ~]# blkid
+/dev/sda1: UUID="356ce5e4-c782-44cb-9447-1e7f0e04e7d1" TYPE="ext4" 
+/dev/sda2: UUID="QiqoY2-Wmng-l4uw-EnNi-QcrR-hiCk-Us7Atn" TYPE="LVM2_member" 
+/dev/sda3: UUID="33659ce2-7c20-4143-9d2b-4e5b39fe5310" TYPE="ext4" 
+/dev/sda5: UUID="64af9fff-884d-4cf2-afe6-ba3f7869cf35" TYPE="ext4" 
+/dev/sda6: UUID="8c2f0179-2787-43c8-8c8b-16456ebc1f57" TYPE="ext4" 
+/dev/sda7: UUID="79c4a924-5436-4163-a624-4785f47a424d" TYPE="swap" 
+/dev/sda8: UUID="fb2c6429-d1fa-4a77-a4db-d2bb899fb552" TYPE="ext4" 
+/dev/mapper/server-myhome: UUID="e9b85403-804d-4bca-bbe7-8222ad01e0ff" TYPE="ext4" 
+/dev/sdc1: LABEL="gkdaxue" UUID="55969e98-43fc-4bd2-b050-9e1b382e8892" TYPE="ext4" 
+
+## 查看特定设备的信息
+[root@localhost ~]# blkid /dev/sdc1
+/dev/sdc1: LABEL="gkdaxue" UUID="55969e98-43fc-4bd2-b050-9e1b382e8892" TYPE="ext4" 
+```
+
+## 磁盘格式化 : mkfs 命令
 mkfs (即make file system) 可以进行分区的格式化操作. 它是一个综合的命令, 所以可以用来创建多种文件系统, 如果分区里面已经存在数据, 那么格式化是会删除该分区上的所有数据, 特别注意.
 > mkfs -t 文件系统格式 设备文件名
 
@@ -1037,7 +1258,7 @@ This filesystem will be automatically checked every 23 mounts or
 /dev/sdb2            ext2   5.0G   11M  4.7G   1% /test_mount_point2   <== 系统默认的文件系统格式
 ```
 
-### mke2fs命令
+## mke2fs命令
 创建 ext2/ext3/ext4 系列文件系统, 不能创建除此之外的文件系统. 以下这些选项也可以在 mkfs 命令中使用一样的效果.
 
 | 选项 | 作用 |
@@ -1049,7 +1270,7 @@ This filesystem will be automatically checked every 23 mounts or
 | -c | 检查磁盘错误, 进行快速读取测试 |
 | -c -c | 测试读写 | 
 
-#### 实验
+### 实验
 我们使用 /dev/sdb2 开始做实验.
 > 1. Volume Name : gkdaxue_logical
 > 2. Block Size : 2048 bytes
@@ -1079,7 +1300,7 @@ Block count:              2626626          <== block 的总数
 Block size:               2048             <== block 的大小 2KB
 ```
 
-### fsck命令
+## fsck命令
 文件系统运行时会有硬盘和内存数据不同步的情况发生, 因此可能导致系统出现各种问题, 所以这个时候就需要使用到我们所说的 fsck (file system check) 命令来检查和修复文件系统. fsck 也是一个综合的命令
 > file [ options ] DEVICE_NAME
 
@@ -1096,7 +1317,7 @@ Block size:               2048             <== block 的大小 2KB
 > 2. 执行 fsck 命令时, 分区不能被挂载在系统上, 必须提前先卸载, 才能执行此命令
 > 3. 其实我们执行 fsck 命令, 就是在调用 e2fsck 这个软件, 所以可以使用 man e2fsck 来获取帮助
 
-#### 实例
+### 实例
 ```bash
 ## fsck 也是一个综合的命令, 有多种形式和之前 mkfs 一样
 [root@localhost ~]# fsck
@@ -1122,7 +1343,7 @@ Pass 5: Checking group summary information
 gkdaxue_logical: 11/656880 files (0.0% non-contiguous), 120951/2626626 blocks  
 ```
 
-### e2fsck命令
+## e2fsck命令
 检查 ext2/ext3/ext4 文件系统
 > e2fsck [ options ] DEVICE_NAME
 
@@ -1131,7 +1352,7 @@ gkdaxue_logical: 11/656880 files (0.0% non-contiguous), 120951/2626626 blocks
 | -y | 自动回答 yes |
 | -f | 强制修复 |
 
-#### 实例
+### 实例
 ```bash
 [root@localhost ~]# e2fsck -y -f /dev/sdb2
 e2fsck 1.41.12 (17-May-2010)
@@ -1143,7 +1364,7 @@ Pass 5: Checking group summary information
 gkdaxue_logical: 11/656880 files (0.0% non-contiguous), 120951/2626626 blocks
 ```
 
-### e2label命令
+## e2label命令
 更改 ext系列 的Label, 我们挂载分区也可以使用 Label Name的方式(稍后讲解), 那么使用卷标有什么优缺点呢?
 > 1. 系统通过 Label 来挂载, 无论磁盘插在什么接口上面, 磁盘文件名如何变化都不会受到影响
 > 2. 如果有 Label 重复的, 那么可能会导致系统出现问题.
@@ -1151,7 +1372,6 @@ gkdaxue_logical: 11/656880 files (0.0% non-contiguous), 120951/2626626 blocks
 **语法:**
 > e2label device [ new-label ]
 
-#### 实例
 ```bash
 ## 查看卷标名
 [root@localhost ~]# e2label /dev/sdb2
@@ -1170,7 +1390,7 @@ Filesystem volume name:   gkdaxue_test
 .......
 ```
 
-### tune2fs命令
+## tune2fs命令
 调整ext2/ext3/ext4文件系统上的可调文件系统参数.
 > tune2fs -jlL DEVICE_NAME
 
@@ -1180,7 +1400,6 @@ Filesystem volume name:   gkdaxue_test
 | -j | 将 ext2 文件系统格式转换为 ext3 格式 |
 | -L "Volume_Name" | 类似于 e2label, 可修改文件系统的 Label |
 
-#### 实例
 ```bash
 [root@localhost ~]# mount /dev/sdb2 /test_mount_point2
 [root@localhost ~]# df -hT /dev/sdb2
