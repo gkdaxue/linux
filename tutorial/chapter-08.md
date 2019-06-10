@@ -764,9 +764,9 @@ at 命令是在你指定的时间, 无论系统状态怎么样都会执行. 但�
 | 选项 | 作用 |
 | :----: | ---- |
 | -u USER_NAME | 可以帮助其他用户 新建/删除 crontab 任务(仅root可用) |
-| -e | 编辑任务 |
-| -l | 查看任务 |
-| -r | 删除所有的任务, 如果只是想删除某条任务, 请使用 -e 参数来编辑删除 |
+| -e | 编辑任务, 默认当前用户 |
+| -l | 查看任务, 默认当前用户 |
+| -r | 删除当前用户的所有任务, 如果只是想删除某条任务, 请使用 -e 参数来编辑删除 |
 
 **crond服务设置任务的参数格式 : “分、时、日、月、星期 命令”**
 
@@ -1424,6 +1424,983 @@ security notice form host localhost.localdomain
 ```
 
 # 系统开启的服务
+## 查看系统已经启动的服务
+查看系统启动的服务方式很多, 我们可以使用 ps 来查看整个系统上面的服务, 因为它可以将全部的进程都找出来, 但是我们比较关系的还是处在监听状态的服务, 所以也可以使用 netstat 命令来查看
+```bash
+[root@localhost ~]# netstat -tulpn
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address               Foreign Address             State       PID/Program name   
+tcp        0      0 0.0.0.0:111                 0.0.0.0:*                   LISTEN      1706/rpcbind        
+tcp        0      0 0.0.0.0:51732               0.0.0.0:*                   LISTEN      1763/rpc.statd      
+tcp        0      0 0.0.0.0:22                  0.0.0.0:*                   LISTEN      10788/sshd          
+tcp        0      0 127.0.0.1:631               0.0.0.0:*                   LISTEN      1837/cupsd          
+tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN      2076/master         
+tcp        0      0 :::46371                    :::*                        LISTEN      1763/rpc.statd      
+tcp        0      0 :::111                      :::*                        LISTEN      1706/rpcbind        
+tcp        0      0 :::80                       :::*                        LISTEN      5908/httpd          
+tcp        0      0 :::22                       :::*                        LISTEN      10788/sshd          
+tcp        0      0 ::1:631                     :::*                        LISTEN      1837/cupsd          
+tcp        0      0 ::1:25                      :::*                        LISTEN      2076/master         
+udp        0      0 0.0.0.0:39620               0.0.0.0:*                               1763/rpc.statd      
+udp        0      0 0.0.0.0:609                 0.0.0.0:*                               1706/rpcbind        
+udp        0      0 0.0.0.0:111                 0.0.0.0:*                               1706/rpcbind        
+udp        0      0 0.0.0.0:631                 0.0.0.0:*                               1837/cupsd          
+udp        0      0 127.0.0.1:703               0.0.0.0:*                               1763/rpc.statd      
+udp        0      0 :::609                      :::*                                    1706/rpcbind        
+udp        0      0 :::111                      :::*                                    1706/rpcbind        
+udp        0      0 :::51996                    :::*                                    1763/rpc.statd 
+
+## 查看所有处在监听状态的进程
+[root@localhost ~]# netstat -lnp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address               Foreign Address             State       PID/Program name   
+tcp        0      0 0.0.0.0:111                 0.0.0.0:*                   LISTEN      1706/rpcbind        
+tcp        0      0 0.0.0.0:51732               0.0.0.0:*                   LISTEN      1763/rpc.statd      
+tcp        0      0 0.0.0.0:22                  0.0.0.0:*                   LISTEN      10788/sshd          
+tcp        0      0 127.0.0.1:631               0.0.0.0:*                   LISTEN      1837/cupsd          
+tcp        0      0 127.0.0.1:25                0.0.0.0:*                   LISTEN      2076/master         
+tcp        0      0 :::46371                    :::*                        LISTEN      1763/rpc.statd      
+tcp        0      0 :::111                      :::*                        LISTEN      1706/rpcbind        
+tcp        0      0 :::80                       :::*                        LISTEN      5908/httpd          
+tcp        0      0 :::22                       :::*                        LISTEN      10788/sshd          
+tcp        0      0 ::1:631                     :::*                        LISTEN      1837/cupsd          
+tcp        0      0 ::1:25                      :::*                        LISTEN      2076/master         
+udp        0      0 0.0.0.0:39620               0.0.0.0:*                               1763/rpc.statd      
+udp        0      0 0.0.0.0:609                 0.0.0.0:*                               1706/rpcbind        
+udp        0      0 0.0.0.0:111                 0.0.0.0:*                               1706/rpcbind        
+udp        0      0 0.0.0.0:631                 0.0.0.0:*                               1837/cupsd          
+udp        0      0 127.0.0.1:703               0.0.0.0:*                               1763/rpc.statd      
+udp        0      0 :::609                      :::*                                    1706/rpcbind        
+udp        0      0 :::111                      :::*                                    1706/rpcbind        
+udp        0      0 :::51996                    :::*                                    1763/rpc.statd      
+Active UNIX domain sockets (only servers)
+Proto RefCnt Flags       Type       State         I-Node PID/Program name    Path
+unix  2      [ ACC ]     STREAM     LISTENING     14028  1706/rpcbind        /var/run/rpcbind.sock
+unix  2      [ ACC ]     STREAM     LISTENING     14106  1726/dbus-daemon    /var/run/dbus/system_bus_socket
+unix  2      [ ACC ]     STREAM     LISTENING     14625  1837/cupsd          /var/run/cups/cups.sock
+unix  2      [ ACC ]     STREAM     LISTENING     14674  1856/acpid          /var/run/acpid.socket
+unix  2      [ ACC ]     STREAM     LISTENING     10026  1/init              @/com/ubuntu/upstart
+unix  2      [ ACC ]     STREAM     LISTENING     15524  2076/master         public/cleanup
+unix  2      [ ACC ]     STREAM     LISTENING     15532  2076/master         private/tlsmgr
+unix  2      [ ACC ]     STREAM     LISTENING     15536  2076/master         private/rewrite
+unix  2      [ ACC ]     STREAM     LISTENING     15540  2076/master         private/bounce
+unix  2      [ ACC ]     STREAM     LISTENING     15544  2076/master         private/defer
+unix  2      [ ACC ]     STREAM     LISTENING     15548  2076/master         private/trace
+unix  2      [ ACC ]     STREAM     LISTENING     15552  2076/master         private/verify
+unix  2      [ ACC ]     STREAM     LISTENING     15556  2076/master         public/flush
+unix  2      [ ACC ]     STREAM     LISTENING     15560  2076/master         private/proxymap
+unix  2      [ ACC ]     STREAM     LISTENING     15564  2076/master         private/proxywrite
+unix  2      [ ACC ]     STREAM     LISTENING     15568  2076/master         private/smtp
+unix  2      [ ACC ]     STREAM     LISTENING     15572  2076/master         private/relay
+unix  2      [ ACC ]     STREAM     LISTENING     15576  2076/master         public/showq
+unix  2      [ ACC ]     STREAM     LISTENING     15580  2076/master         private/error
+unix  2      [ ACC ]     STREAM     LISTENING     15584  2076/master         private/retry
+unix  2      [ ACC ]     STREAM     LISTENING     15588  2076/master         private/discard
+unix  2      [ ACC ]     STREAM     LISTENING     15592  2076/master         private/local
+unix  2      [ ACC ]     STREAM     LISTENING     15596  2076/master         private/virtual
+unix  2      [ ACC ]     STREAM     LISTENING     15600  2076/master         private/lmtp
+unix  2      [ ACC ]     STREAM     LISTENING     15604  2076/master         private/anvil
+unix  2      [ ACC ]     STREAM     LISTENING     15608  2076/master         private/scache
+unix  2      [ ACC ]     STREAM     LISTENING     15661  2090/abrtd          /var/run/abrt/abrt.socket
+unix  2      [ ACC ]     STREAM     LISTENING     14720  1868/hald           @/var/run/hald/dbus-ipcF12qM6y
+unix  2      [ ACC ]     STREAM     LISTENING     14713  1868/hald           @/var/run/hald/dbus-Jdu5YD0Up3
+```
+
+## chkconfig命令
+首先我们来大概了解一下运行等级的概念, 在Linux 中有7(0-6)种运行等级, 图形化界面是 5, 纯文本界面是 3, 那么我想知道在等级 5 下面有哪些服务是开机启动的, 那么怎么办. (**因为我们之前手动启动的服务, 重启后并不会自动启动, 所以我们如果需要开机启动就要自己设置一下**)
+
+
+更新或查询系统服务的运行级别信息. **仅仅只能设置在某些运行级别下是否启动**.
+> chkconfig --list [ Service_Name ]
+>
+> chkconfig [ --level {0123456} ]  Service_Name   < on | off >
+
+```bash
+## 查看所有服务的启动情况
+[root@localhost ~]# chkconfig --list
+## stand alone 管理的服务
+NetworkManager 	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+abrt-ccpp      	0:off	1:off	2:off	3:on	4:off	5:on	6:off
+abrtd          	0:off	1:off	2:off	3:on	4:off	5:on	6:off
+acpid          	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+atd            	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+auditd         	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+autofs         	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+bluetooth      	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+certmonger     	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+cpuspeed       	0:off	1:on	2:on	3:on	4:on	5:on	6:off
+crond          	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+cups           	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+dnsmasq        	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+firstboot      	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+haldaemon      	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+htcacheclean   	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+httpd          	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+ip6tables      	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+iptables       	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+irqbalance     	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+kdump          	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+lvm2-monitor   	0:off	1:on	2:on	3:on	4:on	5:on	6:off
+mdmonitor      	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+messagebus     	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+netconsole     	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+netfs          	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+network        	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+nfs            	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+nfs-rdma       	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+nfslock        	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+ntpd           	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+ntpdate        	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+oddjobd        	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+portreserve    	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+postfix        	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+pppoe-server   	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+psacct         	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+quota_nld      	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+rdisc          	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+rdma           	0:off	1:on	2:on	3:on	4:on	5:on	6:off
+restorecond    	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+rngd           	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+rpcbind        	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+rpcgssd        	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+rpcsvcgssd     	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+rsyslog        	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+saslauthd      	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+smartd         	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+spice-vdagentd 	0:off	1:off	2:off	3:off	4:off	5:on	6:off
+sshd           	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+sssd           	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+sysstat        	0:off	1:on	2:on	3:on	4:on	5:on	6:off
+udev-post      	0:off	1:on	2:on	3:on	4:on	5:on	6:off
+wdaemon        	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+winbind        	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+wpa_supplicant 	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+xinetd         	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+ypbind         	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+
+xinetd based services:  <== super daemon 所管理的服务
+	chargen-dgram: 	off
+	chargen-stream:	off
+	daytime-dgram: 	off
+	daytime-stream:	off
+	discard-dgram: 	off
+	discard-stream:	off
+	echo-dgram:    	off
+	echo-stream:   	off
+	rsync:         	off
+	rsync.back:    	off
+	tcpmux-server: 	off
+	time-dgram:    	off
+	time-stream:   	off
+
+## 我们来筛选一下运行级别3 下启动的服务
+[root@localhost ~]# chkconfig --list | grep '3:on'
+NetworkManager 	0:off	1:off	2:on	 3:on	4:on	 5:on	6:off
+abrt-ccpp      	0:off	1:off	2:off	3:on	4:off	5:on	6:off
+abrtd          	0:off	1:off	2:off	3:on	4:off	5:on	6:off
+acpid          	0:off	1:off	2:on	 3:on	4:on	 5:on	6:off
+atd            	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+auditd         	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+autofs         	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+bluetooth      	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+certmonger     	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+cpuspeed       	0:off	1:on	 2:on	3:on	4:on	5:on	6:off
+crond          	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+cups           	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+haldaemon      	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+ip6tables      	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+iptables       	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+irqbalance     	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+lvm2-monitor   	0:off	1:on	 2:on	3:on	4:on	5:on	6:off
+mdmonitor      	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+messagebus     	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+netfs          	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+network        	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+nfslock        	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+portreserve    	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+postfix        	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+rdma           	0:off	1:on	 2:on	3:on	4:on	5:on	6:off
+rpcbind        	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+rpcgssd        	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+rsyslog        	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+sshd           	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+sysstat        	0:off	1:on	 2:on	3:on	4:on	5:on	6:off
+udev-post      	0:off	1:on	 2:on	3:on	4:on	5:on	6:off
+xinetd         	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+
+## 查看 httpd服务的情况
+[root@localhost ~]# chkconfig --list httpd
+httpd          	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+
+## 设置在 345级别下开机启动, 并查看
+[root@localhost ~]# chkconfig --level 345 httpd on 
+[root@localhost ~]# chkconfig --list httpd
+httpd          	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+
+## chkconfig 仅仅只是设置为开机是否启动服务而已, 该服务目前的状态是什么情况是不知道的
+[root@localhost ~]# service httpd status
+httpd is stopped
+[root@localhost ~]# chkconfig --list httpd
+httpd          	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+
+
+## 管理 super daemon的启动和关闭
+[root@localhost ~]# chkconfig --list | grep rsync:
+	rsync:         	on
+[root@localhost ~]# chkconfig rsync off
+[root@localhost ~]# chkconfig --list | grep rsync:
+	rsync:         	off
+[root@localhost ~]# service xinetd restart
+Stopping xinetd:                                           [  OK  ]
+Starting xinetd:                                           [  OK  ]
+[root@localhost ~]# netstat -tulpn | grep rsync
+[root@localhost ~]# 
+```
+
+## ntsysv命令(类图形化界面管理)
+是一个配置运行级别的简单界面, 为 Red Hat 系列特有的.
+> ntsysv [ \-\-level <level1[,levels2.....]> ]
+
+```bash
+在这个界面中 中括号中 * 表示默认开机就会启动, 没有则表示默认开机不启动.
+上下键来找到你要更改的服务上面, 空格键 选中/取消选中
+Tab键 在 [OK]  [Cancel] 功能上跳转, 然后 按 Enter键 选择.
+F1 键可以显示该服务的简易说明. 自己可以多试验一下 了解了解
+```
+
+# 认识和分析日志文件
+日志文件是什么, 我们为什么要学会分析日志文件? 日志文件就是系统在什么时候 什么服务做了什么事情,或者服务发生了什么错误, 然后这些信息会被记录下来并保存到日志文件中. 因为在后台中有很多的 daemons 在工作, 所以学会记录和分析日志对我们来说很重要. 日志文件产生有两种方式, 一种是软件服务商自己决定输入的文件格式和信息(比如 www). 第二种就是系统写入的信息(你只要把信息丢给系统, 系统就会自动写入到对应的日志文件中). 
+
+## 常见的日志文件
+```bash
+/var/log/cron     : 记录 crontab 任务是否执行以及执行过程中是否有错误, crontab 文件编写是否规范无误等等.
+/var/log/dmesg    : 记录系统开机时内核检测过程所产生的各种信息.
+/var/log/lastlog  : 统一记录系统上所有账号最近一次登录系统时的相关信息
+/var/log/maillog  : 记录邮件的往来信息
+/var/log/messages : 记录系统所有 错误/重要 信息
+/var/log/secure   : 涉及到需要输入账号密码的功能时, 当登录时都会被记录到这个文件(无论登录成功与否)
+/var/log/wtmp     : 记录正确登录系统者的账户信息
+/var/log/faillog  : 记录错误登录账户信息
+/var/log/httpd/*  : www服务的日志信息
+
+## 不同的服务会使用的自己的日志文件来记录日志, 比如 samba  www 等等
+```
+
+## rsyslogd : 记录日志文件的服务
+Linux 的日志文件主要由 rsyslogd (Centos6为 rsyslogd, Centos5 为 syslogd ) 在负责, 所以我们先来检查一下 rsyslogd 是否启动以及是否开机启动.
+```bash
+[root@localhost ~]# ps aux | grep rsyslogd
+root       1616  0.0  0.1 249164  1852 ?        Sl   Mar28   0:00 /sbin/rsyslogd -i /var/run/syslogd.pid -c 5
+root      22579  0.0  0.0 103332   840 pts/0    S+   13:42   0:00 grep rsyslogd
+[root@localhost ~]# chkconfig --list rsyslog
+rsyslog        	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+
+
+## 经过 rsyslog 记录下来的数据中, 每条信息都会记录下面这些重要的数据(以 /var/log/secure 文件为例):
+[root@localhost ~]# cat /var/log/secure
+发生的日期和时间  主机名    服务名称[PID] 实际数据内容
+Apr  1 13:39:27 localhost sshd[2212]:  pam_unix(sshd:session): session closed for user root
+Apr  1 15:14:56 localhost sshd[18667]: Accepted password for root from 192.168.1.11 port 4996 ssh2
+Apr  1 15:14:56 localhost sshd[18667]: pam_unix(sshd:session): session opened for user root by (uid=0)
+Apr  2 11:55:35 localhost sshd[18667]: Received disconnect from 192.168.1.11: 0: 
+Apr  2 11:55:35 localhost sshd[18667]: pam_unix(sshd:session): session closed for user root
+Apr  2 11:55:36 localhost sshd[22232]: Accepted password for root from 192.168.1.11 port 4390 ssh2
+Apr  2 11:55:37 localhost sshd[22232]: pam_unix(sshd:session): session opened for user root by (uid=0)
+```
+rsyslogd 负责系统中各种日志信息的处理并写入到不同的日志文件中, 那么肯定存在一个配置文件规定了哪类信息写入到那个文件中, 因为系统中的日志信息是有等级之分的, 所以不同等级的日志可能就写入到不同的日志文件中.
+
+| 服务类型 | 说明 |
+| :----: | ----- |
+| auth (authpriv) | 主要与认证有关的机制, 如 login, ssh, su 等 |
+| cron | 时间任务相关 |
+| daemon | 各个 daemon 相关的信息 |
+| kern | 内核产生信息的地方 |
+| lpr | 打印相关的信息  |
+| mail | 邮箱收发相关的信息 |
+| news | 新闻组服务相关信息 |
+| user | 用户程序产生的相关信息 |
+| uucp | unix like 机器本身相关的信息 |
+| local[0-7] | 自定义的日志设备 |
+
+| 信息等级( **从小 -> 大排列出来** ) | 说明 |
+| :----: | ---- |
+| debug | 有调试信息的, 日志信息最多 |
+| info | 一般信息的日志 |
+| notice | 具有重要性的普通条件的信息 |
+| warning | 警告信息 |
+| err | 错误级别, 阻止某个功能或者模块不能正常工作的信息 |
+| crit |严重信息 阻止整个系统或者软件不能正常工作的信息 |
+| alert | 需要立即修改的信息 |
+| emerg | 内核崩溃的信息 |
+| none | 什么都不记录 |
+
+
+ 然后我们先来了解一下配置文件 /etc/rsyslog.conf 
+
+```bash
+## 配置文件的基本格式如下 :
+服务名称[.=!]信息等级      信息记录的 文件名/设备/主机
+
+.xxxx : 大于等于 xxxx 级别的信息
+.=xxx : 等于 xxx 级别的信息
+.!xxx : 除 xxx 级别之外的信息 
+
+-  : 表示是使用异步的方式记录日志信息
+@  : 表示通过udp进行转发
+@@ : 表示通过tcp协议发送
+
+## 去除空白行后的效果
+[root@localhost ~]# grep -v '^$' /etc/rsyslog.conf 
+# rsyslog v5 configuration file
+# For more information see /usr/share/doc/rsyslog-*/rsyslog_conf.html
+# If you experience problems, see http://www.rsyslog.com/doc/troubleshoot.html
+#### MODULES ####  加载模块
+$ModLoad imuxsock # provides support for local system logging (e.g. via logger command)
+$ModLoad imklog   # provides kernel logging support (previously done by rklogd)
+#$ModLoad immark  # provides --MARK-- message capability
+# Provides UDP syslog reception
+
+允许514端口接收使用UDP协议转发过来的日志
+#$ModLoad imudp
+#$UDPServerRun 514
+# Provides TCP syslog reception
+
+允许514端口接收使用TCP协议转发过来的日志
+#$ModLoad imtcp
+#$InputTCPServerRun 514
+#### GLOBAL DIRECTIVES ####
+
+定义日志格式默认模板
+# Use default timestamp format
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+# File syncing capability is disabled by default. This feature is usually not required,
+# not useful and an extreme performance hit
+#$ActionFileEnableSync on
+# Include all config files in /etc/rsyslog.d/
+$IncludeConfig /etc/rsyslog.d/*.conf
+#### RULES ####
+# Log all kernel messages to the console.
+# Logging much else clutters up the screen.
+
+关于内核的所有日志都放到/dev/console(控制台)
+#kern.*                                                 /dev/console
+# Log anything (except mail) of level info or higher.
+# Don't log private authentication messages!
+所有日志类型的大于info级别的信息到/var/log/messages，但是mail邮件信息，authpriv验证方面的信息和cron时间任务相关的信息除外
+*.info;mail.none;authpriv.none;cron.none                /var/log/messages
+
+# The authpriv file has restricted access.
+authpriv验证相关的所有信息存放在/var/log/secure
+authpriv.*                                              /var/log/secure
+# Log all the mail messages in one place.
+
+邮件的所有信息存放在/var/log/maillog
+这里有一个-符号, 表示是使用异步的方式记录, 因为日志一般会比较大
+mail.*                                                  -/var/log/maillog
+
+计划任务有关的信息存放在/var/log/cron
+# Log cron stuff
+cron.*                                                  /var/log/cron
+
+记录所有的大于等于emerg级别信息, 以wall方式发送给每个登录到系统的人
+*代表所有在线用户
+# Everybody gets emergency messages
+*.emerg                                                 *
+
+记录uucp,news.crit等存放在/var/log/spooler
+# Save news errors of level crit and higher in a special file.
+uucp,news.crit                                          /var/log/spooler
+
+Save boot messages also to boot.log     启动的相关信息
+# Save boot messages also to boot.log
+local7.*                                                /var/log/boot.log
+# ### begin forwarding rule ###
+# The statement between the begin ... end define a SINGLE forwarding
+# rule. They belong together, do NOT split them. If you create multiple
+# forwarding rules, duplicate the whole block!
+# Remote Logging (we use TCP for reliable delivery)
+#
+# An on-disk queue is created for this action. If the remote host is
+# down, messages are spooled to disk and sent when it is up again.
+#$WorkDirectory /var/lib/rsyslog # where to place spool files
+#$ActionQueueFileName fwdRule1 # unique name prefix for spool files
+#$ActionQueueMaxDiskSpace 1g   # 1gb space limit (use as much as possible)
+#$ActionQueueSaveOnShutdown on # save messages to disk on shutdown
+#$ActionQueueType LinkedList   # run asynchronously
+#$ActionResumeRetryCount -1    # infinite retries if host is down
+# remote host is: name/ip:port, e.g. 192.168.0.1:514, port optional
+
+@@表示通过tcp协议发送    @表示通过udp进行转发
+#*.* @@remote-host:514
+# ### end of the forwarding rule ###
+
+
+## 然后我们去掉所有空白和注释, 在分析一下该文件
+[root@localhost ~]# grep -v '^#' /etc/rsyslog.conf | grep -v '^$'
+$ModLoad imuxsock # provides support for local system logging (e.g. via logger command)
+$ModLoad imklog   # provides kernel logging support (previously done by rklogd)
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+$IncludeConfig /etc/rsyslog.d/*.conf
+*.info;mail.none;authpriv.none;cron.none                /var/log/messages
+authpriv.*                                              /var/log/secure
+mail.*                                                  -/var/log/maillog
+cron.*                                                  /var/log/cron
+*.emerg                                                 *
+uucp,news.crit                                          /var/log/spooler
+local7.*                                                /var/log/boot.log
+```
+
+## 日志文件的轮循(logrotate)
+rsyslog 利用的是 daemon 启动的, 所以如果有日志信息会立即进行, 而 logrotate 则更像是计划任务, 到了规定的时间才开始进行. 所有 logrotate 程序是挂在 cron 下面进行的. 所以我们可以看一下 /etc/cron.daily/logrotate 文件, 这个文件就是记录了每天都要进行的日志文件轮替的行为.
+
+### logrotate配置文件
+logrotate 的配置文件为 /etc/logrotate.conf 以及 /etc/logrotate.d/* , logrotate.conf 指定了一些默认的配置属性, 如果对应的文件没有被具体配置属性, 那么就以这些配置属性作为默认配置属性使用.
+```bash
+[root@localhost ~]# grep -v '^$' /etc/logrotate.conf 
+# see "man logrotate" for details
+
+默认为每周对日志文件进行一次轮循工作
+# rotate log files weekly
+weekly
+
+默认保留 4 个日志文件
+# keep 4 weeks worth of backlogs
+rotate 4
+
+logrotate 自动创建新的日志文件, 并且新的日志文件和原来文件权限一致
+# create new (empty) log files after rotating old ones
+create
+
+日志文件会附加一个 短横线和YYYYMMDD 格式的日期
+# use date as a suffix of the rotated file
+dateext
+
+是否进行压缩
+# uncomment this if you want your log files compressed
+#compress
+
+加载 /etc/logrotate.d 目录中的配置文件
+# RPM packages drop log rotation information into this directory
+include /etc/logrotate.d
+
+每个日志文件的单独配置
+# no packages own wtmp and btmp -- we'll rotate them here
+/var/log/wtmp {
+    monthly                 <== 每个月一次 rotate
+    create 0664 root utmp   <== 指定新建文件的权限 属主  属组
+	minsize 1M              <== 文件大小超过 1M 才进行 rotate
+    rotate 1                <== 只保留一个日志文件
+}
+/var/log/btmp {
+    missingok               <== 在日志轮循期间，任何错误将被忽略
+    monthly
+    create 0600 root utmp
+    rotate 1
+}
+# system-specific logs may be also be configured here.
+```
+
+我们从上面的讲解中可以看出来 logrotate.conf 设置的语法格式为 :
+```bash
+日志文件1(绝对路径) 日志文件2(绝对路径) .....  {
+	参数设置值 ............
+}
+
+monthly                  : 日志文件将按月轮循。其它可用值为‘daily’，‘weekly’或者‘yearly’
+rotate 5                 : 一次将存储5个归档日志。对于第六个归档，时间最久的归档将被删除
+compress                 : 在轮循任务完成后，已轮循的归档将使用gzip进行压缩
+missingok                : 在日志轮循期间，任何错误将被忽略，例如“文件无法找到”之类的错误
+notifempty               : 如果日志文件为空，轮循不会进行
+create 644 root root     : 以指定的权限创建全新的日志文件，同时logrotate也会重命名原始日志文件
+sharedscripts/endscript  : 调用外部命令来进行额外的工作, 下面命令需要配合它来使用
+prerotate                : 在启动 logrotate 之前进行的命令, 例如修改文件的属性 
+postrotate               : 在完成 logrotate 之后启动的命令
+
+比如我们针对日志文件进行了 +a 特殊权限的操作, 那么它就无法被重命名, 这个时候我们可以利用上面说的这些来操作.
+/var/log/messages {
+	sharedscripts
+	prerotate
+		/usr/bin/chattr -a /var/log/messages
+	endscript
+	sharedscripts
+	postrotate
+		/usr/bin/killall -HUP rsyslogd ## 相当于重新读取配置文件, 否则会发生错误
+		/usr/bin/chattr +a /var/log/messages 
+	endscript
+}
+```
+
+### logrotate命令
+> logrotate [ options ] config_file
+
+| 选项 | 作用 |
+| :----: | ---- |
+| -v | 启动显示模式, 显示 logrotate 运行过程 |
+| -f | 不论是否符合配置文件的数据, 强制每个日志文件都进行 rotate 操作 |
+
+```bash
+## 查看配置文件信息
+[root@localhost ~]# cat /etc/logrotate.conf 
+weekly
+rotate 4
+create
+dateext
+
+include /etc/logrotate.d
+.....
+[root@localhost ~]# cat /etc/logrotate.d/httpd 
+/var/log/httpd/*log {
+    missingok
+    notifempty
+    sharedscripts
+    delaycompress
+    postrotate
+        /sbin/service httpd reload > /dev/null 2>/dev/null || true
+    endscript
+}
+
+
+## -v 查看过程
+[root@localhost ~]# logrotate -v /etc/logrotate.conf 
+reading config file /etc/logrotate.conf
+including /etc/logrotate.d
+reading config file ConsoleKit
+reading config info for /var/log/ConsoleKit/history 
+reading config file cups
+reading config info for /var/log/cups/*_log 
+reading config file dracut
+reading config info for /var/log/dracut.log 
+reading config file httpd
+reading config info for /var/log/httpd/*log 
+reading config file ppp
+reading config info for /var/log/ppp/connect-errors 
+reading config file psacct
+reading config info for /var/account/pacct 
+reading config file sssd
+reading config info for /var/log/sssd/*.log 
+reading config file syslog
+reading config info for /var/log/cron
+/var/log/maillog
+/var/log/messages
+/var/log/secure
+/var/log/spooler
+
+reading config file wpa_supplicant
+reading config info for /var/log/wpa_supplicant.log 
+reading config file yum
+reading config info for /var/log/yum.log 
+reading config info for /var/log/wtmp 
+reading config info for /var/log/btmp 
+
+Handling 12 logs
+
+rotating pattern: /var/log/ConsoleKit/history  monthly (6 rotations)
+empty log files are not rotated, old logs are removed
+considering log /var/log/ConsoleKit/history
+  log does not need rotating
+
+rotating pattern: /var/log/cups/*_log  weekly (4 rotations)
+empty log files are not rotated, old logs are removed
+considering log /var/log/cups/*_log
+  log /var/log/cups/*_log does not exist -- skipping
+
+rotating pattern: /var/log/dracut.log  1048576 bytes (4 rotations)
+empty log files are not rotated, old logs are removed
+considering log /var/log/dracut.log
+  log does not need rotating
+
+rotating pattern: /var/log/httpd/*log  weekly (4 rotations)
+empty log files are not rotated, old logs are removed
+considering log /var/log/httpd/access_log
+  log needs rotating
+considering log /var/log/httpd/error_log
+  log does not need rotating
+rotating log /var/log/httpd/access_log, log->rotateCount is 4
+dateext suffix '-20190403'
+glob pattern '-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+glob finding old rotated logs failed
+fscreate context set to unconfined_u:object_r:httpd_log_t:s0
+renaming /var/log/httpd/access_log to /var/log/httpd/access_log-20190403
+creating new /var/log/httpd/access_log mode = 0644 uid = 0 gid = 0
+running postrotate script
+
+rotating pattern: /var/log/ppp/connect-errors  after 1 days (5 rotations)
+empty log files are not rotated, old logs are removed
+considering log /var/log/ppp/connect-errors
+  log /var/log/ppp/connect-errors does not exist -- skipping
+
+rotating pattern: /var/account/pacct  after 1 days (31 rotations)
+empty log files are not rotated, old logs are removed
+considering log /var/account/pacct
+  log does not need rotating
+not running postrotate script, since no logs were rotated
+
+rotating pattern: /var/log/sssd/*.log  weekly (2 rotations)
+empty log files are not rotated, old logs are removed
+considering log /var/log/sssd/*.log
+  log /var/log/sssd/*.log does not exist -- skipping
+not running postrotate script, since no logs were rotated
+
+rotating pattern: /var/log/cron
+/var/log/maillog
+/var/log/messages
+/var/log/secure
+/var/log/spooler
+ weekly (4 rotations)
+empty log files are rotated, old logs are removed
+considering log /var/log/cron
+  log does not need rotating
+considering log /var/log/maillog
+  log does not need rotating
+considering log /var/log/messages
+  log does not need rotating
+considering log /var/log/secure
+  log does not need rotating
+considering log /var/log/spooler
+  log does not need rotating
+not running postrotate script, since no logs were rotated
+
+rotating pattern: /var/log/wpa_supplicant.log  30720 bytes (4 rotations)
+empty log files are not rotated, old logs are removed
+considering log /var/log/wpa_supplicant.log
+  log does not need rotating
+not running postrotate script, since no logs were rotated
+
+rotating pattern: /var/log/yum.log  yearly (4 rotations)
+empty log files are not rotated, old logs are removed
+considering log /var/log/yum.log
+  log does not need rotating
+
+rotating pattern: /var/log/wtmp  monthly (1 rotations)
+empty log files are rotated, only log files >= 1048576 bytes are rotated, old logs are removed
+considering log /var/log/wtmp
+  log does not need rotating
+
+rotating pattern: /var/log/btmp  monthly (1 rotations)
+empty log files are rotated, old logs are removed
+considering log /var/log/btmp
+  log does not need rotating
+set default create context
+
+
+## -f 强制进行 logrotate 操作
+[root@localhost ~]# ll /var/log/httpd/*
+-rw-r--r--. 1 root root     0 Apr  3 12:41 /var/log/httpd/access_log
+-rw-r--r--. 1 root root   324 Apr  3 12:42 /var/log/httpd/error_log
+[root@localhost ~]# logrotate -f /etc/logrotate.conf
+[root@localhost ~]# ll /var/log/httpd/*
+-rw-r--r--. 1 root root     0 Apr  3 12:41 /var/log/httpd/access_log
+-rw-r--r--. 1 root root 70780 Apr  3 11:54 /var/log/httpd/access_log-20190403
+-rw-r--r--. 1 root root   324 Apr  3 12:42 /var/log/httpd/error_log
+-rw-r--r--. 1 root root 37743 Apr  3 12:42 /var/log/httpd/error_log-20190403
+```
+
+### 实例 
+```bash
+存在一个 /var/log/admin.log 并设置了 +a 权限, 要求如下 :
+1. 每一个月轮循一次
+2. 日志文件大于 10M, 则主动轮循, 不受一个月日期限制
+3. 只保留 5个 备份文件
+4. 备份文件需要压缩
+
+[root@localhost ~]# touch /var/log/admin.log
+[root@localhost ~]# chattr +a /var/log/admin.log 
+[root@localhost ~]# lsattr /var/log/admin.log 
+-----a-------e- /var/log/admin.log
+
+## 编写配置文件
+[root@localhost ~]# grep -v '^#' /etc/logrotate.conf 
+weekly
+rotate 4
+create
+dateext
+
+include /etc/logrotate.d
+...
+
+## 因为我们直接测试配置文件, 所以需要加上 create 以及根据需要是否添加 dateext
+[root@localhost ~]# vim /etc/logrotate.d/admin
+/var/log/admin.log {
+    monthly
+    size=10M
+    rotate 5
+    create
+    dateext
+    compress
+    sharedscripts
+    prerotate
+        /usr/bin/chattr -a /var/log/admin.log
+    endscript
+    postrotate
+        /usr/bin/killall -HUP rsyslogd
+        /usr/bin/chattr +a /var/log/admin.log
+    endscript 
+}
+
+## 测试配置文件
+[root@localhost ~]# logrotate -v /etc/logrotate.conf
+........
+rotating pattern: /var/log/admin.log  10485760 bytes (5 rotations)
+empty log files are rotated, old logs are removed
+considering log /var/log/admin.log
+  log does not need rotating
+not running prerotate script, since no logs will be rotated
+not running postrotate script, since no logs were rotated
+........
+
+## 然后来测试一下
+[root@localhost ~]# logrotate -fv /etc/logrotate.d/admin 
+reading config file /etc/logrotate.d/admin
+reading config info for /var/log/admin.log 
+
+Handling 1 logs
+
+rotating pattern: /var/log/admin.log  forced from command line (5 rotations)
+empty log files are rotated, old logs are removed
+considering log /var/log/admin.log
+  log needs rotating
+rotating log /var/log/admin.log, log->rotateCount is 5
+dateext suffix '-20190403'
+glob pattern '-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+glob finding old rotated logs failed
+running prerotate script
+fscreate context set to unconfined_u:object_r:var_log_t:s0
+renaming /var/log/admin.log to /var/log/admin.log-20190403
+creating new /var/log/admin.log mode = 0644 uid = 0 gid = 0
+running postrotate script
+compressing log with: /bin/gzip
+set default create context
+
+## 查看测试文件
+[root@localhost ~]# ll /var/log/admin*
+-rw-r--r--. 1 root root  0 Apr  3 13:15 /var/log/admin.log
+-rw-r--r--. 1 root root 20 Apr  3 13:15 /var/log/admin.log-20190403.gz
+```
+
+## 分析日志文件
+既然我们有了日志文件, 那么我们就会要分析日志文件, 才能知道我们系统或者服务有什么问题, 那么我们可以使用 logwatch 软件, 这个软件会每天分析一次日志文件, 然后将数据以 email 的格式发送给 root 用户, 然后我们来查看一下数据, 如果有其他的需求, 我们也可以根据自己的情况来编写 shell 脚本分析
+```bash
+[root@localhost ~]# yum install -y logwatch &> /dev/null
+[root@localhost ~]# logwatch
+[root@localhost ~]# mail
+Heirloom Mail version 12.4 7/29/08.  Type ? for help.
+"/var/spool/mail/root": 2 messages 1 new
+    1 logwatch@localhost.l  Thu Apr  4 00:04  78/2356  "Logwatch for localhost.localdomain (Linux)"
+>N  2 logwatch@localhost.l  Thu Apr  4 00:06  77/2345  "Logwatch for localhost.localdomain (Linux)"
+& 2
+Message  2:
+From root@localhost.localdomain  Thu Apr  4 00:06:29 2019
+Return-Path: <root@localhost.localdomain>
+X-Original-To: root
+Delivered-To: root@localhost.localdomain
+To: root@localhost.localdomain
+From: logwatch@localhost.localdomain
+Subject: Logwatch for localhost.localdomain (Linux)
+Content-Type: text/plain; charset="iso-8859-1"
+Date: Thu,  4 Apr 2019 00:06:29 +0800 (CST)
+Status: R
+
+
+ ################### Logwatch 7.3.6 (05/19/07) #################### 
+        Processing Initiated: Thu Apr  4 00:06:29 2019
+        Date Range Processed: yesterday
+                              ( 2019-Apr-03 )
+                              Period is day.
+      Detail Level of Output: 0
+              Type of Output: unformatted
+           Logfiles for Host: localhost.localdomain
+  ################################################################## 
+ 
+ --------------------- httpd Begin ------------------------ 
+
+ Requests with error response codes
+    403 Forbidden
+       /: 298 Time(s)
+    404 Not Found
+       /favicon.ico: 3 Time(s)
+...............
+```
+
+# 系统的启动流程
+系统整体的流程如下所示 :
+```bash
+1. 加载 BIOS(Basic Input Output System), 通过 BIOS 读取 CMOS 的信息并取得第一个可启动的设备
+2. 读取启动设备的第一个扇区内的 MBR 并执行 Boot Loader 操作
+3. 根据 Boot Loader 加载 Kernel, Kernel 开始检测硬件和加载驱动
+4. 硬件驱动加载成功后, Kernel 主动调用 init 进程, 取得 run-level 信息
+5. init 执行 /etc/rc.d/rc.sysint 文件来准备软件执行的操作环境
+6. init 执行 run-level 的各个服务的启动
+7. init 执行 /etc/rc.d/rc.local 文件
+8. init 执行终端模拟程序 mingetty 启动 login 进程, 系统启动完成.
+```
+
+## BIOS 和 MBR
+内核文件需要 Loader 来加载, 但是每个操作系统的 loader 都不相同, 那么 BIOS 是怎么读取 MBR 内的 loader 呢? 其实只要 BIOS 能够检测到你的磁盘, 那么就可以通过 INT 13 这条信道老读取磁盘的第一个扇区的 MBR, 这样就可以实现加载内核的功能了.
+
+## Boot Loader功能
+```bash
+Boot Loader 的主要功能 :
+	1. 提供菜单 : 用户可以选择不同的启动选项 
+	2. 加载内核 : 加载 Kernel 到内存中去执行.
+	3. 转交其他的 Loader : 将引导装载功能交给其他 Loader 负责(多个操作系统)
+
+系统的 MBR 只有一个, 那么多系统是怎么实现的呢 ? 
+其实每个文件系统(FileSystem 或 partition) 都会保留一块引导扇区(boot sector) 提供给操作系统安装 boot loader.
+每个操作系统默认都会安装一套 boot loader到它自己的 boot sector中.
+Linux   安装时可以选择将 boot loader 安装到 MBR 内或者 boot sector中.
+windows 安装时则默认主动安装到 MBR 和 boot sector 中. 所以一般都是先安装 windows 系统. 
+所以就是依赖于 Boot Loader 转交 Loader 的功能实现可以安装多操作系统.
+```
+
+## 内核硬件检测 和 initramfs
+通过 Boot Loader 开始读取内核文件后, 接下来 Linux 就会把内核解压缩到内存中, 开始测试和驱动硬件设备, 比如硬盘 网卡 声卡 CPU 等. **内核文件一般放在 /boot 目录下. 名字为 /boot/vmlinuz-VERSION** 
+```bash
+[root@localhost ~]# ls --format=single-column -F /boot
+config-2.6.32-696.el6.x86_64          <== 内核被编译时选择的功能与模块配置文件
+efi/
+grub/                                 <== 引导装载程序 grub 相关数据目录
+initramfs-2.6.32-696.el6.x86_64.img   <== 虚拟文件系统文件
+lost+found/
+symvers-2.6.32-696.el6.x86_64.gz    
+System.map-2.6.32-696.el6.x86_64      <== 内核功能放置在内存中 地址的对应表
+vmlinuz-2.6.32-696.el6.x86_64*        <== 内核文件
+
+## 查看内核版本信息
+[root@localhost ~]# uname -r
+2.6.32-696.el6.x86_64
+
+从上面可以知道内核的版本为 2.6.32-696.el6.x86_64. 
+```
+
+在系统启动过程中**根目录是以只读方式挂载**的, 为了避免影响到磁盘内的文件. 所以我们在修改 root 密码时需要重新挂载根目录就是这个原因.
+
+Linux **内核是可以动态的加载内核模块的, 内核模块被放置在 /lib/modules 目录内**, **模块必须放置在磁盘根目录呢(所以 / 和 /lib 必须在同一个分区内.)**, 因为在启动的过程中内核必须要挂载到根目录, 这样才能够读取内核模块并加载驱动程序. 一般来说, 非必要且可以编译成为模块的内核功能都会被编译成模块, 例如 USB SATA SCSI 等硬盘驱动程序都是以模块的形式存在的. 
+
+那么现在又有了一个新的问题, 我们以 SATA硬盘为例,  我们通过 BIOS 的 INT 13 取得了 Boot Loader 和 Kernel文件, 然后 Kernel 接管系统 检测硬件并尝试挂载根目录来获取驱动程序, 但是 Kernel 根本不认识 SATA硬盘(因为没有驱动, 驱动存在于 /lib/modules), 所以根本无法挂载根目录, 自然无法读取到 /lib/modules中的驱动, **Linux 是通过虚拟文件系统来处理这个问题的**.
+
+我们从上面知道 **虚拟文件系统(Initial RAM FileSystem)** 的文件名为initramfs-2.6.32-696.el6.x86_64.img, 它可以通过 Boot Loader 加载到内存中, 然后会被解压并在内存中仿真成一个根目录, 且此文件系统能够提供一个可执行的程序, 通过该程序来加载启动过程中需要的内核模块(比如 SATA SCSI驱动等), 等载入完成后, 在帮助 Kernel 重新调用 /sbin/init 来启动正常的启动流程. 然后我们尝试把这个文件来解压缩看一下.
+```bash
+## 复制虚拟文件系统过来查看一下
+[root@localhost ~]# cp /boot/initramfs-2.6.32-696.el6.x86_64.img .
+[root@localhost ~]# ll
+total 26048
+-rw-------. 1 root root 26669464 Apr  6 17:13 initramfs-2.6.32-696.el6.x86_64.img
+
+## 必须改名, 否则会出现如下错误 
+## gzip: initramfs-2.6.32-696.el6.x86_64.img: unknown suffix -- ignored
+[root@localhost ~]# mv initramfs-2.6.32-696.el6.x86_64.img initramfs-2.6.32-696.el6.x86_64.gz
+[root@localhost ~]# gzip -d initramfs-2.6.32-696.el6.x86_64.gz
+
+## 只能使用 cpio 解压缩
+[root@localhost ~]# cpio -ivcdu < initramfs-2.6.32-696.el6.x86_64 
+..........
+
+## 查看一下, 发现特别像根目录
+[root@localhost ~]# ll
+total 76200
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 bin
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 cmdline
+drwxr-xr-x. 3 root root     4096 Apr  6 17:18 dev
+-rw-r--r--. 1 root root       23 Apr  6 17:18 dracut-004-409.el6_8.2
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 emergency
+drwxr-xr-x. 8 root root     4096 Apr  6 17:18 etc
+-rwxr-xr-x. 1 root root     8989 Apr  6 17:18 init
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 initqueue
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 initqueue-finished
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 initqueue-settled
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 initqueue-timeout
+-rw-------. 1 root root 77910528 Apr  6 17:13 initramfs-2.6.32-696.el6.x86_64
+drwxr-xr-x. 7 root root     4096 Apr  6 17:18 lib
+drwxr-xr-x. 3 root root     4096 Apr  6 17:18 lib64
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 mount
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 netroot
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 pre-mount
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 pre-pivot
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 pre-trigger
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 pre-udev
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 proc
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 sbin
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 sys
+drwxr-xr-x. 2 root root     4096 Apr  6 17:18 sysroot
+drwxrwxrwt. 2 root root     4096 Apr  6 17:18 tmp
+drwxr-xr-x. 8 root root     4096 Apr  6 17:18 usr
+drwxr-xr-x. 4 root root     4096 Apr  6 17:18 var
+```
+
+当 Kernel 启动时，可以从 initramfs 文件中装载驱动模块，直到挂载真正的rootfs，然后将 initramfs 从内存中移除。Kernel 会以只读方式挂载根文件系统，当根文件系统被挂载后，开始装载第一个进程(用户空间 的进程)，执行/sbin/init，之后就将控制权交接给了 init 程序(所以你会发现 /sbin/init 的 PID 为 1)。
+
+## 第一个进程 init 及 配置文件
+### 运行级别 run level
+我们之前已经简单的讲解过运行级别的问题, 3 级别为多用户字符界面, 5 为图形化界面, 然后我们今天来详细的讲解一下.
+
+| 系统运行级别 | 作用 |
+| :-----: | ------ |
+| 0  | 关机 |
+| 1 | 单用户 |
+| 2 | 多用户, 不含 NFS 服务 |
+| 3 | 多用户 |
+| 4 | 未分配 |
+| 5 | 图形化界面 |
+| 6 | 重启 |
+
+### run level 的切换
+我们知道了有这么多的 run level, 那么我应该如何设置默认的 run level 以及切换 run level 呢? **与 run level 有关的启动其实都是在 /etc/rc.d/rc.sysinit 执行完毕之后, 不同的运行级别仅仅只是 /etc/rc[0-6].d 里面启动的服务不同而已(稍后讲解).**
+
+#### 开机默认启动级别
+如果我们想开机的时候默认进入到某个 run level, 就需要修改 /etc/inittab 文件内的配置选项
+```bash
+[root@localhost ~]# cat /etc/inittab 
+# 我们之前讲解的系统运行级别如下所示 : 
+# Default runlevel. The runlevels used are:
+#   0 - halt (Do NOT set initdefault to this)
+#   1 - Single user mode
+#   2 - Multiuser, without NFS (The same as 3, if you do not have networking)
+#   3 - Full multiuser mode
+#   4 - unused
+#   5 - X11
+#   6 - reboot (Do NOT set initdefault to this)
+
+## 设置系统启动时的默认运行级别, 代表系统默认以 3 级别启动, 如果需要修改, 只要把 3 修改为对应级别数字即可.
+id:3:initdefault:
+
+
+## 然后我们来分析一下 /etc/inittab 文件的内容, 用 : 分割的四个字段
+设置选项 : 运行级别 : 操作行为 : 命令选项
+
+设置选项 : 代表 init 的主要工作选项
+运行级别 : 该选项在哪些 run level 下面运行
+操作行为 : 主要可以进行的操作选项
+命令选项 : 应该执行什么命令, 通常是一些 script
+```
+
+| 操作行为 | 含义 |
+| :---: | ----- |
+| initdefault | 代表默认的 run level 设置值 |
+| sysinit | 代表系统初始化的操作选项 |
+| ctrlaltdel | 代表 ctrl + alt + del 三个按键是否可以重新启动配置 |
+| wait | 后面字段设置的命令必须要执行完毕后才能继续下面其他的操作 |
+| respawn | 后面字段的命令可以无限制的重新启动 |
+
+#### init命令 : 临时切换 run level
+如果我们想要临时切换运行级别, 那么就可以使用 ` init Run_Level ` 来操作即可. 重启时还是以配置文件 /etc/inittab 为准, 只是临时切换而已.
+
+#### runlevel命令
+runlevel 命令用来显示当前运行级别以及上次运行的级别信息.
+```bash
+[root@localhost ~]# runlevel
+N 3    <== N 表示没有切换过运行级别, 系统启动就是 3 级别的
+
+## 然后我们来切换一下级别
+[root@localhost ~]# init 5
+[root@localhost ~]# runlevel
+3 5    <== 上一次是在 3 级别, 现在在 5 级别
+```
+
+### init的处理流程
+我们可以从下图来分析一下系统启动的流程 :
+
+![init](https://github.com/gkdaxue/linux/raw/master/image/chapter_A8_0001.png)
+
 
 
 
