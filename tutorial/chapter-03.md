@@ -1117,7 +1117,32 @@ rm: remove regular empty file `rm_dir/test_6'? y
 rm: remove regular empty file `rm_dir/test_5'? y
 rm: remove directory `rm_dir'? y
 
-## rm -rf /* 是一个非常危险的命令, 表示是删除根目录下所有的文件 
+## 既然 rm 命令会删除文件, 那么 rm 命令删除文件时是不是会删除隐藏文件呢 ?
+## 仅仅发现只能删除所有的非隐藏文件, 所以这点要特别注意
+[root@localhost ~]# ll -a | tail -n 5
+drwx------.  2 root root 4096 Mar  3 14:42 .pulse
+-rw-------.  1 root root  256 Mar  3 14:42 .pulse-cookie
+drwx------.  2 root root 4096 Mar  3 14:42 .ssh
+-rw-r--r--.  1 root root  129 Dec  4  2004 .tcshrc
+-rw-------.  1 root root 5818 May  2 03:51 .viminfo
+[root@localhost ~]# touch zz.txt
+[root@localhost ~]# ll -a | tail -n 6
+drwx------.  2 root root 4096 Mar  3 14:42 .pulse
+-rw-------.  1 root root  256 Mar  3 14:42 .pulse-cookie
+drwx------.  2 root root 4096 Mar  3 14:42 .ssh
+-rw-r--r--.  1 root root  129 Dec  4  2004 .tcshrc
+-rw-------.  1 root root 5818 May  2 03:51 .viminfo
+-rw-r--r--.  1 root root    0 Jun 26 16:39 zz.txt
+[root@localhost ~]# rm -rf *
+[root@localhost ~]# ll -a | tail -n 5
+drwx------.  2 root root 4096 Mar  3 14:42 .pulse
+-rw-------.  1 root root  256 Mar  3 14:42 .pulse-cookie
+drwx------.  2 root root 4096 Mar  3 14:42 .ssh
+-rw-r--r--.  1 root root  129 Dec  4  2004 .tcshrc
+-rw-------.  1 root root 5818 May  2 03:51 .viminfo
+
+
+## rm -rf /* 是一个非常危险的命令, 表示是删除根目录下所有的文件(非隐藏) 
 ## 这会导致它会把系统也删除, 出现大问题, 所以使用 rm 命令一定要谨慎.
 ```
 ## who命令
