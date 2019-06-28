@@ -1198,7 +1198,7 @@ gkdaxue
 3 4
 ```
 
-## declare/typeset命令
+## declare命令 / typeset命令
 声明变量的类型, 变量的类型默认为 字符串, 并且 bash 中数组运算, 默认最多仅能达到整数类型
 > declare [ options ] variable
 
