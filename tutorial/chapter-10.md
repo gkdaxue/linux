@@ -977,6 +977,39 @@ Filesystem     1K-blocks   Used Available Use% Mounted on
 /dev/md0         9314596 152000   8689432   2% /mnt/raid
 ```
 
+### 先关在开 RAID
+```bash
+## 先把 RAID 关闭, 在查看 /proc/mdstat 文件
+[root@localhost ~]# mdadm -S /dev/md0
+mdadm: stopped /dev/md0
+[root@localhost ~]# cat /proc/mdstat
+Personalities : [raid6] [raid5] [raid4] 
+unused devices: <none>
+
+## 那么我们如何在重新打开这个 RAID 呢 ?
+[root@localhost ~]# mdadm -A -s /dev/md0
+mdadm: /dev/md0 not identified in config file.
+
+## 有些同学会遇到上面的错误, 错误的原因是没有 /etc/mdadm.conf 配置文件
+## 这个时候我们就可以使用下面这个命令来解决, 是不是发现和我们自己手动写入的很像
+[root@localhost ~]# mdadm -Ds
+ARRAY /dev/md0 metadata=1.2 spares=1 name=localhost.localdomain:0 UUID=b3480a3a:9c89f632:c6f0236e:3fb66b7f
+
+## 然后我们就可以使用 > 或 >> 来把这些导入到配置文件中去(具体使用 > >> 看自己需要)
+## 这样我们的配置文件就存在了, 然后就继续我们的启动 RAID 的操作
+[root@localhost ~]# mdadm -Ds > /etc/mdadm.conf
+[root@localhost ~]# mdadm -A -s /dev/md0
+mdadm: /dev/md0 has been started with 4 drives and 1 spare.
+
+## 查看 /proc/mdstat 
+[root@localhost ~]# cat /proc/mdstat 
+Personalities : [raid6] [raid5] [raid4] 
+md0 : active raid5 sdb5[5] sdb6[4](S) sdb3[2] sdb2[1] sdb1[0]
+      9463296 blocks super 1.2 level 5, 512k chunk, algorithm 2 [4/4] [UUUU]
+
+unused devices: <none>
+```
+
 ### 关闭 RAID
 ```bash
 ## 卸载并删除 /etc/fatab 中配置文件
