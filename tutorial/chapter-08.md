@@ -642,7 +642,9 @@ dr-x------. 2 root root 0 Mar 11 16:26 fd
 > 长期性任务 : 每天备份数据库文件(每天例行性的工作)
 
 ## at命令(一次性任务)
-一次性任务只执行一次, 一般用于满足临时的工作需求, 所以我们可以使用 ` at命令 ` 来实现这种功能. (要执行 at 时, 必须有 atd 这个服务的支持才行, 所以需要检查是否安装了此软件以及服务是否启动). at命令 来生成要运行的工作, 然后将这个工作以文本文件的方式写入到 **/var/spool/at 目录中**, 然后等待 atd 服务的调用和执行即可.  **并不是所有的人都可以使用 at 命令**, 我们可以利用 **/etc/at.allow** 和 **/etc/at.deny** 两个文件来进行限制. at 工作情况如下:
+一次性任务只执行一次, 一般用于满足临时的工作需求, 所以我们可以使用 ` at命令 ` 来实现这种功能. (要执行 at 时, 必须有 atd 这个服务的支持才行, 所以需要检查是否安装了此软件以及服务是否启动). at命令 来生成要运行的工作, 然后将这个工作以文本文件的方式写入到 **/var/spool/at 目录中**, 然后等待 atd 服务的调用和执行即可.  
+**并不是所有的人都可以使用 at 命令**, 我们可以利用 **/etc/at.allow** 和 **/etc/at.deny** 两个文件来进行限制.
+at 工作情况如下:
 > 1. 先寻找 /etc/at.allow 文件, 如果找到, 则只有这个文件中存在的用户才可以使用 at 命令.
 > 2. 如果 /etc/at.allow 文件不存在, 则寻找 /etc/at.deny 文件, 这个文件存在的用户不能使用 at 命令, 不在这个文件中的用户则可以使用.
 > 3. 如果这两个文件都不存在, 那就只有 root 用户可以使用这个命令了
@@ -738,7 +740,7 @@ marcinDELIMITER3c8750f7
 
 ## 如果我们使用 at 来执行计划任务, 那么命令最好使用绝对路径的形式. 防止因为 PATH 变量有问题导致的问题.
 ## 然后我们等待了 10 分钟之后, 发现并没有输出 :hello, 这是为啥呢?
-因为 at 的执行和终端机无关是被放到后台中执行的, 所以 标准输出/标准错误输出 信息都会被传送到执行这的 mailbox 中去了
+因为 at 的执行和终端机无关是被放到后台中执行的, 所以 标准输出/标准错误输出 信息都会被传送到执行者的 mailbox 中去了
 如果我们想要显示在当前终端显示一下, 应该怎么操作呢? 先查看一下当前的终端信息
 [root@localhost ~]# tty
 /dev/pts/1
@@ -751,11 +753,119 @@ job 7 at 2019-03-25 19:25
 [root@localhost ~]# hello
 ^C
 
-如果 at 执行的任务没有任何的信息输出, 那么 at 默认不会发邮件给执行这, 如果一定要发送邮件给执行者, 可以使用 at -m TIME 来操作.
+如果 at 执行的任务没有任何的信息输出(标准/错误), 那么 at 默认不会发邮件给执行者, 
+如果一定要发送邮件给执行者, 可以使用 at -m TIME 来操作.
+
+
+## 然后我们就来测试一下执行权限的问题(符合条件就退出, 不进行后续判断操作)
+## 1. at 会先判断 at.allow 文件是否存在, 存在则不再此文件中的用户不能执行 at 命令(无论用户是否存在 at.deny 文件中)
+## 2. 如果 at.allow 不存在, 则判断 at.deny 是否存在, 存在则此文件中的用户不能执行 at 命令
+## 3. 如果以上两个文件都不存在, 则只有 root 用户可以执行 at 命令
+[root@localhost ~]# ll /etc/at.*
+-rw-r--r--. 1 root root 1 Mar 22  2017 /etc/at.deny     <== 发现只存在 at.deny 文件
+[root@localhost ~]# cat /etc/at.deny
+           <== 为一个空文件
+
+
+## 然后我们就来验证一下以上结论
+[root@localhost ~]# mv /etc/at.deny  /etc/at.deny_back
+## 没有此用户, 请使用 useradd gkdaxue 命令来添加一下
+[root@localhost ~]# su - gkdaxue    
+[gkdaxue@localhost ~]$ at 12:00
+You do not have permission to use at.   <== 不存在上述两个文件, 所以只有 root 可以执行
+[gkdaxue@localhost ~]$ exit
+logout
+
+
+## 验证存在 at.deny 文件的情况
+[root@localhost ~]# mv /etc/at.deny_back /etc/at.deny
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ at 12:00
+at> pwd
+at> <EOT>   <== 按 ctrl + d 命令
+job 7 at 2019-05-02 12:00
+[gkdaxue@localhost ~]$ at -l
+7	2019-05-02 12:00 a gkdaxue
+[gkdaxue@localhost ~]$ exit
+logout
+## 将 gkdaxue 用户写入到 at.deny 文件中
+[root@localhost ~]# echo 'gkdaxue' >> /etc/at.deny
+[root@localhost ~]# cat /etc/at.deny 
+gkdaxue
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ at 12:00
+You do not have permission to use at.   <== 发现没有权限
+[gkdaxue@localhost ~]$ exit
+logout
+
+
+## 验证存在 at.allow 文件的情况(同时也存在 at.deny 文件)
+[root@localhost ~]# cp -a /etc/at.deny /etc/at.allow
+[root@localhost ~]# ll /etc/at.*
+-rw-r--r--. 1 root root 9 May  1 21:40 /etc/at.allow
+-rw-r--r--. 1 root root 9 May  1 21:40 /etc/at.deny
+[root@localhost ~]# head /etc/at.{allow,deny}
+==> /etc/at.allow <==
+gkdaxue
+
+==> /etc/at.deny <==
+gkdaxue
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ at 12:01
+at> pwd
+at> <EOT>
+job 8 at 2019-05-02 12:01                <== 存在于 at.allow 文件中, 所以可以执行 at 命令
+[gkdaxue@localhost ~]$ at -l
+8	2019-05-02 12:01 a gkdaxue
+7	2019-05-02 12:00 a gkdaxue
+[gkdaxue@localhost ~]$ exit
+logout
+## 删除 at.allow 文件中 gkdaxue 这个用户
+[root@localhost ~]# sed -i 's/gkdaxue//' /etc/at.allow 
+[root@localhost ~]# cat /etc/at.allow 
+            <== 为空的文件
+[root@localhost ~]# su - gkdaxue
+[gkdaxue@localhost ~]$ at 12:02
+You do not have permission to use at.   <== 已经全部验证完成
+[gkdaxue@localhost ~]$ exit
+logout
+## 还原实验环境
+[root@localhost ~]# rm -rf /etc/at.allow 
+[root@localhost ~]# sed -i 's/gkdaxue//' /etc/at.deny 
+[root@localhost ~]# cat /etc/at.deny 
+          <== 空文件
+
+
+## 新的问题又来了, 我们 at 设置的命令执行时, 是在什么路径下面执行的, 开始实验
+[root@localhost ~]# cd /tmp
+[root@localhost tmp]# tty
+/dev/pts/0
+[root@localhost tmp]# at now + 1min
+at> pwd > /dev/pts/0
+at> <EOT>
+job 10 at 2019-05-01 21:59
+[root@localhost tmp]# at -l
+8	2019-05-02 12:01 a gkdaxue         <== 发现 root 也可以看到其他用户的任务
+10	2019-05-01 21:59 a root
+7	2019-05-02 12:00 a gkdaxue
+## 等了一分钟, 显示为 /tmp 目录, 所以是在执行 at 命令时的当前目录
+[root@localhost tmp]# /tmp
 ```
 
 ## batch命令
 at 命令是在你指定的时间, 无论系统状态怎么样都会执行. 但是如果我们想的是系统比较空闲的时候才执行, 那么我们就可以使用 batch命令, batch 命令也是利用 at 命令来执行的, 只不过加入了一些控制的参数而已. (当 cpu 的工作负载小于0.8 时, 才会执行工作任务), 其他的内容和 at 命令一致.
+```bash
+## batch 不需要任何参数, 当负载小于 0.8时, 系统会自动执行, 所以不需要参数
+[root@localhost ~]# tty
+/dev/pts/0
+[root@localhost ~]# batch
+at> pwd > /dev/pts/0
+at> <EOT>
+job 14 at 2019-05-01 22:17
+
+##等待一段时间后, 显示了出来
+[root@localhost ~]# /root
+```
 
 ## crontab命令(长期性任务)
 **crontab 使用 crond 这个系统服务来控制的**. 它的安全性和 at 类似, 也有两个文件 **/ect/cron.allow** 和 **/etc/cron.deny** 系统默认保留 /etc/cron.deny 文件, 只要将不想执行 crontab 的用户写入到此文件中即可. 当用户使用 crontab 命令来创建任务时, 会在 **/var/spool/cron/USER_NAME**  文件中被记录. (建议不要通过vim直接编辑该文件, 防止由于语法错误, 导致无法执行 cron)
@@ -2401,7 +2511,115 @@ N 3    <== N 表示没有切换过运行级别, 系统启动就是 3 级别的
 
 ![init](https://github.com/gkdaxue/linux/raw/master/image/chapter_A8_0001.png)
 
+```bash
+1. 调用 /sbin/init 来启动正常的启动流程, 加载 /etc/inittab 以及 /etc/init/*.conf , 取得 run level以及其他信息
+2. 通过 /etc/rc.d/rc.sysinit 来加载 /etc/sysconfig 目录内的文件, 准备软件执行的环境, 
+   包含启动网络, 主机名, 语系, 文件系统格式等等初始化工作
+3. 然后加载 /etc/fstab  来挂载文件等工作
+4. 按照 runlevel 来加载不同目录( /etc/rc.d/rc[0-6].d ) 然后先执行 K 开头的服务关掉, 在执行 S 开头的服务启动
+5. 执行用户自定义引导程序/etc/rc.d/rc.local , 完成了系统所有的启动任务后，linux会启动终端或X-Window来等待用户登录
 
+
+## 然后我们就以 runlevel 为 3 来查看一下 /etc/rc.d/rc3.d/ 下的文件
+## 文件名为 K 或 S + 数字(执行顺序) + 服务名组成  先执行 K 的操作然后在执行 S 的操作
+## 并且发现都是链接到了  etc/init.d/ 目录下的文件
+[root@localhost ~]# ll /etc/rc.d/rc3.d/
+total 0
+lrwxrwxrwx. 1 root root 16 Apr  2 10:23 K01smartd -> ../init.d/smartd
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 K02oddjobd -> ../init.d/oddjobd
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 K05wdaemon -> ../init.d/wdaemon
+lrwxrwxrwx. 1 root root 15 Apr  2 10:23 K100kdump -> ../init.d/kdump
+lrwxrwxrwx. 1 root root 16 Apr  2 10:23 K10psacct -> ../init.d/psacct
+lrwxrwxrwx. 1 root root 19 Apr  2 10:23 K10saslauthd -> ../init.d/saslauthd
+lrwxrwxrwx. 1 root root 22 Apr  2 10:23 K15htcacheclean -> ../init.d/htcacheclean
+lrwxrwxrwx. 1 root root 24 Apr  2 10:23 K30spice-vdagentd -> ../init.d/spice-vdagentd
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 K50dnsmasq -> ../init.d/dnsmasq
+lrwxrwxrwx. 1 root root 13 Apr  2 10:23 K60nfs -> ../init.d/nfs
+lrwxrwxrwx. 1 root root 18 Apr  2 10:23 K61nfs-rdma -> ../init.d/nfs-rdma
+lrwxrwxrwx. 1 root root 20 Apr  2 10:23 K69rpcsvcgssd -> ../init.d/rpcsvcgssd
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 K73winbind -> ../init.d/winbind
+lrwxrwxrwx. 1 root root 14 Apr  2 10:23 K74ntpd -> ../init.d/ntpd
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 K75ntpdate -> ../init.d/ntpdate
+lrwxrwxrwx. 1 root root 19 Apr  2 10:23 K75quota_nld -> ../init.d/quota_nld
+lrwxrwxrwx. 1 root root 16 Apr  2 10:23 K76ypbind -> ../init.d/ypbind
+lrwxrwxrwx. 1 root root 19 Apr  2 10:38 K83bluetooth -> ../init.d/bluetooth
+lrwxrwxrwx. 1 root root 24 Apr  2 10:38 K84wpa_supplicant -> ../init.d/wpa_supplicant
+lrwxrwxrwx. 1 root root 21 Apr  2 10:23 K87restorecond -> ../init.d/restorecond
+lrwxrwxrwx. 1 root root 14 Apr  2 10:23 K88sssd -> ../init.d/sssd
+lrwxrwxrwx. 1 root root 20 Apr  2 10:23 K89netconsole -> ../init.d/netconsole
+lrwxrwxrwx. 1 root root 15 Apr  2 10:23 K89rdisc -> ../init.d/rdisc
+lrwxrwxrwx. 1 root root 22 Apr  2 10:23 K92pppoe-server -> ../init.d/pppoe-server
+lrwxrwxrwx. 1 root root 19 Apr  2 10:23 K95firstboot -> ../init.d/firstboot
+lrwxrwxrwx. 1 root root 14 Apr  2 10:23 K99rngd -> ../init.d/rngd
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 S01sysstat -> ../init.d/sysstat
+lrwxrwxrwx. 1 root root 22 Apr  2 10:23 S02lvm2-monitor -> ../init.d/lvm2-monitor
+lrwxrwxrwx. 1 root root 14 Apr  2 10:23 S05rdma -> ../init.d/rdma
+lrwxrwxrwx. 1 root root 19 Apr  2 10:23 S08ip6tables -> ../init.d/ip6tables
+lrwxrwxrwx. 1 root root 18 Apr  2 10:23 S08iptables -> ../init.d/iptables
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 S10network -> ../init.d/network
+lrwxrwxrwx. 1 root root 16 Apr  2 10:23 S11auditd -> ../init.d/auditd
+lrwxrwxrwx. 1 root root 21 Apr  2 10:23 S11portreserve -> ../init.d/portreserve
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 S12rsyslog -> ../init.d/rsyslog
+lrwxrwxrwx. 1 root root 18 Apr  2 10:23 S13cpuspeed -> ../init.d/cpuspeed
+lrwxrwxrwx. 1 root root 20 Apr  2 10:23 S13irqbalance -> ../init.d/irqbalance
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 S13rpcbind -> ../init.d/rpcbind
+lrwxrwxrwx. 1 root root 19 Apr  2 10:23 S15mdmonitor -> ../init.d/mdmonitor
+lrwxrwxrwx. 1 root root 20 Apr  2 10:23 S22messagebus -> ../init.d/messagebus
+lrwxrwxrwx. 1 root root 24 Apr  2 10:23 S23NetworkManager -> ../init.d/NetworkManager
+lrwxrwxrwx. 1 root root 17 Apr  2 10:38 S24nfslock -> ../init.d/nfslock
+lrwxrwxrwx. 1 root root 17 Apr  2 10:38 S24rpcgssd -> ../init.d/rpcgssd
+lrwxrwxrwx. 1 root root 26 Apr  2 10:23 S25blk-availability -> ../init.d/blk-availability
+lrwxrwxrwx. 1 root root 14 Apr  2 10:23 S25cups -> ../init.d/cups
+lrwxrwxrwx. 1 root root 15 Apr  2 10:23 S25netfs -> ../init.d/netfs
+lrwxrwxrwx. 1 root root 15 Apr  2 10:23 S26acpid -> ../init.d/acpid
+lrwxrwxrwx. 1 root root 19 Apr  2 10:23 S26haldaemon -> ../init.d/haldaemon
+lrwxrwxrwx. 1 root root 19 Apr  2 10:23 S26udev-post -> ../init.d/udev-post
+lrwxrwxrwx. 1 root root 16 Apr  2 10:23 S28autofs -> ../init.d/autofs
+lrwxrwxrwx. 1 root root 14 Apr  2 10:23 S55sshd -> ../init.d/sshd
+lrwxrwxrwx. 1 root root 16 Apr  2 10:23 S56xinetd -> ../init.d/xinetd
+lrwxrwxrwx. 1 root root 16 Apr  6 21:59 S64mysqld -> ../init.d/mysqld
+lrwxrwxrwx. 1 root root 17 Apr  2 10:23 S80postfix -> ../init.d/postfix
+lrwxrwxrwx. 1 root root 15 Apr  2 10:23 S82abrtd -> ../init.d/abrtd
+lrwxrwxrwx. 1 root root 19 Apr  2 10:38 S83abrt-ccpp -> ../init.d/abrt-ccpp
+lrwxrwxrwx. 1 root root 15 Apr  2 10:23 S85httpd -> ../init.d/httpd
+lrwxrwxrwx. 1 root root 15 Apr  2 10:23 S90crond -> ../init.d/crond
+lrwxrwxrwx. 1 root root 13 Apr  2 10:23 S95atd -> ../init.d/atd
+lrwxrwxrwx. 1 root root 20 Apr  2 10:23 S99certmonger -> ../init.d/certmonger
+lrwxrwxrwx. 1 root root 11 Mar  3 11:36 S99local -> ../rc.local
+```
+
+### /etc/rc.d/rc.sysinit
+```bash
+## 此配置主要完成的任务如下 :
+1. 取得网络环境与主机类型 /etc/sysconfig/network 
+2. 测试与挂载内存设备的   /proc 以及 /sys   /etc/fstab
+3. 是否启动 selinux
+4. 启动系统的随机数生成器
+5. 设置系统时钟
+6. 加载用户的自定义模块   /etc/sysconfig/modules/*.modules
+7. 加载内核相关设置      /etc/sysctl.conf
+........
+```
+
+### /etc/rc.d/rc.local 用户自定义开机启动顺序
+如果我们自定义了一个服务, 那么是否需要跑到 /etc/init.d 目录下创建一个文件, 然后在跑到对应 /etc/rc.d/rc[0-6].d 目录下创建一个链接文件呢? 答案是不需要的, 我们只要把它写入到 /etc/rc.d/rc.local 文件即可. 
+
+## chkconfig命令 : 设置自己的网络服务
+
+
+
+## 内核和内核模块
+我们了解了系统的整个启动流程, 知道了在整个启动的过程中, 能够成功驱动我们主机硬件设备就是内核的功能, 而内核一般是压缩文件, 所以在使用内核时, 必须要先解压, 然后才能加载到内存中. 但是内核中又不可能含有所有的模块, 所以就产生了模块化的概念.
+
+```bash
+内核文件          　　: /boot/vmlinuz-VERSION
+内核解压所需 ramdisk  : initramfs-VERSION.img
+内核模块 　　　　　　  : /lib/modules/VERSION/kernel/*
+内核版本　　          : /proc/VERSION
+系统内核功能          : /proc/sys/kernel/*
+```
+
+所以, 如果我们的 Linux 不支持硬件, 那么我们就可以重新来编译内核加入对应的驱动, 然后做成模块, 在启动时加载此模块即可. 
 
 
 
