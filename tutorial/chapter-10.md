@@ -593,6 +593,7 @@ mdadm 可以以 **分区或者磁盘 作为单位**, 所以我们只要保证有
 | :------: | ----- |
 | -C | 创建 RAID |
 | -n | 指定设备数量 |
+| -a {yes\|no}| 是否自动为其创建设备文件 |
 | -x | 指定备用盘数量 |
 | -l | 指定 RAID 级别 |
 | -v | 显示创建过程 |
@@ -600,7 +601,8 @@ mdadm 可以以 **分区或者磁盘 作为单位**, 所以我们只要保证有
 | -S | 停止 RAID 磁盘阵列 |
 | --add 设备 | 添加设备到 RAID 中 |
 | --remove 设备 | 从 RAID 中移除设备 |
-| --fail 设备 | 将 RAID 中 此设备设置为出错状态 |
+| {-f \| -\-fail} 设备 | 将 RAID 中 此设备设置为出错状态 |
+| {-s \| \-\-scan} | 扫描配置文件信息 |
 
 ## 实践出真知
 ### 环境准备
@@ -711,6 +713,7 @@ brw-rw----. 1 root disk 8, 22 Apr 26 04:55 /dev/sdb6
 ### 创建 RAID 5
 ```bash
 ## 利用 sdb1 sdb2 sdb3 sdb5 组成 RAID 5 sdb6 用来做热备盘(spare disk)
+## 设备数一定要等于 n 的个数(4) + x 的个数(1) = /dev/sdb{1,2,3,5,6} (5)
 [root@localhost ~]# mdadm -Cv /dev/md0 -l 5 -n 4 -x 1 /dev/sdb{1,2,3,5,6}
 mdadm: layout defaults to left-symmetric
 mdadm: layout defaults to left-symmetric
