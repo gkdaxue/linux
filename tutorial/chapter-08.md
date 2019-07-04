@@ -2605,8 +2605,29 @@ lrwxrwxrwx. 1 root root 11 Mar  3 11:36 S99local -> ../rc.local
 如果我们自定义了一个服务, 那么是否需要跑到 /etc/init.d 目录下创建一个文件, 然后在跑到对应 /etc/rc.d/rc[0-6].d 目录下创建一个链接文件呢? 答案是不需要的, 我们只要把它写入到 /etc/rc.d/rc.local 文件即可. 
 
 ## chkconfig命令 : 设置自己的网络服务
+我们之前知道 chkconfig 可以设置一个系统服务是否开机自启动, 那么如果是我们自己定义的服务, 那么又该如何操作呢?
+> chkconfig [ --add | --del ] SERVER_NAME
 
+| 选项 | 作用 |
+| :----: | :----: |
+| \-\-add | 添加一个服务交给 chkconfig 管理, 服务名称必须存在于 /etc/init.d/ 内 |
+| \-\-del | 从 chkconfig 管理的服务中删除指定的服务 |
 
+```bash
+## 这里只是演示一下, 没有任何实际意义, 只是为了讲解知识点
+## 在 /etc/init.d/ 下新建一个 gkdaxue 文件 runlevel  35 级别下启动, 80顺序启动  70顺序结束
+[root@localhost ~]# vim /etc/init.d/gkdaxue 
+#!/bin/bash
+# chkconfig: 35 80 70
+# description: self service
+echo 'gkdaxue self service'
+[root@localhost ~]# chkconfig --add gkdaxue
+[root@localhost ~]# chkconfig --list gkdaxue
+gkdaxue        	0:off	1:off	2:off	3:on	4:off	5:on	6:off
+[root@localhost ~]# chkconfig --del gkdaxue
+[root@localhost ~]# chkconfig --list | grep gkdaxue
+[root@localhost ~]# rm -rf /etc/init.d/gkdaxue
+```
 
 ## 内核和内核模块
 我们了解了系统的整个启动流程, 知道了在整个启动的过程中, 能够成功驱动我们主机硬件设备就是内核的功能, 而内核一般是压缩文件, 所以在使用内核时, 必须要先解压, 然后才能加载到内存中. 但是内核中又不可能含有所有的模块, 所以就产生了模块化的概念.
