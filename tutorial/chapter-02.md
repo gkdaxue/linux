@@ -1212,6 +1212,23 @@ total 72K
 
 ### 隐藏文件(.开头的文件)
 以 . 开头的文件, 我们叫做隐藏文件, 但是 "." 也是一个文件名的一部分, 比如有一个文件叫做 ` .bash_history `, 那么他就叫做 ` .bash_history ` 而不是 ` bash_history `
+```bash
+## 以下用到的命令会在以后讲解, 现在只要讲解这个知识点
+## 创建一个 .gkdaxue.txt 文件
+[root@localhost ~]# touch .gkdaxue.txt
+[root@localhost ~]# ll .gkdaxue.txt 
+-rw-r--r--. 1 root root 0 May  4 21:29 .gkdaxue.txt
+
+## 尝试删除 gkdaxue.txt 发现文件不存在
+[root@localhost ~]# rm gkdaxue.txt
+rm: cannot remove `gkdaxue.txt': No such file or directory
+
+## 然后我们删除 .gkdaxue.txt文件, 询问是否删除, 输入 y 确定删除
+[root@localhost ~]# rm .gkdaxue.txt
+rm: remove regular empty file `.gkdaxue.txt'? y
+[root@localhost ~]# ll .gkdaxue.txt
+ls: cannot access .gkdaxue.txt: No such file or directory
+```
 
 ### ls -l 信息讲解
 ```bash
