@@ -1053,22 +1053,39 @@ LV : Logical Volume (逻辑卷) PE 是整个 LVM 的最小存储单位, 所以 L
 
 | 功能/命令 | 物理卷管理	 | 卷组管理	 |  逻辑卷管理 |
 | :-----:  |   :-----: |  :-----: |  :-----: |
+| 查看信息 | pvs  | vgs | lvs |
 | 扫描      |	pvscan |	vgscan |	lvscan |
 | 建立	   | pvcreate |	vgcreate  |	lvcreate |
 | 显示	  | pvdisplay	 | vgdisplay |	lvdisplay |
 | 删除   |	pvremove |	vgremove |	lvremove |
 | 扩展    |	<br> |	vgextend |	lvextend |
 | 缩小   | <br> | 	vgreduce |	lvreduce |
+| 移动 | pvmove | <br> | <br> |
 
 ## 实验出真知
 ### 实验要求
 ```bash
-1. /dev/sdb1 /dev/sdb2 /dev/sdb3 /dev/sdb5 组成一个 VG , VG 名称为 vg_gkdaxue
-2. PE 的大小为 16MB, 划分出来一个 7G 的 LV, 名称为 lv_gkdaxue
-3. 格式化为 ext3 文件格式并挂载到 /mnt/lvm 下, 开机自启动
+1. 使用 /dev/sdb 划分出来 /dev/sdb{1,2,3,5,6} 分区, 分区大小为 3G.
+2. /dev/sdb{1,2,3,5} 组成一个 VG , 名称为 vg_gkdaxue , PE 的大小为 8M, 划分出来一个 7G 的 LV
+3. lv_gkdaxue 格式化为 ext3 文件格式并挂载到 /mnt/lvm 下, 开机自启动
+4. 在划分出来一个 lv 名字为 lv_xfs_gkdaxue, 大小为 1G 格式化为 xfs 挂载到 /mnt/lvm_xfs 下
+5. 因为我系统中使用了 /dev/sda 来做 lvm, 所以会有 /dev/sda 硬盘分区信息, 忽略即可. 只看 /dev/sdb 的
 
 我们来理一下思路
 分区/磁盘 -> PV -> VG -> LV -> 格式化 -> 开机挂载 -> 挂载并使用, 所以我们就使用这个步骤开始操作. 
+```
+
+### 让 Centos6 支持 xfs 文件系统
+```
+## 查看一下是否启用了 xfs 文件系统模块, 发现并没有启用
+[root@localhost ~]# lsmod | grep xfs
+
+## 安装并载入 xfs 文件系统模块
+[root@localhost ~]# yum install xfsprogs -y
+[root@localhost ~]# modprobe xfs
+[root@localhost ~]# lsmod |grep xfs
+xfs                  1135639  0 
+exportfs                4236  1 xfs
 ```
 
 ### 实验环境
@@ -1090,6 +1107,16 @@ Disk identifier: 0xd140095f
 /dev/sdb4            1180        2610    11494507+   5  Extended
 /dev/sdb5            1180        1572     3156741   83  Linux
 /dev/sdb6            1573        1965     3156741   83  Linux
+
+[root@localhost ~]# lsblk /dev/sdb
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+sdb      8:16   0  20G  0 disk 
+├─sdb1   8:17   0   3G  0 part 
+├─sdb2   8:18   0   3G  0 part 
+├─sdb3   8:19   0   3G  0 part 
+├─sdb4   8:20   0   1K  0 part 
+├─sdb5   8:21   0   3G  0 part 
+└─sdb6   8:22   0   3G  0 part 
 ```
 
 ## PV的管理
@@ -1107,10 +1134,27 @@ Disk identifier: 0xd140095f
   Physical volume "/dev/sdb6" successfully created
 ```
 
+### pvs命令 : 显示 PV 的相关信息
+```bash
+[root@localhost ~]# pvs
+  PV         VG     Fmt  Attr PSize PFree
+  /dev/sda2  server lvm2 a--u 4.88g    0 
+  /dev/sdb1         lvm2 ---- 3.01g 3.01g
+  /dev/sdb2         lvm2 ---- 3.01g 3.01g
+  /dev/sdb3         lvm2 ---- 3.01g 3.01g
+  /dev/sdb5         lvm2 ---- 3.01g 3.01g
+  /dev/sdb6         lvm2 ---- 3.01g 3.01g
+
+## 讲解一下 Attr 中字母的含义
+(a)llocatable
+e(x)ported 
+(m)issing
+```
+
 ### pvscan命令 : 扫描所有磁盘以查找物理卷并显示汇总信息
 ```bash
 [root@localhost ~]# pvscan
-  PV /dev/sda2   VG server          lvm2 [4.88 GiB / 0    free]
+  PV /dev/sda2   VG server          lvm2 [4.88 GiB / 0    free]  
   PV /dev/sdb1                      lvm2 [3.01 GiB]
   PV /dev/sdb2                      lvm2 [3.01 GiB]
   PV /dev/sdb3                      lvm2 [3.01 GiB]
@@ -1151,7 +1195,6 @@ Disk identifier: 0xd140095f
 
 
 PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
-
 ```
 
 ###  pvremove命令 : 移除一个 PV
@@ -1216,6 +1259,31 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
   PV /dev/sda2   VG server          lvm2 [4.88 GiB / 0    free]
   PV /dev/sdb6                      lvm2 [3.01 GiB]
   Total: 6 [19.92 GiB] / in use: 5 [16.91 GiB] / in no VG: 1 [3.01 GiB]
+
+[root@localhost ~]# pvs
+  PV         VG         Fmt  Attr PSize PFree
+  /dev/sda2  server     lvm2 a--u 4.88g    0 
+  /dev/sdb1  vg_gkdaxue lvm2 a--u 3.01g 3.01g    <== 都已经有了对应的 VG
+  /dev/sdb2  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb3  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb5  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb6             lvm2 ---- 3.01g 3.01g    <== 没有被加入到 VG 中
+```
+
+### vgs命令 : 显示关于 VG 的相关信息
+```bash
+[root@localhost ~]# vgs
+  VG         #PV #LV #SN Attr   VSize  VFree 
+  server       1   1   0 wz--n-  4.88g     0 
+  vg_gkdaxue   4   0   0 wz--n- 12.03g 12.03g   <== 我们刚才创建的 VG
+
+Attr :
+1. (w)riteable, (r)ead-only
+2. Resi(z)eable
+3. E(x)ported
+4. (p)artial: one or more physical volumes belonging to the volume group are missing from the system
+5. Allocation policy: (c)ontiguous, c(l)ing, (n)ormal, (a)nywhere, (i)nherited
+6. (c)lustered
 ```
 
 ### vgscan命令 : 扫描所有磁盘以查找卷组并重建缓存
@@ -1268,6 +1336,12 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
   PV /dev/sdb6                      lvm2 [3.01 GiB]                      <== 没有被使用     
   Total: 6 [19.92 GiB] / in use: 5 [16.91 GiB] / in no VG: 1 [3.01 GiB]
 
+## 查看一下原来大小为 12.03g
+[root@localhost ~]# vgs
+  VG         #PV #LV #SN Attr   VSize  VFree 
+  server       1   1   0 wz--n-  4.88g     0 
+  vg_gkdaxue   4   0   0 wz--n- 12.03g 12.03g   <== 我们刚才创建的 VG
+
 ## 把 /dev/sdb6 加入到 vg_gkdaxue 卷组中去
 [root@localhost ~]# vgextend vg_gkdaxue /dev/sdb6
   Volume group "vg_gkdaxue" successfully extended
@@ -1313,12 +1387,23 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
   Alloc PE / Size       0 / 0   
   Free  PE / Size       1925 / 15.04 GiB                        <== PE 数量和容量都增大了
   VG UUID               78sXrm-wwY1-qSjs-5rIy-zaEp-AEMs-y6ajNj
+
+## 大小变为了 15.04g
+[root@localhost ~]# vgs
+  VG         #PV #LV #SN Attr   VSize  VFree 
+  server       1   1   0 wz--n-  4.88g     0 
+  vg_gkdaxue   5   0   0 wz--n- 15.04g 15.04g
 ```
 
 ### vgreduce命令 : 缩小卷组容量
 >  vgreduce  VolumeGroupName  PhysicalVolumePath...
 
 ```bash
+[root@localhost ~]# vgs
+  VG         #PV #LV #SN Attr   VSize  VFree 
+  server       1   1   0 wz--n-  4.88g     0 
+  vg_gkdaxue   5   0   0 wz--n- 15.04g 15.04g
+
 [root@localhost ~]# vgreduce vg_gkdaxue /dev/sdb6
   Removed "/dev/sdb6" from volume group "vg_gkdaxue"
 
@@ -1330,6 +1415,20 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
   PV /dev/sda2   VG server          lvm2 [4.88 GiB / 0    free]
   PV /dev/sdb6                      lvm2 [3.01 GiB]
   Total: 6 [19.92 GiB] / in use: 5 [16.91 GiB] / in no VG: 1 [3.01 GiB]
+
+[root@localhost ~]# pvs
+  PV         VG         Fmt  Attr PSize PFree
+  /dev/sda2  server     lvm2 a--u 4.88g    0 
+  /dev/sdb1  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb2  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb3  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb5  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb6             lvm2 ---- 3.01g 3.01g    <== 没有被使用
+
+[root@localhost ~]# vgs
+  VG         #PV #LV #SN Attr   VSize  VFree 
+  server       1   1   0 wz--n-  4.88g     0 
+  vg_gkdaxue   4   0   0 wz--n- 12.03g 12.03g    <== 大小重新变为 12.03g
 
 [root@localhost ~]# vgdisplay vg_gkdaxue
   --- Volume group ---
@@ -1369,6 +1468,21 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
   PV /dev/sdb3   VG vg_gkdaxue      lvm2 [3.01 GiB / 3.01 GiB free]
   PV /dev/sdb5   VG vg_gkdaxue      lvm2 [3.01 GiB / 3.01 GiB free
 
+[root@localhost ~]# pvs
+  PV         VG         Fmt  Attr PSize PFree
+  /dev/sda2  server     lvm2 a--u 4.88g    0 
+  /dev/sdb1  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb2  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb3  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb5  vg_gkdaxue lvm2 a--u 3.01g 3.01g
+  /dev/sdb6  vg_test    lvm2 a--u 3.01g 3.01g    <== 被 vg_test 所使用
+
+[root@localhost ~]# vgs
+  VG         #PV #LV #SN Attr   VSize  VFree 
+  server       1   1   0 wz--n-  4.88g     0 
+  vg_gkdaxue   4   0   0 wz--n- 12.03g 12.03g
+  vg_test      1   0   0 wz--n-  3.01g  3.01g    <== 大小为 3.01g
+
 [root@localhost ~]# vgdisplay vg_test
   --- Volume group ---
   VG Name               vg_test
@@ -1394,11 +1508,18 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
 ## 然后删除 VG
 [root@localhost ~]# vgremove vg_test
   Volume group "vg_test" successfully removed
-[root@localhost ~]# pvscan 
+
+[root@localhost ~]# pvscan  | grep /dev/sdb6
   PV /dev/sdb6                      lvm2 [3.01 GiB]        <== 没有被使用
+
 [root@localhost ~]# vgdisplay vg_test
   Volume group "vg_test" not found
   Cannot process volume group vg_test
+
+[root@localhost ~]# vgs
+  VG         #PV #LV #SN Attr   VSize  VFree 
+  server       1   1   0 wz--n-  4.88g     0 
+  vg_gkdaxue   4   0   0 wz--n- 12.03g 12.03g
 ```
 
 ## LV管理
@@ -1414,32 +1535,29 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
 | -n LV_Name | 指定 LV 的名称 |
 
 ```bash
-## 使用指定容量的方式
+## 使用指定容量的方式(不够一个PE,也要分配一个 PE, 如 PE 大小为4M 需要41M, 那么就需要 11个PE => 44M )
 [root@localhost ~]# lvcreate -L 7G -n lv_gkdaxue vg_gkdaxue
   Logical volume "lv_gkdaxue" created.
 
-[root@localhost ~]# vgdisplay vg_gkdaxue
-  --- Volume group ---
-  VG Name               vg_gkdaxue
-  System ID             
-  Format                lvm2
-  Metadata Areas        4
-  Metadata Sequence No  4
-  VG Access             read/write
-  VG Status             resizable
-  MAX LV                0
-  Cur LV                1
-  Open LV               0
-  Max PV                0
-  Cur PV                4
-  Act PV                4
-  VG Size               12.03 GiB
-  PE Size               8.00 MiB
-  Total PE              1540
-  Alloc PE / Size       896 / 7.00 GiB    <== 已经分配的空间
-  Free  PE / Size       644 / 5.03 GiB    <== 剩余的空间
-  VG UUID               78sXrm-wwY1-qSjs-5rIy-zaEp-AEMs-y6ajNj
+## 然后我们使用 -l 的方式来创建 lv_xfs_gkdaxue 大小为 1G  1024 / 4 = 128 个 PE
+[root@localhost ~]# lvcreate -l 128 -n lv_xfs_gkdaxue vg_gkdaxue
+  Logical volume "lv_xfs_gkdaxue" created.
+
+[root@localhost ~]# vgs
+  VG         #PV #LV #SN Attr   VSize  VFree
+  server       1   1   0 wz--n-  4.88g    0 
+  vg_gkdaxue   4   2   0 wz--n- 12.03g 4.03g  <== 也可以看到只剩下了 5.03g
 ```
+
+### lvs命令 : 显示 LV 相关信息
+```bash
+[root@localhost ~]# lvs
+  LV             VG         Attr       LSize Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  myhome         server     -wi-ao---- 4.88g                                                    
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g                                                    
+  lv_xfs_gkdaxue vg_gkdaxue -wi-a----- 1.00g  
+```
+
 
 ### lvdisplay命令 : 显示 LV 的属性
 > lvdisplay VgNamePath/LV_Name1 .....
@@ -1462,13 +1580,33 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
   Read ahead sectors     auto
   - currently set to     256
   Block device           253:1
+
+[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_xfs_gkdaxue 
+  --- Logical volume ---
+  LV Path                /dev/vg_gkdaxue/lv_xfs_gkdaxue
+  LV Name                lv_xfs_gkdaxue
+  VG Name                vg_gkdaxue
+  LV UUID                EYwfGK-1III-gEF4-wSas-jB47-5Oku-9v05ev
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2019-04-26 05:23:15 +0800
+  LV Status              available
+  # open                 0
+  LV Size                1.00 GiB
+  Current LE             128        <== 我们计算的 128 个 PE       
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:2
 ````
 
 ### lvscan命令 :  查看所有磁盘上的 LV
 ```bash
 [root@localhost ~]# lvscan 
-  ACTIVE            '/dev/vg_gkdaxue/lv_gkdaxue' [7.00 GiB] inherit
-  ACTIVE            '/dev/server/myhome'         [4.88 GiB] inherit
+  ACTIVE            '/dev/vg_gkdaxue/lv_gkdaxue'     [7.00 GiB] inherit
+  ACTIVE            '/dev/vg_gkdaxue/lv_xfs_gkdaxue' [1.00 GiB] inherit
+  ACTIVE            '/dev/server/myhome'             [4.88 GiB] inherit
+  LV的状态           LV的位置以及名称                  LV的大小
 ```
 
 ### lvchange命令 : 更改 LV 是否为活动状态
@@ -1496,6 +1634,13 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
   - currently set to     256
   Block device           253:2
 
+[root@localhost ~]# lvs
+  LV             VG         Attr       LSize Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  myhome         server     -wi-ao---- 4.88g                                                    
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g                                                    
+  lv_test        vg_gkdaxue -wi-a----- 1.00g                                                     
+  lv_xfs_gkdaxue vg_gkdaxue -wi-a----- 1.00g   
+
 ## 设置为不活跃状态
 [root@localhost ~]# lvchange -a n /dev/vg_gkdaxue/lv_test 
 [root@localhost ~]# lvscan 
@@ -1503,12 +1648,26 @@ PE 只有新建 VG 是才给与的参数, 所以这里关于 PE 的都是 0
   inactive          '/dev/vg_gkdaxue/lv_test'    [1.00 GiB] inherit
   ACTIVE            '/dev/server/myhome'         [4.88 GiB] inherit
 
+[root@localhost ~]# lvs
+  LV             VG         Attr       LSize Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  myhome         server     -wi-ao---- 4.88g                                                    
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g                                                    
+  lv_test        vg_gkdaxue -wi------- 1.00g      <== 和之前比少了一个 a 属性                                               
+  lv_xfs_gkdaxue vg_gkdaxue -wi-a----- 1.00g   
+
 ## 设置为活跃状态
 [root@localhost ~]# lvchange -a y /dev/vg_gkdaxue/lv_test
 [root@localhost ~]# lvscan
   ACTIVE            '/dev/vg_gkdaxue/lv_gkdaxue' [7.00 GiB] inherit
   ACTIVE            '/dev/vg_gkdaxue/lv_test'    [1.00 GiB] inherit
   ACTIVE            '/dev/server/myhome'         [4.88 GiB] inherit
+
+[root@localhost ~]# lvs
+  LV             VG         Attr       LSize Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  myhome         server     -wi-ao---- 4.88g                                                    
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g                                                    
+  lv_test        vg_gkdaxue -wi-a----- 1.00g                                                     
+  lv_xfs_gkdaxue vg_gkdaxue -wi-a----- 1.00g  
 ```
 
 
@@ -1522,6 +1681,12 @@ Do you really want to remove active logical volume lv_test? [y/n]: y
 
 [root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_test
   Failed to find logical volume "vg_gkdaxue/lv_test"
+
+[root@localhost ~]# lvs
+  LV             VG         Attr       LSize Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  myhome         server     -wi-ao---- 4.88g                                                    
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g                                                    
+  lv_xfs_gkdaxue vg_gkdaxue -wi-a----- 1.00g   
 ```
 
 ### lvresize命令 : 调整逻辑卷的大小( 可扩大/可缩小 )
@@ -1531,15 +1696,15 @@ Do you really want to remove active logical volume lv_test? [y/n]: y
 
 ```bash
 ## 先查看大小, 现在 lv_gkdaxue 为 7G
-[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_gkdaxue | grep 'LV Size'
-  LV Size                7.00 GiB
+[root@localhost ~]# lvs | grep lv_gkdaxue
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g   <== 大小为 7G                                                    
 
 ## 使用相对运算, 扩大 1G, 在查看大小发现为 8G 了
 [root@localhost ~]# lvresize -L +1G /dev/vg_gkdaxue/lv_gkdaxue 
   Size of logical volume vg_gkdaxue/lv_gkdaxue changed from 7.00 GiB (896 extents) to 8.00 GiB (1024 extents).
   Logical volume lv_gkdaxue successfully resized.
-[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_gkdaxue | grep 'LV Size'
-  LV Size                8.00 GiB
+[root@localhost ~]# lvs | grep lv_gkdaxue
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 8.00g  
 
 ## 因为我这里面没有数据, 仅仅只是测试命令使用, 生产环境中不可直接进行此操作
 ## 然后使用相对运算, 缩小 1G, 在查看大小发现为 7G 了
@@ -1549,8 +1714,8 @@ Do you really want to remove active logical volume lv_test? [y/n]: y
 Do you really want to reduce vg_gkdaxue/lv_gkdaxue? [y/n]: y
   Size of logical volume vg_gkdaxue/lv_gkdaxue changed from 8.00 GiB (1024 extents) to 7.00 GiB (896 extents).
   Logical volume lv_gkdaxue successfully resized.
-[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_gkdaxue | grep 'LV Size'
-  LV Size                7.00 GiB
+[root@localhost ~]# lvs | grep lv_gkdaxue
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g   <== 大小为 7G 
 ```
 
 ### lvextend命令 : 扩大 LV 的大小
@@ -1558,24 +1723,24 @@ Do you really want to reduce vg_gkdaxue/lv_gkdaxue? [y/n]: y
 > lvextend -L LogicalVolumeSize[KMGTPE]  LogicalVolumePath/LogicalVolumePathName
 
 ```bash
-[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_gkdaxue | grep 'LV Size'
-  LV Size                7.00 GiB
+[root@localhost ~]# lvs | grep lv_gkdaxue
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g   <== 大小为 7G 
 
 [root@localhost ~]# lvextend -L 8G /dev/vg_gkdaxue/lv_gkdaxue 
   Size of logical volume vg_gkdaxue/lv_gkdaxue changed from 7.00 GiB (896 extents) to 8.00 GiB (1024 extents).
   Logical volume lv_gkdaxue successfully resized.
 
-[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_gkdaxue | grep 'LV Size'
-  LV Size                8.00 GiB
+[root@localhost ~]# lvs | grep lv_gkdaxue
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 8.00g  
 ```
 
 ### lvreduce命令 : 缩小 LV 的大小(谨慎操作)
-**扩大 LV 的大小, 几乎没有风险, 但是缩小 LV 的容量一定有风险, 所以谨慎操作.**
+**扩大 LV 的大小, 几乎没有风险, 但是缩小 LV 的容量一定有风险, 所以谨慎操作. 这里仅仅只是测试命令, 生产环境要严格按照实例的操作来进行缩小.**
 > lvreduce -L LogicalVolumeSize[KMGTPE]  LogicalVolumePath/LogicalVolumePathName
 
 ```bash
-[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_gkdaxue | grep 'LV Size'
-  LV Size                8.00 GiB
+[root@localhost ~]# lvs | grep lv_gkdaxue
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 8.00g
 
 [root@localhost ~]# lvreduce -L 7G /dev/vg_gkdaxue/lv_gkdaxue 
   WARNING: Reducing active and open logical volume to 7.00 GiB.
@@ -1584,12 +1749,13 @@ Do you really want to reduce vg_gkdaxue/lv_gkdaxue? [y/n]: y
   Size of logical volume vg_gkdaxue/lv_gkdaxue changed from 8.00 GiB (1024 extents) to 7.00 GiB (896 extents).
   Logical volume lv_gkdaxue successfully resized.
 
-[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_gkdaxue | grep 'LV Size'
-  LV Size                7.00 GiB
+[root@localhost ~]# lvs | grep 'lv_gkdaxue'
+  lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g 
 ```
 
 ## 挂载并使用
 ```bash
+## 格式化 lv_gkdaxue 文件系统为 ext3 
 [root@localhost ~]# mkfs.ext3 /dev/vg_gkdaxue/lv_gkdaxue 
 mke2fs 1.41.12 (17-May-2010)
 Filesystem label=
@@ -1614,21 +1780,36 @@ Writing superblocks and filesystem accounting information: done
 This filesystem will be automatically checked every 20 mounts or
 180 days, whichever comes first.  Use tune2fs -c or -i to override.
 
-[root@localhost ~]# mkdir -p /mnt/lvm
+## 格式化 lv_xfs_gkdaxue 文件系统为 xfs
+[root@localhost ~]# mkfs.xfs /dev/vg_gkdaxue/lv_xfs_gkdaxue 
+meta-data=/dev/vg_gkdaxue/lv_xfs_gkdaxue isize=256    agcount=4, agsize=65536 blks
+         =                       sectsz=512   attr=2, projid32bit=0
+data     =                       bsize=4096   blocks=262144, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+
+## 查看一下格式化完成的情况
+[root@localhost ~]# blkid | grep 'lv'
+/dev/mapper/vg_gkdaxue-lv_gkdaxue:     UUID="9477b1db-8c50-467c-9cf7-7e72963e5b41" SEC_TYPE="ext2" TYPE="ext3" 
+/dev/mapper/vg_gkdaxue-lv_xfs_gkdaxue: UUID="ce76a73c-df4f-4a68-9c09-7690e8dad641" TYPE="xfs" 
+
+## 创建目录并挂载使用
+[root@localhost ~]# mkdir -p /mnt/lvm /mnt/lvm_xfs
 [root@localhost ~]# vim /etc/fstab
 /dev/vg_gkdaxue/lv_gkdaxue /mnt/lvm ext3 defaults 0 0 
-
 [root@localhost ~]# mount -a
-[root@localhost ~]# df
-Filesystem                       1K-blocks    Used Available Use% Mounted on
-/dev/sda5                          1983056  310808   1569848  17% /
-tmpfs                               502056       0    502056   0% /dev/shm
-/dev/sda1                           194241   35163    148838  20% /boot
-/dev/mapper/server-myhome          4904448   10008   4638648   1% /home
-/dev/sda8                           991512    1308    939004   1% /tmp
-/dev/sda3                          3966144 3070696    690648  82% /usr
-/dev/sda6                          1983056   87140   1793516   5% /var
-/dev/mapper/vg_gkdaxue-lv_gkdaxue  7224824  147320   6710504   3% /mnt/lvm
+[root@localhost ~]# mount /dev/vg_gkdaxue/lv_xfs_gkdaxue /mnt/lvm_xfs/
+[root@localhost ~]# mount | grep lv
+/dev/mapper/vg_gkdaxue-lv_xfs_gkdaxue on /mnt/lvm_xfs type xfs (rw)
+/dev/mapper/vg_gkdaxue-lv_gkdaxue on /mnt/lvm type ext3 (rw)
+
+[root@localhost ~]# df | grep lv
+Filesystem                             Type   Size  Used Avail Use% Mounted on
+/dev/mapper/vg_gkdaxue-lv_xfs_gkdaxue  xfs   1014M   33M  982M   4% /mnt/lvm_xfs
+/dev/mapper/vg_gkdaxue-lv_gkdaxue      ext3   6.9G  144M  6.4G   3% /mnt/lvm
 ```
 
 ## resize2fs命令 : 调整 ext2/ext3/ext4 文件系统大小
@@ -1636,65 +1817,70 @@ tmpfs                               502056       0    502056   0% /dev/shm
 
 ```bash
 -f   : 强制进行 resize2fs 操作
-size : 可以忽略不写, 如果忽略 默认设置为全部大小
+size : 可以忽略不写, 如果忽略 默认设置为所在LV全部大小
 ```
 
-## 扩大LV容量
+## xfs_growfs命令 : 扩展XFS文件系统(只支持扩大)
+>  xfs_growfs -L size  mount-point
+
+**虽然xfs文件系统只支持增加，不支持减少。但并不是说在xfs系统文件下不能减小，只是减小后，需要重新格式化才能挂载上。这样原来的数据就丢失了!**
+
+
+## 扩大文件系统容量
 ```bash
 1. 先查看 VG 是否有剩余的空间, 有则进行到第4步, 没有就进行下一步
 2. 使用 pvcreate 创建 PV
 3. 使用 vgextend 把 PV 加入到对应的 VG 中
-4. 利用 lvresize 将新加入的 PV 内的 PE 加入到 LV 中
+4. 利用 lvextend 将新加入的 PV 内的 PE 加入到 LV 中
+
+## 如果是 ext 系列的文件系统可以使用如下命令
 5. 利用 resize2fs 增加文件系统的容量(增/减 block group)
+## 如果是 xfs 文件系统, 则使用 xfs_growfs 命令
+5. 利用 xfs_growfs 命令来增大文件系统的容量
 
 
-[root@localhost ~]# vgdisplay /dev/vg_gkdaxue
-  --- Volume group ---
-  VG Name               vg_gkdaxue
-  System ID             
-  Format                lvm2
-  Metadata Areas        4
-  Metadata Sequence No  6
-  VG Access             read/write
-  VG Status             resizable
-  MAX LV                0
-  Cur LV                1
-  Open LV               1
-  Max PV                0
-  Cur PV                4
-  Act PV                4
-  VG Size               12.03 GiB
-  PE Size               8.00 MiB
-  Total PE              1540
-  Alloc PE / Size       896 / 7.00 GiB
-  Free  PE / Size       644 / 5.03 GiB               <== VG 剩余的空间
-  VG UUID               78sXrm-wwY1-qSjs-5rIy-zaEp-AEMs-y6ajNj
+## 查看 vg_gkdaxue 剩余的空间 
+[root@localhost ~]# vgs vg_gkdaxue
+  VG         #PV #LV #SN Attr   VSize  VFree
+  vg_gkdaxue   4   2   0 wz--n- 12.03g 4.03g      <== VG 剩余的空间
 
 ## 虽然剩余的还有空间, 但是我们还是按照完整的流程走一遍吧
 [root@localhost ~]# pvcreate /dev/sdb6
   Physical volume "/dev/sdb6" successfully created
-
 [root@localhost ~]# vgextend vg_gkdaxue /dev/sdb6
   Volume group "vg_gkdaxue" successfully extended
-
-[root@localhost ~]# vgdisplay vg_gkdaxue | grep 'Free'
-  Free  PE / Size       1029 / 8.04 GiB              <== 空间确实增大了, 并且有可用的空间
+[root@localhost ~]# vgs vg_gkdaxue
+  VG         #PV #LV #SN Attr   VSize  VFree
+  vg_gkdaxue   5   2   0 wz--n- 15.04g 7.04g      <== vg 的可用空间容量为 7.04g
 
 ## 查看 lv_gkdaxue 的大小
-[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_gkdaxue | grep 'LV Size'
-  LV Size                7.00 GiB
+[root@localhost ~]# lvs | grep lv
+  lv_gkdaxue     vg_gkdaxue -wi-ao---- 7.00g      <== 原本大小为 7G,扩大到 10G                                                    
+  lv_xfs_gkdaxue vg_gkdaxue -wi-ao---- 1.00g   
 
-## lv_gkdaxue 的大小扩展到 10G 吧
+## lv_gkdaxue 的大小扩展到 10G 
 [root@localhost ~]# lvextend -L 10G /dev/vg_gkdaxue/lv_gkdaxue 
   Size of logical volume vg_gkdaxue/lv_gkdaxue changed from 7.00 GiB (896 extents) to 10.00 GiB (1280 extents).
   Logical volume lv_gkdaxue successfully resized.
-[root@localhost ~]# lvdisplay /dev/vg_gkdaxue/lv_gkdaxue | grep 'LV Size'
-  LV Size                10.00 GiB
+
+## lv_xfs_gkdaxue 的大小扩展到 2G 
+[root@localhost ~]# lvextend -L 2G /dev/vg_gkdaxue/lv_xfs_gkdaxue 
+  Size of logical volume vg_gkdaxue/lv_xfs_gkdaxue changed from 1.00 GiB (128 extents) to 2.00 GiB (256 extents).
+  Logical volume lv_xfs_gkdaxue successfully resized.
+
+## 查看 LV 的容量, 发现确实扩大了, 但是文件系统的容量却没有扩大
+[root@localhost ~]# lvs | grep lv
+  lv_gkdaxue     vg_gkdaxue -wi-ao---- 10.00g                                                    
+  lv_xfs_gkdaxue vg_gkdaxue -wi-ao----  2.00g   
+[root@localhost ~]# df -hT | grep lv
+/dev/mapper/vg_gkdaxue-lv_xfs_gkdaxue  xfs   1014M   33M  982M   4% /mnt/lvm_xfs
+/dev/mapper/vg_gkdaxue-lv_gkdaxue      ext3   6.9G  144M  6.4G   3% /mnt/lvm
+
+
+----------------------------  文件系统不同, 扩容命令不同  --------------------------------
+## 以上步骤对所有的文件系统都一样, 主要就是根据不同的文件系统来选择不同的扩容命令
 
 ## 使用 resize2fs 来扩大 容量(因为 LV 容量增加了, 文件系统容量却没有增加)
-[root@localhost ~]# df -hT /mnt/lvm
-Filesystem                         Type  Size  Used Avail Use% Mounted on
-/dev/mapper/vg_gkdaxue-lv_gkdaxue  ext3  6.9G  144M  6.4G   3% /mnt/lvm
 [root@localhost ~]# resize2fs /dev/vg_gkdaxue/lv_gkdaxue 
 resize2fs 1.41.12 (17-May-2010)
 Filesystem at /dev/vg_gkdaxue/lv_gkdaxue is mounted on /mnt/lvm; on-line resizing required
@@ -1702,13 +1888,27 @@ old desc_blocks = 1, new_desc_blocks = 1
 Performing an on-line resize of /dev/vg_gkdaxue/lv_gkdaxue to 2621440 (4k) blocks.
 The filesystem on /dev/vg_gkdaxue/lv_gkdaxue is now 2621440 blocks long.
 
+## 使用 xfs_growfs 来扩展 lv_xfs_gkdaxue 的大小
+[root@localhost ~]# xfs_growfs /dev/vg_gkdaxue/lv_xfs_gkdaxue 
+meta-data=/dev/mapper/vg_gkdaxue-lv_xfs_gkdaxue isize=256    agcount=4, agsize=65536 blks
+         =                       sectsz=512   attr=2, projid32bit=0
+data     =                       bsize=4096   blocks=262144, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0
+log      =internal               bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+data blocks changed from 262144 to 524288
+----------------------------------------------------------------------------------------
+
+
 ## 再次查看大小, 发现已经变为我们想要的
-[root@localhost ~]# df -hT /mnt/lvm
-Filesystem                         Type  Size  Used Avail Use% Mounted on
-/dev/mapper/vg_gkdaxue-lv_gkdaxue  ext3  9.9G  144M  9.3G   2% /mnt/lvm
+[root@localhost ~]# df -hT | grep lv
+/dev/mapper/vg_gkdaxue-lv_xfs_gkdaxue  xfs    2.0G   33M  2.0G   2% /mnt/lvm_xfs
+/dev/mapper/vg_gkdaxue-lv_gkdaxue      ext3   9.9G  144M  9.3G   2% /mnt/lvm
 ```
 
-## 缩小LV容量
+## 缩小文件系统容量(ext系列)
 ```bash
 ## 从我们之前的讲解中, 我们也发现了 缩小LV容量是有风险的, 所以我们操作的时候一定要谨慎.
 1. 先卸载文件系统(扩容的时候可以不用卸载)
@@ -1773,6 +1973,59 @@ Filesystem                          Type  Size  Used Avail Use% Mounted on
 /dev/mapper/vg_gkdaxue-lv_gkdaxue   ext3  7.9G  144M  7.4G   2% /mnt/lvm    <== 容量确实为 8G 了.
 ```
 
+## pvmove命令 : 移动数据
+> pvmove  PV  [ New_PV ]
+
+```bash
+New_PV 可以省略, 系统会自动移动到其他 PV 上, 也可以自己手动指定.
+
+
+## 我们先把 lv_xfs_gkdaxue 删除, 以免影响后续的实验
+[root@localhost ~]# umount /mnt/lvm_xfs/
+[root@localhost ~]# lvremove /dev/vg_gkdaxue/lv_xfs_gkdaxue 
+Do you really want to remove active logical volume lv_xfs_gkdaxue? [y/n]: y
+  Logical volume "lv_xfs_gkdaxue" successfully removed
+[root@localhost ~]# pvs
+  PV         VG         Fmt  Attr PSize PFree
+  /dev/sda2  server     lvm2 a--u 4.88g    0 
+  /dev/sdb1  vg_gkdaxue lvm2 a--u 3.01g    0 
+  /dev/sdb2  vg_gkdaxue lvm2 a--u 3.01g    0         <== 可以空间为 0
+  /dev/sdb3  vg_gkdaxue lvm2 a--u 3.01g 2.02g
+  /dev/sdb5  vg_gkdaxue lvm2 a--u 3.01g 8.00m
+  /dev/sdb6  vg_gkdaxue lvm2 a--u 3.01g 3.01g        <== 全部可用
+
+## 我们可以看到 lv_gkdaxue 的 8G 空间使用的是 /dev/sdb{1,2,3}
+## 我们想把 /dev/sdb2 提出 lv_gkdaxue 中, 不在使用它, 应该如何操作
+[root@localhost ~]# pvmove  /dev/sdb2
+  /dev/sdb2: Moved: 0.0%
+  /dev/sdb2: Moved: 23.6%
+  /dev/sdb2: Moved: 47.8%
+  /dev/sdb2: Moved: 71.9%
+  /dev/sdb2: Moved: 96.1%
+  /dev/sdb2: Moved: 100.0%
+[root@localhost ~]# pvs
+  PV         VG         Fmt  Attr PSize PFree
+  /dev/sda2  server     lvm2 a--u 4.88g    0 
+  /dev/sdb1  vg_gkdaxue lvm2 a--u 3.01g    0 
+  /dev/sdb2  vg_gkdaxue lvm2 a--u 3.01g 3.01g     <== 已经全部可用
+  /dev/sdb3  vg_gkdaxue lvm2 a--u 3.01g 2.02g
+  /dev/sdb5  vg_gkdaxue lvm2 a--u 3.01g 8.00m
+  /dev/sdb6  vg_gkdaxue lvm2 a--u 3.01g    0      <== 已无剩余空间
+
+## 这个时候我们就可以吧 /dev/sdb2 从 vg_gkdaxue 这个 VG 中删除
+[root@localhost ~]# vgreduce vg_gkdaxue /dev/sdb2
+  Removed "/dev/sdb2" from volume group "vg_gkdaxue"
+[root@localhost ~]# pvs
+  PV         VG         Fmt  Attr PSize PFree
+  /dev/sda2  server     lvm2 a--u 4.88g    0 
+  /dev/sdb1  vg_gkdaxue lvm2 a--u 3.01g    0 
+  /dev/sdb2             lvm2 ---- 3.01g 3.01g    <== 已经成功移除
+  /dev/sdb3  vg_gkdaxue lvm2 a--u 3.01g 2.02g
+  /dev/sdb5  vg_gkdaxue lvm2 a--u 3.01g 8.00m
+  /dev/sdb6  vg_gkdaxue lvm2 a--u 3.01g    0 
+```
+
+
 ## 关闭LVM
 ```bash
 如果我们想要关闭并删除LVM, 就需要按照之前的顺序倒过来做了
@@ -1782,15 +2035,17 @@ Filesystem                          Type  Size  Used Avail Use% Mounted on
 4. 删除所有的 VG
 5. 删除所有的 PV
 
-
 [root@localhost ~]# vim /etc/fstab 
 /dev/vg_gkdaxue/lv_gkdaxue /mnt/lvm ext3 defaults 0 0      <== 删除此行
 
 [root@localhost ~]# umount /mnt/lvm/
+[root@localhost ~]# umount /mnt/lvm_xfs
 
 [root@localhost ~]# lvremove /dev/vg_gkdaxue/lv_gkdaxue 
 Do you really want to remove active logical volume lv_gkdaxue? [y/n]: y
   Logical volume "lv_gkdaxue" successfully removed
+
+
 [root@localhost ~]# lvdisplay  /dev/vg_gkdaxue/lv_gkdaxue
   Failed to find logical volume "vg_gkdaxue/lv_gkdaxue"
 
