@@ -1855,7 +1855,7 @@ size : 可以忽略不写, 如果忽略 默认设置为所在LV全部大小
 
 ## 查看 lv_gkdaxue 的大小
 [root@localhost ~]# lvs | grep lv
-  lv_gkdaxue     vg_gkdaxue -wi-ao---- 7.00g      <== 原本大小为 7G,扩大到 10G                                                    
+  lv_gkdaxue     vg_gkdaxue -wi-ao---- 7.00g      <== 原本大小为 7G,扩大到 10G
   lv_xfs_gkdaxue vg_gkdaxue -wi-ao---- 1.00g   
 
 ## lv_gkdaxue 的大小扩展到 10G 
