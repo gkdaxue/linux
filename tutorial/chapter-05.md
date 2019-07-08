@@ -1334,7 +1334,7 @@ useradd 命令用来添加一个用户
 | ---- | ---- |
 | -u UID | 使用指定的 UID 来创建用户 (UID 这个用户不能存在, 否则报错) |
 | -g GID | 使用指定的 GID 或者组名 来创建账户 (GID 这个用户组必须已经存在) |
-| -G GROUP_NAME | 设置 GROUP_NAME 作为 用户的附加组 (附加组必须事先存在) |
+| -G GROUP_NAME | 设置 GROUP_NAME 作为 用户的附加组 (附加组必须事先存在, 多个附加组中间用 , 分割) |
 | -M | 不要创建用户家目录 (系统账号默认值) |
 | -m | 创建用户家目录 (一般账号默认值) |
 | -c '备注信息' | 设置账户的备注信息 |
@@ -1580,7 +1580,7 @@ Directory: /home/gkdaxue            	Shell: /bin/bash  <== shell 已改变
 | -d HOME_DIR| 修改用户的家目录 |
 | -u UID | 更改用户的 UID |
 | -g GID | 设置用户的初始用户组 |
-| -G GID | 设置用户的附加组 (覆盖之前的附加组) |
+| -G GROUP_NAME | 设置用户的附加组 (覆盖之前的附加组) |
 | -a | 追加用户的附加组, 不会覆盖之前的附加组 |
 | -l NEW_NAME | 修改用户的登录名 |
 | -s SHELL | 更改用户的 shell |
@@ -1591,6 +1591,40 @@ Directory: /home/gkdaxue            	Shell: /bin/bash  <== shell 已改变
 
 ### 实例
 ```bash
+## 我们来测试一下 -G 以及 -a 的情况
+## 新增 三个测试用户组, tmp1 tmp2 tmp3 在增加一个 tmp 用户
+[root@localhost ~]# groupadd tmp1
+[root@localhost ~]# groupadd tmp2
+[root@localhost ~]# groupadd tmp3
+[root@localhost ~]# groupadd tmp4
+[root@localhost ~]# useradd -G tmp1,tmp2 tmp
+[root@localhost ~]# grep '^tmp' /etc/{passwd,group}
+/etc/passwd:tmp:x:500:503::/home/tmp:/bin/bash    <== 这是 tmp 用户的信息
+/etc/group :tmp1:x:500:tmp                        <== tmp用户的附加组
+/etc/group :tmp2:x:501:tmp                        <== tmp用户的附加组
+/etc/group :tmp3:x:502:
+/etc/group :tmp4:x:504:
+/etc/group :tmp:x:503:
+## 把  tmp3 也追加进去
+[root@localhost ~]# usermod -a -G tmp3 tmp
+[root@localhost ~]# grep '^tmp' /etc/{passwd,group}
+/etc/passwd:tmp:x:500:503::/home/tmp:/bin/bash
+/etc/group :tmp1:x:500:tmp
+/etc/group :tmp2:x:501:tmp
+/etc/group :tmp3:x:502:tmp                         <== 也成为了 tmp 用户的附加组
+/etc/group :tmp4:x:504:
+/etc/group :tmp:x:503:
+## 然后我们不使用 -a 测试一下, 发现只有一个附加组 tmp4 了
+[root@localhost ~]# usermod -G tmp4 tmp
+[root@localhost ~]# grep '^tmp' /etc/{passwd,group}
+/etc/passwd:tmp:x:500:503::/home/tmp:/bin/bash
+/etc/group :tmp1:x:500:
+/etc/group :tmp2:x:501:
+/etc/group :tmp3:x:502:
+/etc/group :tmp4:x:504:tmp
+/etc/group :tmp:x:503:
+
+
 ## 查看用户
 [root@localhost ~]# grep gkdaxue /etc/passwd
 gkdaxue:x:500:500::/home/gkdaxue:/bin/bash
@@ -1874,7 +1908,7 @@ user_test:$6$hH8Tt/LCWCTZ$O6ymk2RGp/B.MIDHoxkgrQahqK2UtQ1lo.X8PAY4DFypOWlnCM....
 ```bash
 ## 虽然我们能修改 GID, 但是不建议随便修改
 [root@localhost ~]# groupmod -g 888 -n user_test user1
-[root@localhost ~]# grep user_test /etc/group
+[root@localhost ~]# grep 'user_test' /etc/group
 user_test:x:888:
 ```
 
@@ -2819,6 +2853,10 @@ Swap:	   1023996          0    1023996
 
 ## ifconfig命令
 ifconfig命令用来查看和配置网络接口. 默认用来查看处于活动状态的接口地址.
+**有些 Linux 版本中并没有 ifconfig 这个命令, 是因为没有安装对应的软件包, 这个时候就需要我们来安装一下软件包.**
+> **yum install net-tools -y**
+
+
 ```bash
 ifconfig                                                : 查看所有处于活动状态的接口地址
 ifconfig -a                                             : 查看所有接口地址
