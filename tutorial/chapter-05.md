@@ -2854,7 +2854,7 @@ Swap:	   1023996          0    1023996
 ## ifconfig命令
 ifconfig命令用来查看和配置网络接口. 默认用来查看处于活动状态的接口地址.
 **有些 Linux 版本中并没有 ifconfig 这个命令, 是因为没有安装对应的软件包, 这个时候就需要我们来安装一下软件包.**
-> **yum install net-tools -y**
+> **yum install   net-tools   -y**
 
 
 ```bash
