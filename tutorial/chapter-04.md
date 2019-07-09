@@ -1210,8 +1210,9 @@ gkdaxue
 | r   | 将变量设置为只读 (变量不可更改, 也不能重设)                     |
 | x   | 指定的变量会成为环境变量，可供shell以外的程序来使用。 (export 作用一样) |
 | i   | [设置值]可以是数值,数字字符串或运算式          |
-| a   | 将变量声明为数组                      |
-| p   | 显示指定变量的声明类型                   |
+| a   | 将变量声明为索引数组               |
+| A   | 将变量声明为关联数组          |
+| p   | 显示指定变量的声明类型   |
 
 ### 实例
 ```bash
@@ -1238,14 +1239,24 @@ declare -ir sum="600"
 ### 数组(array) 变量类型(了解即可)
 ```bash
 ## 有一个 test 数组, [] 中的为索引值, 为一些数字
-[root@localhost ~]# test[1]=['test1']
-[root@localhost ~]# test[2]=['test2']
-[root@localhost ~]# test[3]=['test3']
+[root@localhost ~]# test[1]='test1'
+[root@localhost ~]# test[2]='test2'
+[root@localhost ~]# test[3]='test3'
 [root@localhost ~]# echo ${test[1]}, ${test[2]}, ${test[3]}
-[test1], [test2], [test3]
+test1, test2, test3
+
+## 定义一个索引数组
+[root@localhost ~]# gkdaxue=(aa bb cc dd)
+
+## 查看数组里面有多少个元素
+[root@localhost ~]# echo ${#gkdaxue[*]}
+4
+
+## 查看所有下标
+[root@localhost ~]# echo ${!gkdaxue[*]}
+0 1 2 3		<== 数组下标从 0 开始
 
 ## 数组的下标从 0 开始 
-[root@localhost ~]# gkdaxue=(aa bb cc dd)
 [root@localhost ~]# echo ${gkdaxue[0]}
 aa			<== gkdaxue[0]  对应的为  aa
 
@@ -1255,13 +1266,33 @@ aa bb cc dd
 [root@localhost ~]# echo ${gkdaxue[@]}
 aa bb cc dd
 
-## 查看所有下标
-[root@localhost ~]# echo ${!gkdaxue[*]}
-0 1 2 3		<== 数组下标从 0 开始
 
-## 查看数组里面有多少个元素
-[root@localhost ~]# echo ${#gkdaxue[*]}
-4
+## 在 bash 4.0 之后, 我们还可以定义关联数组, 使用任意的文本作为数组索引
+## 必须先使用 declare -A 显示的声明为一个关联数组, 不能像索引数组一样不用声明
+## fruit_array 声明为关联数组 
+[root@localhost ~]# declare -A fruit_array
+[root@localhost ~]# fruit_array=([apple]='10 $' [orange]='5 $')
+
+## 查看关联数组的所有值
+[root@localhost ~]# echo ${fruit_array[*]}   # =  echo ${fruit_array[@]}
+5 $ 10 $
+
+## 查看数组中共有多少元素
+[root@localhost ~]# echo ${#fruit_array[*]}
+2
+
+## 查看数组中所有元素的下标
+[root@localhost ~]# echo ${!fruit_array[*]}
+orange apple
+
+## 第二种给关联数组赋值的方式
+[root@localhost ~]# fruit_array[watermelon]='2 $'
+[root@localhost ~]# echo ${#fruit_array[*]}
+3
+[root@localhost ~]# echo ${!fruit_array[*]}
+orange apple watermelon
+[root@localhost ~]# echo ${fruit_array[*]}
+5 $ 10 $ 2 $
 ```
 
 ## wc命令
