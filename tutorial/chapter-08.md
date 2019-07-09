@@ -2461,17 +2461,28 @@ title : 该启动项目的名称
 	kernel : 内核文件名 后边跟上内核的参数 使用 UUID 来挂载根目录
              rhgb : 彩色显示
              quiet : 安静模式(屏幕不会输出内核检测信息)
-	initrd : ram disk 的文件名
+	initrd : ram filesystem 的文件名
 
 
 ## 上面我们讲解了菜单功能以及加载内核文件, 那么如果我们想要转交给其他的 boot loader, 又该如何操作?
+一般来说 chain loader 只要设置两个就够了
+1. 预计要前往的 boot sector 所在的分区代号
+2. chain loader 在那个分区的 boot sector (第一个扇区上)
 
+
+## 现在假设我的 Windows 分区在 /dev/hda1 , 而我又只有一块硬盘, 那么我就可以这么写
+title  Windows partition
+       rootnoverify (hd0,0)  <== 设置使用此分区并且不检验该分区的文件系统
+       chainloader +1        <== 可以理解为 boot sector 的第一个扇区
+       makeactive            <== 因为 Windows 的系统盘需要设置为活动状态, 所以加上一条
+       hide (hd0,4)          <== 隐藏此分区
+
+一般只要设置两个就好了, 如果是 Windows 就要加上 maketive, 如果想要隐藏某分区, 就加上 hide 那个.
 ```
-
-
 
 ## 内核硬件检测 和 initramfs
 通过 Boot Loader 开始读取内核文件后, 接下来 Linux 就会把内核解压缩到内存中, 开始测试和驱动硬件设备, 比如硬盘 网卡 声卡 CPU 等. **内核文件一般放在 /boot 目录下. 名字为 /boot/vmlinuz-VERSION** 
+
 ```bash
 [root@localhost ~]# ls --format=single-column -F /boot
 config-2.6.32-696.el6.x86_64          <== 内核被编译时选择的功能与模块配置文件
@@ -2492,11 +2503,24 @@ vmlinuz-2.6.32-696.el6.x86_64*        <== 内核文件
 
 在系统启动过程中**根目录是以只读方式挂载**的, 为了避免影响到磁盘内的文件. 所以我们在修改 root 密码时需要重新挂载根目录就是这个原因.
 
-Linux **内核是可以动态的加载内核模块的, 内核模块被放置在 /lib/modules 目录内**, **模块必须放置在磁盘根目录呢(所以 / 和 /lib 必须在同一个分区内.)**, 因为在启动的过程中内核必须要挂载到根目录, 这样才能够读取内核模块并加载驱动程序. 一般来说, 非必要且可以编译成为模块的内核功能都会被编译成模块, 例如 USB SATA SCSI 等硬盘驱动程序都是以模块的形式存在的. 
+Linux **内核是可以动态的加载内核模块的, 内核模块被放置在 /lib/modules 目录内**, **模块必须放置在磁盘根目录呢(所以 / 和 /lib 必须在同一个分区内.)**, 因为在启动的过程中内核**必须要挂载到根目录**, 这样才能够读取内核模块并加载驱动程序. 一般来说, 非必要且可以编译成为模块的内核功能都会被编译成模块, 例如 USB SATA SCSI 等硬盘驱动程序都是以模块的形式存在的. 
 
 那么现在又有了一个新的问题, 我们以 SATA硬盘为例,  我们通过 BIOS 的 INT 13 取得了 Boot Loader 和 Kernel文件, 然后 Kernel 接管系统 检测硬件并尝试挂载根目录来获取驱动程序, 但是 Kernel 根本不认识 SATA硬盘(因为没有驱动, 驱动存在于 /lib/modules), 所以根本无法挂载根目录, 自然无法读取到 /lib/modules中的驱动, **Linux 是通过虚拟文件系统来处理这个问题的**.
+**Linux 内核本身认识 IDE 接口的磁盘, 所以不需要 initramfs 也能顺利启动起来.**
+
+```bash
+一般来说, 需要 initramfs 的时刻为 :
+1. 根目录所在的磁盘为 SATA USB 或 SCSI 等连接接口
+2. 根目录所在的文件系统为 LVM RAID 等特殊格式
+3. 根目录所在的文件系统为非传统 Linux 所认识的文件系统
+4. 其他必须在内核加载时提供的模块
+
+USB SATA SCSI 驱动都是以模块的形式存在 /lib/modules/VERSION/kernel 下, 所以必须先挂载根目录
+但是系统又没有办法识别这些接口, 所以就需要用到 initramfs.
+```
 
 我们从上面知道 **虚拟文件系统(Initial RAM FileSystem)** 的文件名为initramfs-2.6.32-696.el6.x86_64.img, 它可以通过 Boot Loader 加载到内存中, 然后会被解压并在内存中仿真成一个根目录, 且此文件系统能够提供一个可执行的程序, 通过该程序来加载启动过程中需要的内核模块(比如 SATA SCSI驱动等), 等载入完成后, 在帮助 Kernel 重新调用 /sbin/init 来启动正常的启动流程. 然后我们尝试把这个文件来解压缩看一下.
+
 ```bash
 ## 复制虚拟文件系统过来查看一下
 [root@localhost ~]# cp /boot/initramfs-2.6.32-696.el6.x86_64.img .
