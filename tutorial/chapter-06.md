@@ -422,6 +422,47 @@ man.config                                             1,1            All
 | :set nu | 显示行号 |
 | :set nonu | 不显示行号 |
 
+## 实践出真知(修改主机名)
+```bash
+## 我想修改我的主机名为 test.gkdaxue.com, 然后我们来实际操作一下
+[root@localhost ~]# hostname
+localhost.localdomain
+## 查看当期的 etho 的 ip 地址
+[root@localhost ~]# ifconfig eth0
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:55034 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:16050 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:31345487 (29.8 MiB)  TX bytes:1373488 (1.3 MiB)
+
+## 编辑主机配置文件  /etc/sysconfig/network
+[root@localhost ~]# vim /etc/sysconfig/network
+NETWORKING=yes
+HOSTNAME=test.gkdaxue.com       <== 修改为如下所示
+[root@localhost ~]# echo '192.168.1.206   test.gkdaxue.com'  >> /etc/hosts
+
+## 测试一下
+[root@localhost ~]# ping -c 2 test.gkdaxue.com
+PING test.gkdaxue.com (192.168.1.206) 56(84) bytes of data.
+64 bytes from test.gkdaxue.com (192.168.1.206): icmp_seq=1 ttl=64 time=0.033 ms
+64 bytes from test.gkdaxue.com (192.168.1.206): icmp_seq=2 ttl=64 time=0.031 ms
+
+--- test.gkdaxue.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1007ms
+rtt min/avg/max/mdev = 0.031/0.032/0.033/0.001 ms
+
+## 最好的方式就是重启一下
+[root@localhost ~]# reboot
+
+## 重启完成后, 查看主机名已经变为  test.gkdaxue.com
+[root@test ~]# hostname
+test.gkdaxue.com
+```
+
+
 # 正则表达式
 正则表达式(Regular Expression)是通过一些特殊的字符排列, 用于查找 替换 删除一行或者多行文字字符串. 是一种字符串处理的标准依据. 它 **以行为单位** 来进行字符串的处理行为. 比如 vim, grep, awk, sed 等都支持正则表达式. 正则表达式 和 bash 的 globing 是两种不同的东西.
 
