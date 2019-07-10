@@ -2971,7 +2971,7 @@ eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34
                               errors   : 数据包发生错误的数量
                               dropped  : 数据包有问题而被丢弃的数量
                               overruns : 速度过快而丢失的数据包数
-							  frame    : 发生frame错误而丢失的数据包数
+                              frame    : 发生frame错误而丢失的数据包数
 第六行 :
 		TX                  : 网络由启动到目前为止数据包的发送情况
                               carrier  : 发生carrier错误而丢失的数据包数
