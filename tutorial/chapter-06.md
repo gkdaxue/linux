@@ -422,7 +422,8 @@ man.config                                             1,1            All
 | :set nu | 显示行号 |
 | :set nonu | 不显示行号 |
 
-## 实践出真知(修改主机名)
+## 实践出真知
+### 修改主机名
 ```bash
 ## 我想修改我的主机名为 test.gkdaxue.com, 然后我们来实际操作一下
 [root@localhost ~]# hostname
@@ -462,6 +463,36 @@ rtt min/avg/max/mdev = 0.031/0.032/0.033/0.001 ms
 test.gkdaxue.com
 ```
 
+### 配置网卡信息
+如果我这一台主机想要上网, 那么我们就必须为其设置合理的网络参数, 比如 IP/NETMASK/GATEWAY/DNS 等信息
+```bash
+我们先了解以下知识点 :
+1. 网卡配置文存放在 /etc/sysconfig/network-scripts/ 目录下
+2. CentOS6 : 网卡命名为 ifcfg-eth0, ifcfg-eth1 等等
+3. CentOS7 : 网卡命名为 ifcfg-enoxxxxxxxx 其中 xxxxxxxx 表示为数字, 例如 ifcfg-eno16777736
+
+
+## 因为我们当前系统为 CentOS6 , 所以自然我们的配置文件名为 ifcfg-eth0
+## 以下 IP 信息应该根据自己的事情情况来设置.
+[root@test ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0
+DEVICE=eth0                  <== 设备文件名
+HWADDR="00:0C:29:27:50:34"   <== 网卡 MAC 地址
+TYPE=Ethernet                <== 网络的类型
+ONBOOT=yes                   <== 开机是否启动 yes/no, 应设置为 yes 
+BOOTPROTO=static             <== 获取 IP 的方式 static/dhcp
+IPADDR=192.168.1.206         <== IP 地址
+NETMASK=255.255.255.0        <== 子网掩码
+GATEWAY=192.168.1.1          <== 网关
+DNS1=192.168.1.1             <== DNS
+
+
+## 设置完后, 我们可以重启我们的网络服务, 有两种方式
+1. 重启所有的网卡  /etc/init.d/network restart
+2. 重启特定的网卡  ifconfig eth0 down ; ifconfig eth0 up
+
+## 重启完成后, 查看网卡的配置信息是否正确
+[root@test ~]# /etc/init.d/network restart
+```
 
 # 正则表达式
 正则表达式(Regular Expression)是通过一些特殊的字符排列, 用于查找 替换 删除一行或者多行文字字符串. 是一种字符串处理的标准依据. 它 **以行为单位** 来进行字符串的处理行为. 比如 vim, grep, awk, sed 等都支持正则表达式. 正则表达式 和 bash 的 globing 是两种不同的东西.
