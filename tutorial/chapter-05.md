@@ -2937,6 +2937,50 @@ eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34
           TX packets:67730 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000 
           RX bytes:24706520 (23.5 MiB)  TX bytes:7481628 (7.1 MiB)
+
+
+## 然后我们来分析一下显示的各个字段的含义
+[root@localhost ~]# ifconfig eth0 | nl
+     1	eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+     2	          inet addr:192.168.1.206  Bcast:192.168.1.255  Mask:255.255.255.0
+     3	          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+     4	          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+     5	          RX packets:3129 errors:0 dropped:0 overruns:0 frame:0
+     6	          TX packets:1328 errors:0 dropped:0 overruns:0 carrier:0
+     7	          collisions:0 txqueuelen:1000 
+     8	          RX bytes:293151 (286.2 KiB)  TX bytes:137208 (133.9 KiB)
+第一行 : 
+		eth0                : 网卡的名称代号
+		Link encap:Ethernet : 连接类型以太网
+		HWaddr              : 网卡的 MAC 地址为 00:0C:29:27:50:34
+第二行 : 
+		inet addr           : IPv4 的 IP 地址
+		Bcast               : Broadcast 的地址
+		Mask                : Netmask 的地址
+第三行 :
+		inet6 addr          : IPv6 的 IP 地址
+第四行 : 
+		UP                  : 网卡启用状态
+		BROADCAST           : 支持组播
+		RUNNING             : 网卡在工作中
+		MULTICAST           : 主机支持多播
+		MTU                 : 网络接口的最大传输单元
+第五行 : 
+		RX                  : 网络由启动到现在为止的数据包接收情况
+                              packets  : 数据包的数量
+                              errors   : 数据包发生错误的数量
+                              dropped  : 数据包有问题而被丢弃的数量
+                              overruns : 速度过快而丢失的数据包数
+							  frame    : 发生frame错误而丢失的数据包数
+第六行 :
+		TX                  : 网络由启动到目前为止数据包的发送情况
+                              carrier  : 发生carrier错误而丢失的数据包数
+第七行 :
+        collisions          : 数据包冲突的情况 
+        txqueuelen          : 用来传输数据的缓冲区的存储长度 
+第八行 : 
+		RX bytes            : 接收的数据量
+		TX bytes            : 发送的数据量
 ```
 
 ## netstat命令
