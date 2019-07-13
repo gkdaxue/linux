@@ -1744,7 +1744,7 @@ Changing password for gkdaxue.
 You must wait longer to change your password
 passwd: Authentication token manipulation error  <== 为什么会报错, 想一下
 
-## 因为我们今天杠杆设置了密码, 然后有设置了 5 天之内不能更改密码, 导致的问题
+## 因为我们今天刚刚设置了密码, 然后有设置了 5 天之内不能更改密码, 导致的问题
 [gkdaxue@localhost ~]$ exit
 logout
 [root@localhost ~]# passwd -n 0 gkdaxue  # <== 0 表示随时都可以修改密码
