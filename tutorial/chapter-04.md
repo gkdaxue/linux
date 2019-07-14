@@ -1161,6 +1161,7 @@ logout
 |---- | -----|
 |-p 提示符 | 提示用户输入的提示信息 |
 | -t time_out | 超时时间, 用户超过这个时间没有输入, 自动结束(单位 s) |
+| -s  | 隐藏输入的信息, 一般可用于隐藏输入的密码等 |
 
 ### 实例
 ```bash
@@ -1176,6 +1177,12 @@ Input Your name [root@localhost ~]#
 Input Your name gkdaxue
 [root@localhost ~]# echo $NAME
 gkdaxue
+
+## -s 隐藏输入的信息
+[root@localhost ~]# read -s -p 'password : ' password
+password :             <== 会发现我们输入的信息不会显示出来 
+[root@localhost ~]# echo $password
+123
 
 ## 输入参数个数 = 变量个数
 [root@localhost ~]# read -p "请输入多个参数:" a b c 
