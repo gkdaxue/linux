@@ -383,7 +383,7 @@ tail 命令用户查看文件的后 N 行 或者 检测文件直到按下 Ctrl +
 | -n  {+\|\-\}N | 显示文件最后几行(+N : 不显示文档开始的前 N-1 行) |
 | -q            | 不输出各个文件名(多个文件)                 |
 | -v            | 总是显示文件名                        |
-| -f            | 动态监视文档最新追加的内容(比如日志)            |
+| -f            | 动态监视文档最新追加的内容(比如日志.)<br> 用户手动使用 vim 编辑的内容会是其失效     |
 
 ### 实例
 
@@ -434,10 +434,10 @@ tail 命令用户查看文件的后 N 行 或者 检测文件直到按下 Ctrl +
 015	nobody:x:99:99:Nobody:/:/sbin/nologin
 
 ## 接下来我们演示 -f 参数的作用. 主要用于查看日志等文件, 动态监听文件内容变化.
-## tty 用于查看当前终端
-[root@localhost ~]# tty
-/dev/pts/0   <== 我们叫它 0 号终端
-[root@localhost ~]# tail -f head_file.txt 
+## 重新定义 PS1 变量, 用来表示是两个不同的终端(注意看命令是在哪个终端执行的)
+## 第一个终端是 0
+[root@localhost ~]# PS1='[\l]\$ '
+[0]# tail -f head_file.txt 
 006	sync:x:5:0:sync:/sbin:/bin/sync
 007	shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
 008	halt:x:7:0:halt:/sbin:/sbin/halt
@@ -450,13 +450,12 @@ tail 命令用户查看文件的后 N 行 或者 检测文件直到按下 Ctrl +
 015	nobody:x:99:99:Nobody:/:/sbin/nologin
       <== 光标在这个地方, 就像卡着了一样, 监听这变化
 
-## 然后切换到 1 号终端, 并执行以下命令
-[root@localhost ~]# tty
-/dev/pts/1   <== 我们叫它 1 号终端
-[root@localhost ~]# echo 'www.gkdaxue.com' >> head_file.txt 
+## 然后切换到 1 号终端, 第二个终端是 1,  并执行以下命令
+[root@localhost ~]# PS1='[\l]\$ '
+[1]# echo 'www.gkdaxue.com' >> head_file.txt 
 
 ## 此时在切换到 0 号终端
-[root@localhost ~]# tail -f head_file.txt 
+[0]# tail -f head_file.txt 
 006	sync:x:5:0:sync:/sbin:/bin/sync
 007	shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
 008	halt:x:7:0:halt:/sbin:/sbin/halt
@@ -468,7 +467,26 @@ tail 命令用户查看文件的后 N 行 或者 检测文件直到按下 Ctrl +
 014	ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
 015	nobody:x:99:99:Nobody:/:/sbin/nologin
 www.gkdaxue.com   <== 这是我们在 1 号终端添加的内容
-   <== 光标又停在了这个地方, 等待继续监听变化, 如果想结束, 按 Ctrl + c 键         
+   <== 光标又停在了这个地方, 等待继续监听变化, 如果想结束, 按 Ctrl + c 键     
+
+
+## 我们来测试一下 -f 如果用户手动添加会有什么情况(也是两个终端)
+## 使用 vim 编辑文件会导致 -f 失去效果, nano 却不会有这个问题
+## 添加并查看
+[0]# echo 'test' > gkdaxue.txt
+[0]# cat gkdaxue.txt 
+test
+[1]# tail -f gkdaxue.txt 
+test
+    <== 光标在这里跳动
+
+## 更改内容如下所示, 但是 1 号终端的内容却不会变化, 即使我们后来使用 echo 来继续追加.
+[0]# vim gkdaxue.txt 
+test
+test22
+[1]# tail -f gkdaxue.txt 
+test
+^C   <== 内容不会变化
 ```
 
 ## stat命令
