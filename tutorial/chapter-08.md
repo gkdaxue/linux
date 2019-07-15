@@ -123,6 +123,24 @@ Signal bash(3248) ? (y/N) n
 Signal bash(36638) ? (y/N) y
 ```
 
+### pkill命令 : 按照进程名终止进程
+> pkill [ options ] [ 信号 ] 进程名
+
+| 选项 | 作用 |
+| :----: | ---- |
+| -t 终端 | 按照终端号踢出用户 |
+
+```bash
+## 我们当前在 pts/0 终端下
+[root@localhost ~]# w
+ 13:05:03 up 2 days, 20:53,  1 user,  load average: 0.00, 0.00, 0.00
+USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+root     pts/0    192.168.1.11     13:05    0.00s  0.13s  0.08s w
+
+## 我们尝试把自己当前终端关闭, 发现执行完后我们已经被踢出系统了.
+[root@localhost ~]# pkill -9 -t pts/0
+```
+
 ## 进程的执行顺序
 我们通过 top 命令可以发现系统中有很多的进程, 但是绝大部分进程都是在 sleeping 状态, 那么如果所有的进程同时工作, 那么哪个进程执行的优先级比较高呢? 这就涉及到程序的优先级(Priority, PRI)与CPU调度. Linux 给予进程一个所谓的优先级概念, 这个 PRI 的值越低代表越能被优先执行的意思, 不过这个 PRI 的值是由内核来动态调整的, 我们无法直接操作. 如果我们想要调整进程的优先级, 那么可以使用 Nice 的值, 也就是 NI, 它们的关系粗略如下所示:
 > PRI(new) = PRI(old) + NI
