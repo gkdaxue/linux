@@ -572,6 +572,9 @@ fuser 是由 文件/设备 去找到使用使用该 文件/设备 的进程, lso
 | -a | 需要满足多个条件才显示出结果 |
 | -u User_Name | 列出 User_Name 用户相关进程打开的文件 |
 | +d Dir_Name | 找出某个目录下已经被打开的文件 |
+| -i :端口号 | 查询端口被哪个进程所占用 |
+| -c 进程 | 显示进程打开的文件 |
+| -p PID | 显示进程号为 PID 的进程打开了哪些文件 |
 
 ```bash
 ## 列出当前系统上所有已经被打开的文件与设备
@@ -605,6 +608,41 @@ init          1      root    2u   CHR                1,3      0t0  4601 /dev/nul
 udevd       575      root    0u   CHR                1,3      0t0  4601 /dev/null
 udevd       575      root    1u   CHR                1,3      0t0  4601 /dev/null
 .......
+
+## -i 显示某个端口被哪个进程占用
+[root@localhost ~]# lsof -i :22
+COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+sshd     1938 root    3u  IPv4  15294      0t0  TCP *:ssh (LISTEN)
+sshd     1938 root    4u  IPv6  15300      0t0  TCP *:ssh (LISTEN)
+sshd    27298 root    3r  IPv4  76411      0t0  TCP 192.168.1.206:ssh->192.168.1.11:12757 (ESTABLISHED
+
+## -c 显示进程打开的文件
+[root@localhost ~]# lsof -c sshd
+COMMAND   PID USER   FD   TYPE             DEVICE SIZE/OFF  NODE NAME
+sshd     1938 root  cwd    DIR                8,5     4096     2 /
+sshd     1938 root  rtd    DIR                8,5     4096     2 /
+sshd     1938 root  txt    REG                8,3   571096 45987 /usr/sbin/sshd
+sshd     1938 root  mem    REG                8,5    66432   139 /lib64/libnss_files-2.12.so
+sshd     1938 root  mem    REG                8,5    47760  7272 /lib64/librt-2.12.so
+sshd     1938 root  mem    REG                8,5   247160  7294 /lib64/libnspr4.so
+sshd     1938 root  mem    REG                8,5    17096  7296 /lib64/libplds4.so
+sshd     1938 root  mem    REG                8,5    21288  7295 /lib64/libplc4.so
+sshd     1938 root  mem    REG                8,3   186208 54805 /usr/lib64/libnssutil3.so
+...........
+
+## -p 查看指定的进程打开了哪些文件(我们远程连接的 PID 为 27298)
+[root@localhost ~]# lsof -p 27298
+COMMAND   PID USER   FD   TYPE             DEVICE SIZE/OFF  NODE NAME
+sshd    27298 root  cwd    DIR                8,5     4096     2 /
+sshd    27298 root  rtd    DIR                8,5     4096     2 /
+sshd    27298 root  txt    REG                8,3   571096 45987 /usr/sbin/sshd
+sshd    27298 root  DEL    REG                0,4          76461 /dev/zero
+sshd    27298 root  mem    REG                8,5    18600   578 /lib64/security/pam_limits.so
+sshd    27298 root  mem    REG                8,5    10224   576 /lib64/security/pam_keyinit.so
+sshd    27298 root  mem    REG                8,5    43664   585 /lib64/security/pam_namespace.so
+sshd    27298 root  mem    REG                8,5    10240   581 /lib64/security/pam_loginuid.so
+......
+
 ```
 
 # 特殊文件 /proc/* 
