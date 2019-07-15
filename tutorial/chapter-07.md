@@ -2138,6 +2138,13 @@ Last dump(s) done (Dump '>' file systems):
 
 ### 实例
 ```bash
+## 查看一下 restore 命令属于哪个软件包
+[root@localhost ~]# rpm -qf $(which restore)
+dump-0.4-0.6.b42.el6.x86_64
+
+## 如果没有 restore 命令需要安装一下 dump 这个软件包
+[root@localhost ~]# yum install dump -y
+
 ## 查看 dump 文件的内容
 [root@localhost ~]# restore -t -f /root/boot.dump 
 Dump   date: Thu Mar 14 05:42:13 2019  <==备份的日期
