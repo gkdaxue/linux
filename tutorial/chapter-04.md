@@ -815,7 +815,7 @@ Kernel \r on an \m
 | \s     | 操作系统的名称                         |
 | \v    | 操作系统的版本                                 |
 
-所有我们就知道, 为什么我们使用 tty1-tty6时会显示对应的提示信息以及显示变量的设置, 还有一个 /etc/issue.nett 是提供给 telnet 远程登录程序使用的, 当我们使用 telnet 登录系统时就会显示 /etc/issue.net 文件中的内容, 但是实际的情况是 我们使用的最多的是 ssh 方式登录到系统中, 如果我们想要显示提示信息, 那么就需要用到我们所说的 /etc/motd 文件了.
+所有我们就知道, 为什么我们使用 tty1-tty6时会显示对应的提示信息以及显示变量的设置, 还有一个 **/etc/issue.net** 是提供给 telnet 远程登录程序使用的, 当我们使用 telnet 登录系统时就会显示 /etc/issue.net 文件中的内容, 但是实际的情况是 我们使用的最多的是 ssh 方式登录到系统中, 如果我们想要显示提示信息, 那么就需要用到我们所说的 /etc/motd 文件了.
 ```bash
 ## 该文件默认为空文件, 然后我们尝试写入一些信息
 [root@localhost ~]# cat /etc/motd
@@ -830,10 +830,11 @@ logout
 Last login: Sat Apr 13 10:45:13 2019
 Hi, How are you ?  <== 发现出现了我们所添加的信息
 ```
+
 ### 总结
 > /etc/issue : 给 tty1-tty6 终端设置相应的提示信息, 允许使用特定的变量
 >
-> /etc/issue.net : 给 telnet 的用户设置提示信息
+> /etc/issue.net : 给 telnet 的用户设置提示信息 (不解析 /etc/issue 中提供的变量)
 >
 > /etc/motd : 给所有的终端设置提示信息(不解析 /etc/issue 中提供的变量) 
 
