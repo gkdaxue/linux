@@ -2993,7 +2993,7 @@ fat                    54992  1 vfat
 ```
 
 ### modprobe命令 : 加载指定的内核模块
-**使用 modprobe 加载指定的内核模块, 最大的有点就是回去主动查找 modules.dep 的内容, 先查看依赖于哪些模块, 然后才决定需要加载的模块有哪些.**
+**使用 modprobe 加载指定的内核模块, 最大的优点就是会去主动查找 modules.dep 的内容, 先查看依赖于哪些模块, 然后才决定需要加载的模块有哪些.**
 > modprobe [ options ] module_name
 
 ```bash
