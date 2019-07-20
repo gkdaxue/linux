@@ -1354,33 +1354,95 @@ halt:x:7:0:halt:/sbin:/sbin/halt
 
 
 ### diff命令
-主要用在比较两个文件的区别并且是**以行为单位来比较**的.
+主要用在比较两个文件的区别并且是**以行为单位来比较**的. 所以自然可以用来制作补丁文件.
 ```bash
 ## 实验环境
 [root@localhost ~]# sed -n '1,3p' /etc/passwd > diff1.txt
 [root@localhost ~]# sed -n '1,3p' /etc/passwd > diff2.txt
-[root@localhost ~]# cat diff1.txt
+[root@localhost ~]# head diff1.txt diff2.txt 
+==> diff1.txt <==
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+==> diff2.txt <==
 root:x:0:0:root:/root:/bin/bash
 bin:x:1:1:bin:/bin:/sbin/nologin
 daemon:x:2:2:daemon:/sbin:/sbin/nologin
 
 ## 未修改之前比较一下, 都一样
-[root@localhost ~]# diff diff1.txt diff2.txt 
+[root@localhost ~]# diff diff1.txt diff2.txt
 
 ## 然后修改 diff2.txt 文件
-[root@localhost ~]# sed -i '1s/root/ROOT/g' diff2.txt 
-[root@localhost ~]# cat diff2.txt 
-ROOT:x:0:0:ROOT:/ROOT:/bin/bash      <== 此行已经被改变
+[root@localhost ~]# sed -i 's/root/ROOT/g' diff2.txt 
+[root@localhost ~]# sed -i 's/daemon/DAEMON/' diff2.txt 
+[root@localhost ~]# head diff1.txt diff2.txt 
+==> diff1.txt <==
+root:x:0:0:root:/root:/bin/bash
 bin:x:1:1:bin:/bin:/sbin/nologin
 daemon:x:2:2:daemon:/sbin:/sbin/nologin
 
-## 发现了不同的部分
-[root@localhost ~]# !diff
-diff diff1.txt diff2.txt 
-1c1
+==> diff2.txt <==
+ROOT:x:0:0:ROOT:/ROOT:/bin/bash           <== 此行已经被改变
+bin:x:1:1:bin:/bin:/sbin/nologin
+DAEMON:x:2:2:daemon:/sbin:/sbin/nologin   <== 此行已经被改变
+
+## 使用 diff 发现不同的部分
+[root@localhost ~]# diff diff1.txt diff2.txt | tee diff.patch
+1c1    <== 文件 1 (diff1.txt) 中的第 1 行 改为 文件 2 (diff2.txt) 中的第 1 行, 则两个文件相同
 < root:x:0:0:root:/root:/bin/bash
 ---
 > ROOT:x:0:0:ROOT:/ROOT:/bin/bash
+3c3    <== 文件 1 (diff1.txt) 中的第 3 行 改为 文件 2 (diff2.txt) 中的第 3 行, 则两个文件相同
+< daemon:x:2:2:daemon:/sbin:/sbin/nologin
+---
+> DAEMON:x:2:2:daemon:/sbin:/sbin/nologin
+
+
+diff.patch 的文件内容如上所示, 然后这就可以作为一个补丁文件, 接下来我们会讲解
+```
+
+### patch命令 : 向文件打补丁
+patch指令让用户利用设置修补文件的方式，修改，更新原始文件。倘若一次仅修改一个文件，可直接在指令列中下达指令依序执行。如果配合修补文件的方式则能一次修补大批文件，这也是Linux系统核心的升级方法之一。
+> patch [  options ] -i Patch_File  patchfile
+
+```bash
+## 先查询该命令是否存在
+[root@localhost ~]# which patch
+/usr/bin/patch
+## 如果不存在, 则可以使用如下命令安装, 前提是必须可以设置好 YUM 源, 根据 YUM 源决定是否需要联网
+[root@localhost ~]# yum install patch -y
+
+## 然后我们尝试安装补丁, 在比较差别
+[root@localhost ~]# patch -i diff.patch diff1.txt 
+patching file diff1.txt
+[root@localhost ~]# diff diff1.txt diff2.txt
+
+## 最后查看文件内容 
+[root@localhost ~]# head diff1.txt diff2.txt 
+==> diff1.txt <==
+ROOT:x:0:0:ROOT:/ROOT:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+DAEMON:x:2:2:daemon:/sbin:/sbin/nologin
+
+==> diff2.txt <==
+ROOT:x:0:0:ROOT:/ROOT:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+DAEMON:x:2:2:daemon:/sbin:/sbin/nologin
+
+## -R : 然后我们再把文件还原回去
+[root@localhost ~]# patch -R -i diff.patch diff1.txt 
+patching file diff1.txt
+[root@localhost ~]# head diff1.txt diff2.txt 
+==> diff1.txt <==
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+
+==> diff2.txt <==
+ROOT:x:0:0:ROOT:/ROOT:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+DAEMON:x:2:2:daemon:/sbin:/sbin/nologin
 ```
 
 # shell script
