@@ -1692,7 +1692,7 @@ proc                                      /proc                   proc    defaul
 > 因为我买的云主机为 1核 1G内存 1M 40GB 配置, 然后安装了很多的软件, 经常因为内存不足而导致服务异常结束, 那么我就可以使用如下方式来增加一个 swap, 缓解内存压力.
 
 使用文件构造 swap 的步骤 :
-> 1. 分出一个区或者文件给系统作为 swap (有可能需要修改分区的ID)
+> 1. **分出一个区**或者**文件**给系统作为 swap (有可能需要修改分区的ID)
 > 2. 格式化 "mkswap 设备文件名", 可以格式化该分区成为 swap 格式
 > 3. 启用该 swap 设备, 方法为 swapon 设备文件名
 > 4. 通过 free 命令来查看
@@ -1741,10 +1741,21 @@ Swap:      1023996      20784    1003212
 ## 剩下的根据需要, 是不是需要开机启动等操作.
 ```
 
-### swapon/swapoff 命令
+### swapon命令/swapoff命令 : 启用或禁用 swap 设备
 > swapon/swapoff 设备文件名
 
-启用或禁用 swap 设备
+```bash
+## swapon -s : 查看交换分区
+[root@localhost ~]# swapon -s
+Filename				Type		Size	Used	Priority
+/dev/sda7                               partition	1023996	0	-1
+
+## swapon -a : 读取 /etc/fstab 文件中定义的 swap 并挂载
+[root@localhost ~]# swapon -a
+
+## swapon 设备文件名 : 单独挂载某个交换分区
+[root@localhost ~]# swapon /dev/sdb1
+```
 
 # 文件与文件系统的打包和压缩
 在 Linux 下扩展名仅仅只是为了给我们提示让我们可以知道使用什么方式来操作仅此而已. 在 Linux 中压缩文件的扩展名大多为 \*.tar, \*.tar.gz, \*.tgz, \*.gz, \*.bz2, \*.zip, 因为支持的压缩命令非常多, 所以需要使用特定的命令来 压缩/解压缩.
