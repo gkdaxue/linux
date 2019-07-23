@@ -587,6 +587,47 @@ init          1      root  mem       REG                8,5    66432        139 
 init          1      root  mem       REG                8,5  1930416       7269 /lib64/libc-2.12.so
 .....
 
+## 字段讲解
+COMMAND : 进程的名称
+PID     : 进程标识符
+USER    : 进程所有者
+FD      : 文件描述符，应用程序通过文件描述符识别该文件。如cwd、txt等(w表示写)
+TYPE    : 文件类型，如DIR、REG等
+DEVICE  : 指定磁盘的名称
+SIZE    : 文件的大小
+NODE    : 索引节点(文件在磁盘上的表示)
+NAME    : 打开文件的名称
+
+
+## 我们用这个文件进行讲解
+[root@localhost ~]# lsof | grep messages
+COMMAND     PID      USER   FD      TYPE             DEVICE SIZE/OFF       NODE NAME
+rsyslogd   1595      root    1w      REG                8,6      846       3112 /var/log/messages
+
+## 进程为 1595
+[root@localhost ~]# fuser /var/log/messages
+/var/log/messages:    1595      <== 被 1595 进程所使用
+
+## 在 /dev/sda6 这块设备上
+[root@localhost ~]# ll /dev/ | grep '8,[[:space:]]*\<6\>'
+brw-rw----. 1 root disk      8,   6 Apr 26 07:23 sda6
+[root@localhost ~]# df -hT | grep /dev/sda6
+/dev/sda6            ext4   1.9G  151M  1.7G   9% /var
+
+## FD 为 1595 进程的 1 号文件描述符 写入
+[root@localhost ~]# ll /proc/1595/fd
+total 0
+lrwx------. 1 root root 64 Apr 29 08:13 0 -> socket:[13710]
+l-wx------. 1 root root 64 Apr 29 08:13 1 -> /var/log/messages  <== 这个在使用
+l-wx------. 1 root root 64 Apr 29 08:13 2 -> /var/log/cron
+lr-x------. 1 root root 64 Apr 29 08:13 3 -> /proc/kmsg
+l-wx------. 1 root root 64 Apr 29 08:13 4 -> /var/log/secure
+
+## inode 的节点为 846
+[root@localhost ~]# ll -i /var/log/messages
+3112 -rw-------. 1 root root 846 Apr 30 03:35 /var/log/messages  <== inode 为 3112
+
+
 ## 仅列出 root 用户所打开的文件和设备
 [root@localhost ~]# lsof -u root | less
 COMMAND     PID USER   FD      TYPE             DEVICE SIZE/OFF       NODE NAME
@@ -642,7 +683,39 @@ sshd    27298 root  mem    REG                8,5    10224   576 /lib64/security
 sshd    27298 root  mem    REG                8,5    43664   585 /lib64/security/pam_namespace.so
 sshd    27298 root  mem    REG                8,5    10240   581 /lib64/security/pam_loginuid.so
 ......
+```
 
+### lsof恢复文件
+**进程没有被关闭, 如果进程被关闭, 将无法恢复.**
+```bash
+## 如果我们不小心把 /var/log/meesages 文件删除了
+[root@localhost ~]# rm -rf /var/log/messages
+[root@localhost ~]# lsof | grep messages
+rsyslogd   1595  root  1w   REG  8,6  846  3112 /var/log/messages (deleted) <== 显示已经被删除
+[root@localhost ~]# ll /proc/1595/fd
+total 0
+lrwx------. 1 root root 64 Apr 29 08:13 0 -> socket:[13710]
+l-wx------. 1 root root 64 Apr 29 08:13 1 -> /var/log/messages (deleted)
+l-wx------. 1 root root 64 Apr 29 08:13 2 -> /var/log/cron
+lr-x------. 1 root root 64 Apr 29 08:13 3 -> /proc/kmsg
+l-wx------. 1 root root 64 Apr 29 08:13 4 -> /var/log/secure
+
+## 查看一下是否存在
+[root@localhost ~]# less /proc/1595/fd/1
+Apr 29 07:36:26 localhost kernel: sdb: sdb1
+Apr 29 07:36:29 localhost kernel: sdb: sdb1
+Apr 29 07:36:31 localhost kernel: sdb: sdb1
+Apr 29 09:10:20 localhost kernel: sdb: sdb1
+Apr 29 09:10:23 localhost kernel: sdb: sdb1
+Apr 29 09:28:54 localhost yum[14534]: Installed: xfsprogs-3.1.1-20.el6.x86_64
+Apr 29 10:10:50 localhost kernel: EXT4-fs (dm-1): mounted filesystem with ordered data mode. Opts: 
+Apr 30 02:41:33 localhost kernel: EXT4-fs (dm-4): mounted filesystem with ordered data mode. Opts: 
+Apr 30 02:44:44 localhost kernel: EXT4-fs (dm-4): mounted filesystem with ordered data mode. Opts: 
+Apr 30 03:35:24 localhost kernel: EXT4-fs (dm-1): mounted filesystem with ordered data mode. Opts:
+/proc/1595/fd/1 (END) 
+
+## 然后我们可以重定向回去
+[root@localhost ~]# less /proc/1595/fd/1 > /var/log/messages
 ```
 
 # 特殊文件 /proc/* 
