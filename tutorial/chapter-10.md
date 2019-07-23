@@ -1533,13 +1533,16 @@ Attr :
 | -L Num{MGT} | 指定容量, 但是这个容量必须是 PE 的整数倍, 否则系统自动计算 PE 数 |
 | -l PE_Num | 指定 PE 的数量, 需要自己计算需要多少 PE 数 |
 | -n LV_Name | 指定 LV 的名称 |
+| -s | 表示创建的是一个快照(snapshot) |
 
 ```bash
 ## 使用指定容量的方式(不够一个PE,也要分配一个 PE, 如 PE 大小为4M 需要41M, 那么就需要 11个PE => 44M )
+## 我们也可以使用 50%FREE 来表示使用剩余空间的 50% 的大小
+## lvcreate -l 50%FREE -n lv_gkdaxue vg_gkdaxue
 [root@localhost ~]# lvcreate -L 7G -n lv_gkdaxue vg_gkdaxue
   Logical volume "lv_gkdaxue" created.
 
-## 然后我们使用 -l 的方式来创建 lv_xfs_gkdaxue 大小为 1G  1024 / 4 = 128 个 PE
+## 然后我们使用 -l 的方式来创建 lv_xfs_gkdaxue 大小为 1G
 [root@localhost ~]# lvcreate -l 128 -n lv_xfs_gkdaxue vg_gkdaxue
   Logical volume "lv_xfs_gkdaxue" created.
 
@@ -1557,7 +1560,6 @@ Attr :
   lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g                                                    
   lv_xfs_gkdaxue vg_gkdaxue -wi-a----- 1.00g  
 ```
-
 
 ### lvdisplay命令 : 显示 LV 的属性
 > lvdisplay VgNamePath/LV_Name1 .....
@@ -1669,7 +1671,6 @@ Attr :
   lv_test        vg_gkdaxue -wi-a----- 1.00g                                                     
   lv_xfs_gkdaxue vg_gkdaxue -wi-a----- 1.00g  
 ```
-
 
 ### lvremove命令 : 删除一个 LV
 > lvremove VolumeGroupPath/LogicalVolumeName
@@ -1822,6 +1823,8 @@ size : 可以忽略不写, 如果忽略 默认设置为所在LV全部大小
 
 ## xfs_growfs命令 : 扩展XFS文件系统(只支持扩大)
 >  xfs_growfs -L size  mount-point
+>  
+> yum install xfsprogs -y (如果没有 xfs_growfs 命令, 使用此命令可以安装)
 
 **虽然xfs文件系统只支持增加，不支持减少。但并不是说在xfs系统文件下不能减小，只是减小后，需要重新格式化才能挂载上。这样原来的数据就丢失了!**
 
@@ -1889,6 +1892,7 @@ Performing an on-line resize of /dev/vg_gkdaxue/lv_gkdaxue to 2621440 (4k) block
 The filesystem on /dev/vg_gkdaxue/lv_gkdaxue is now 2621440 blocks long.
 
 ## 使用 xfs_growfs 来扩展 lv_xfs_gkdaxue 的大小
+## yum install xfsprogs -y (如果没有 xfs_growfs 命令, 使用此命令可以安装)
 [root@localhost ~]# xfs_growfs /dev/vg_gkdaxue/lv_xfs_gkdaxue 
 meta-data=/dev/mapper/vg_gkdaxue-lv_xfs_gkdaxue isize=256    agcount=4, agsize=65536 blks
          =                       sectsz=512   attr=2, projid32bit=0
@@ -2025,7 +2029,6 @@ Do you really want to remove active logical volume lv_xfs_gkdaxue? [y/n]: y
   /dev/sdb6  vg_gkdaxue lvm2 a--u 3.01g    0 
 ```
 
-
 ## 关闭LVM
 ```bash
 如果我们想要关闭并删除LVM, 就需要按照之前的顺序倒过来做了
@@ -2061,6 +2064,167 @@ Do you really want to remove active logical volume lv_gkdaxue? [y/n]: y
   Labels on physical volume "/dev/sdb3" successfully wiped
   Labels on physical volume "/dev/sdb5" successfully wiped
   Labels on physical volume "/dev/sdb6" successfully wiped
+```
+
+## LVM快照的使用(snapshot)
+> 1. 快照卷和原始卷必须在同一个VG中
+> 
+> 2. 快照卷的容量必须等同于逻辑卷的容量(否则如果修改的数据过多, 会导致快照失效)
+> 
+> 3. 快照卷仅一次有效，一旦执行还原操作后则会被立即自动删除
+>
+> 4. 快照卷中记录的都是原始卷中变化的数据部分, 如果没有变化的数据, 两者是共用的.
+
+```bash
+## 我们先完整的制作一个 LVM, 然后在制作一个快照来体验一下快照的效果
+## 使用 /dev/sdb1(3G) 来制作完成 卷组名称 vg1, lv名称 lv2
+## 我们故意创建一个 50M 的快照 名字为 lv1-snap
+[root@localhost ~]# pvcreate /dev/sdb1
+  Physical volume "/dev/sdb1" successfully created
+[root@localhost ~]# vgcreate datavg /dev/sdb1
+  Volume group "datavg" successfully created
+[root@localhost ~]# lvcreate -L 204M -n lv1 datavg
+  Logical volume "lv1" created.
+[root@localhost ~]# mkfs.ext4 /dev/datavg/lv1 
+mke2fs 1.41.12 (17-May-2010)
+Filesystem label=
+OS type: Linux
+Block size=1024 (log=0)
+Fragment size=1024 (log=0)
+Stride=0 blocks, Stripe width=0 blocks
+52416 inodes, 208896 blocks
+10444 blocks (5.00%) reserved for the super user
+First data block=1
+Maximum filesystem blocks=67371008
+26 block groups
+8192 blocks per group, 8192 fragments per group
+2016 inodes per group
+Superblock backups stored on blocks: 
+	8193, 24577, 40961, 57345, 73729, 204801
+
+Writing inode tables: done                            
+Creating journal (4096 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+This filesystem will be automatically checked every 20 mounts or
+180 days, whichever comes first.  Use tune2fs -c or -i to override.
+[root@localhost ~]# mkdir /mnt/lv1
+[root@localhost ~]# mount /dev/datavg/lv1 /mnt/lv1/
+
+## 复制一些数据进去
+[root@localhost ~]# cp -afr /etc /mnt/lv1
+[root@localhost ~]# cp -afr /etc /mnt/lv1/etc2
+[root@localhost ~]# dd if=/dev/zero of=/mnt/lv1/test.txt count=1M bs=6
+1048576+0 records in
+1048576+0 records out
+6291456 bytes (6.3 MB) copied, 1.32959 s, 4.7 MB/s
+[root@localhost ~]# df -hT
+Filesystem              Type   Size  Used Avail Use% Mounted on
+/dev/mapper/datavg-lv1  ext4   194M   81M  103M  44% /mnt/lv1
+
+## 先查看一下对应的  VG 是否还有剩余的空间(因为必须在同一个 VG 中)
+[root@localhost ~]# vgs
+  VG     #PV #LV #SN Attr   VSize VFree
+  datavg   1   1   0 wz--n- 3.01g 2.81g   <== 还有充足的空间
+  server   1   1   0 wz--n- 4.88g    0 
+
+## 创建快照卷并只读挂载(快照卷是一个特殊的逻辑卷)
+[root@localhost ~]# lvcreate -L 50M -n lv1-snap -s /dev/datavg/lv1 
+  Rounding up size to full physical extent 52.00 MiB
+  Logical volume "lv1-snap" created.
+[root@localhost ~]# lvscan 
+  ACTIVE   Original '/dev/datavg/lv1'      [204.00 MiB] inherit  <== 原始卷
+  ACTIVE   Snapshot '/dev/datavg/lv1-snap' [52.00 MiB]  inherit  <== 快照卷, 只有 50M 的空间
+  ACTIVE            '/dev/server/myhome'   [4.88 GiB]   inherit
+[root@localhost ~]# mkdir /mnt/lv1-snap
+[root@localhost ~]# mount -o ro /dev/datavg/lv1-snap /mnt/lv1-snap/
+[root@localhost ~]# df -hT
+Filesystem                     Type   Size  Used Avail Use% Mounted on
+/dev/mapper/datavg-lv1         ext4   194M   81M  103M  44% /mnt/lv1
+/dev/mapper/datavg-lv1--snap   ext4   194M   81M  103M  44% /mnt/lv1-snap <== 结果显示和原卷一样大
+
+## 数据都是一样的 
+[root@localhost ~]# ls /mnt/lv1*
+/mnt/lv1:
+etc  etc2  lost+found  test.txt
+
+/mnt/lv1-snap:
+etc  etc2  lost+found  test.txt
+
+
+## 接下来开始测试, 改变原始卷中的数据
+[root@localhost ~]# echo 'lv1 yang' > /mnt/lv1
+lv1/      lv1-snap/ 
+[root@localhost ~]# echo 'lv1 yang' > /mnt/lv1/yang.txt
+[root@localhost ~]# rm -rf /mnt/lv1/etc2
+[root@localhost ~]# ls /mnt/lv1*
+/mnt/lv1:
+etc  lost+found  test.txt  yang.txt   <== 数据已经不同了
+
+/mnt/lv1-snap:
+etc  etc2  lost+found  test.txt       <== 数据已经不同了
+
+
+## 因为快照卷记录的是原始卷中数据改变的部分, 而我们的快照卷只有 50M, 原始卷为 200M.
+## 所以当原始卷的数据改变程度大于 50M, 那么我们这个快照卷就没用了, 所以快照卷的大小最好大于或等于原始卷的大小
+## snapshot 可以用来作为数据的备份, 防止出现数据不一致的情况, 基本都是一瞬间备份完成
+[root@localhost ~]# lvs
+  LV       VG     Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  lv1      datavg owi-aos--- 204.00m                                                    
+  lv1-snap datavg swi-aos---  52.00m      lv1    1.90   <== 快照卷只用了 1.9%(只记录原始卷中变化的数据)
+  myhome   server -wi-ao----   4.88g
+
+## 比如我们再删除一部分数据
+[root@localhost ~]# rm -rf /mnt/lv1/etc/
+[root@localhost ~]# ls /mnt/lv1*
+/mnt/lv1:
+lost+found  test.txt  yang.txt
+
+/mnt/lv1-snap:
+etc  etc2  lost+found  test.txt                                             
+[root@localhost ~]# lvs
+  LV       VG     Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  lv1      datavg owi-aos--- 204.00m                                                    
+  lv1-snap datavg swi-aos---  52.00m      lv1    3.08   <== 用了 2.52%(原始卷更改数据越多, 这个会逐渐变大)
+  myhome   server -wi-ao----   4.88g 
+```
+
+### lvconvert命令 : 恢复快照的信息
+```bash
+## 先把我们挂载的卸载了
+[root@localhost ~]# umount /mnt/lv1
+[root@localhost ~]# umount /mnt/lv1-snap/
+
+## 还原快照的信息
+[root@localhost ~]# lvconvert --merge /dev/datavg/lv1-snap 
+  Merging of volume lv1-snap started.
+  lv1: Merged: 98.1%
+  lv1: Merged: 100.0%
+  Merge of snapshot into logical volume lv1 has finished.
+  Logical volume "lv1-snap" successfully removed   <== 快照已经被删除了, 只有一次有效
+[root@localhost ~]# lvs
+  LV     VG     Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  lv1    datavg -wi-a----- 204.00m                                                    
+  myhome server -wi-ao----   4.88g       
+
+## 然后我们在把原始卷挂载上去, 发现我们之前删除的数据都还原回来了.                                             
+[root@localhost ~]# mount /dev/datavg/lv1 /mnt/lv1
+[root@localhost ~]# ls /mnt/lv1
+etc  etc2  lost+found  test.txt
+
+## 还原操作
+## 为什么不能删除, 想一下
+[root@localhost ~]# lvremove /dev/datavg/lv1 
+  Logical volume datavg/lv1 contains a filesystem in use.
+[root@localhost ~]# umount /mnt/lv1
+[root@localhost ~]# lvremove /dev/datavg/lv1 
+Do you really want to remove active logical volume lv1? [y/n]: y
+  Logical volume "lv1" successfully removed
+[root@localhost ~]# vgremove datavg
+  Volume group "datavg" successfully removed
+[root@localhost ~]# pvremove /dev/sdb1
+  Labels on physical volume "/dev/sdb1" successfully wiped
+[root@localhost ~]# rm -rf /mnt/lv1*
 ```
 
 # RAID10 + LVM 实战
@@ -2300,3 +2464,94 @@ unused devices: <none>
 ARRAY /dev/md0 UUID=9b1333b9:4daa5f55:4eb9bf45:59460176  <== 删除此行
 ```
 
+# 网络相关命令
+## route命令 : 显示/设置 IP路由表
+每台主机都有自己的路由表, 当主机想要发送数据时, 主要参考的就是 ` 路由表(Route table) `.
+> route [ -n ]
+
+| 选项 | 作用 |
+| :----: | ---- |
+| -n | 将主机名以 IP 的方式显示 |
+
+```bash
+## 显示路由信息
+[root@localhost ~]# route
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.0.0     *               255.255.248.0   U     1      0        0 eth0
+default         192.168.1.1     0.0.0.0         UG    0      0        0 eth0
+
+## -n : 将主机名以 IP 的方式显示
+[root@localhost ~]# route -n
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.0.0     0.0.0.0         255.255.248.0   U     1      0        0 eth0
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 eth0
+
+## 字段讲解
+Destination : 目的地网络
+Gateway     : 该接口的 Gateway 的 IP, 如为 0.0.0.0 或 * 则表示不需要额外的 UP
+Genmask     : 就是 Netmask, 与 Destination 组合成为一台主机或网络
+Flags       : 表示网络或主机代表的含义
+			  U : 代表该路由可用
+              G : 代表该网络需要经由 Gateway 帮忙传递
+              H : 该行路由为一台主机, 而非整个网络
+Iface       : 哪个网卡接口 (Interface)
+
+
+## 我们使用下面一行来讲解
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.0.0     0.0.0.0         255.255.248.0   U     1      0        0 eth0
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 eth0 <== 此行就是 default
+如果我们发送的数据包在 192.168.0.0/255.255.248.0 则会直接以 eth0 发送出去, 不需要经过 Gateway.
+如果我们发送的数据包不在路由规则里面, 那么就会发送到 default 所在的那个路由规则去.
+```
+
+## arp命令 : 管理系统的arp缓存
+ARP(Address Resolution Protocol 网络地址解析协议), 用来传递数据的是以太网(Ethernet) , 以太网主要是用网卡的 MAC 地址, 那么 IP 地址和 MAC 一定存在联系, 那么我们怎么知道某个 IP 被配置到了哪个网卡上了呢? 这个时候我们的主机就会给局域网发送 ARP 数据包, 对方收到 ARP 数据包后就会返回对应的 MAC 地址给我们. 然后我们就知道了对方所在的网卡, 然后我们就可以发送数据了, 但是如果我们每次都要来查找 MAC 地址就会很麻烦, 所以 **当使用 ARP 协议取得目标的 IP 和 MAC 地址后, 就会记录到 ARP table中(内存中的数据), 记录 20 分钟.**
+> arp [ options ]
+
+| 选项 | 作用 |
+| :----: | --- |
+| -s hostname(IP) Hardware_address| 添加 IP 或 hostname 的 MAC 地址 到 ARP table 中 |
+| -d hostname | 从 ARP table 中删除对应的记录 |
+
+```bash
+[root@localhost ~]# ifconfig eth0 | grep HWaddr
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34   <== 这就是 MAC 地址
+
+## 我们在 Windows 中查看我们自己的网卡信息, 因为我们使用 XShell 连接到的 服务器
+c:\>ipconfig -all
+ 物理地址. . . . . . . . . . . . . : 1C-1B-0D-52-95-78   <== 网卡 MAC 地址
+ IPv4 地址 . . . . . . . . . . . . : 192.168.1.11(首选)  <== IP 地址
+
+## 查看本机的 ARP table 信息
+[root@localhost ~]# arp
+Address                  HWtype  HWaddress           Flags Mask            Iface
+192.168.1.1              ether   b0:95:8e:4a:94:b9   C                     eth0
+192.168.1.11             ether   1c:1b:0d:52:95:78   C                     eth0
+
+## 添加一个 hostname 到 ARP table 中
+[root@localhost ~]# arp -s 192.168.2.11 1c:1b:0d:52:95:78
+[root@localhost ~]# arp
+Address                  HWtype  HWaddress           Flags Mask            Iface
+192.168.1.1              ether   b0:95:8e:4a:94:b9   C                     eth0
+192.168.2.11             ether   1c:1b:0d:52:95:78   CM                    eth0
+192.168.1.11             ether   1c:1b:0d:52:95:78   C                     eth0
+## 字段讲解
+Address    : 主机IP地址
+HWtype     : 以太网
+HWaddress  : MAC 地址
+Flags Mask : Mask 标志
+			 C : 代表此表项目是高速缓存中的内容
+             M : 则表示静态表项，静态表项的内容不会过一段时间被清空
+Iface      : 网卡的接口
+
+## 从 ARP table 中删除一条记录
+[root@localhost ~]# arp -d 192.168.2.11
+[root@localhost ~]# arp
+Address                  HWtype  HWaddress           Flags Mask            Iface
+192.168.1.1              ether   b0:95:8e:4a:94:b9   C                     eth0
+192.168.2.11                     (incomplete)                              eth0
+192.168.1.11             ether   1c:1b:0d:52:95:78   C                     eth0
+```
+
+## 
