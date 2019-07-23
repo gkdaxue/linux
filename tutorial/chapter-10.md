@@ -1654,7 +1654,7 @@ Attr :
   LV             VG         Attr       LSize Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
   myhome         server     -wi-ao---- 4.88g                                                    
   lv_gkdaxue     vg_gkdaxue -wi-a----- 7.00g                                                    
-  lv_test        vg_gkdaxue -wi------- 1.00g      <== 和之前比少了一个 a 属性                                               
+  lv_test        vg_gkdaxue -wi------- 1.00g      <== 和之前比少了一个 a 属性
   lv_xfs_gkdaxue vg_gkdaxue -wi-a----- 1.00g   
 
 ## 设置为活跃状态
