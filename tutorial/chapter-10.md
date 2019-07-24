@@ -2466,14 +2466,29 @@ ARRAY /dev/md0 UUID=9b1333b9:4daa5f55:4eb9bf45:59460176  <== 删除此行
 
 # 网络相关命令
 ## route命令 : 显示/设置 IP路由表
-每台主机都有自己的路由表, 当主机想要发送数据时, 主要参考的就是 ` 路由表(Route table) `.
-> route [ -n ]
+每台主机都有自己的路由表, 当主机想要发送数据时, 主要参考的就是 ` 路由表(Route table) `. 路由是有顺序的(从上到下查找).
+> route [ -nee ]
+>
+> route add [ -net | -host ] [ 网络或主机 ] netmask mask [ gw | [dev] INTERFACE ]
+>
+> route add default gw xxxxx
+>
+> route del [ -net | -host ] [ 网络或主机 ] netmask mask [ gw | [dev] INTERFACE ] 
 
 | 选项 | 作用 |
 | :----: | ---- |
 | -n | 将主机名以 IP 的方式显示 |
+| -ee | 显示更详细的信息 |
 
 ```bash
+增加(add)和删除(del)路由的相关参数
+    default : 设置一个默认的路由
+	-net    : 表示后边接的路由为一个网络
+	-host   : 表示后边接的为连接到单个主机的路由
+	mask    : 设置的 netmask
+	gw      : gateway 的地址
+	dev     : 指定 dev 连接, dev 可以省略, 直接写 INTERFACE
+
 ## 显示路由信息
 [root@localhost ~]# route
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
@@ -2503,6 +2518,30 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 eth0 <== 此行就是 default
 如果我们发送的数据包在 192.168.0.0/255.255.248.0 则会直接以 eth0 发送出去, 不需要经过 Gateway.
 如果我们发送的数据包不在路由规则里面, 那么就会发送到 default 所在的那个路由规则去.
+
+## -ee 显示更详细的信息
+[root@localhost ~]# route -nee
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface    MSS   Window irtt
+192.168.0.0     0.0.0.0         255.255.248.0   U     1      0        0 eth0     0     0      0
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 eth0     0     0      0
+
+## add 我们来随便添加一个路由
+[root@localhost ~]# route add -net 169.254.0.0 netmask 255.255.0.0 dev eth0
+[root@localhost ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.0.0     0.0.0.0         255.255.248.0   U     1      0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     0      0        0 eth0
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 eth0
+
+## del 在删除一个路由
+[root@localhost ~]# route del -net 169.254.0.0 netmask 255.255.0.0 dev eth0
+[root@localhost ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.0.0     0.0.0.0         255.255.248.0   U     1      0        0 eth0
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 eth0
 ```
 
 ## arp命令 : 管理系统的arp缓存
@@ -2693,3 +2732,5 @@ Last login: Sat Jun  8 04:55:16 2019 from 192.168.1.206
 
 ## 这样对我们来说, 是不是又方便了呢 ^_^.
 ```
+
+##  ip命令
