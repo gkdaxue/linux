@@ -2554,4 +2554,142 @@ Address                  HWtype  HWaddress           Flags Mask            Iface
 192.168.1.11             ether   1c:1b:0d:52:95:78   C                     eth0
 ```
 
-## 
+## ssh命令
+SSH客户端是使用 Secure Shell(SSH) 协议远程连接到主机上软件程序, 通过 SSH 客户端, 我们连接到运行 SSH服务器 的远程主机上, 有如下好处 :
+> 1. 数据传输是加密的, 可以防止信息泄露
+> 
+> 2. 数据传输是压缩的, 可以提高传输速度.
+
+命令的格式如下 :
+> ssh [ -p port ] user@remote
+
+```bash
+-p port : 是 SSH Server 监听的端口, 端口可以省略, 如果省略, 则以默认 22 端口连接
+user    : 远程主机上的用户名, 如果不指定则以当前用户连接
+remote  : 远程主机的地址, 可以是 IP/域名/别名
+
+## 如果想退出连接, 可以使用 exit 命令
+```
+
+注意事项 :  
+1. ssh 默认只能在 Linux 或者 Unix 系统下使用
+2. 如果在 Windows 下使用, 则需要使用其他软件帮助, 比如 Xshell/PuTTY 等客户端软件
+3. 有关 SSH 配置信息都保存在用户家目录下的 .ssh 目录下
+
+### ssh密码登录
+```bash
+## 实验步骤(默认都是 22 端口)
+## 1. 使用 Xshell 连接到 192.168.1.206 这个服务器 (Windows -> Linux)
+## 2. 在从 192.168.1.206 连接到 192.168.1.207 这个服务器 (Linux -> Linux)
+
+
+## 因为我已经安装了 Xshell 这个软件, 那么我就以这个软件来演示, 默认打开是这样的
+[d:\~]$ 
+
+## 然后输入我们想要连接的远程主机等信息, 因为 XShell 的语法规则不同, 为 
+## ssh user@host [ port ], 是因为软件的问题, 正常就应该是 ssh -p PORT user@remote
+## 只有有一个输入密码的过程, 当你输入正确后, 就可以进入到该系统
+[d:\~]$ ssh root@192.168.1.206 22
+Connecting to 192.168.1.206:22...
+Connection established.
+To escape to local shell, press Ctrl+Alt+].
+
+Last login: Wed May  1 03:01:56 2019 from 192.168.1.11
+[root@localhost ~]# ifconfig eth0 | grep 'inet addr:'
+          inet addr:192.168.1.206  Bcast:192.168.7.255  Mask:255.255.248.0 
+
+## 我们现在是 192.168.1.206 尝试连接到 192.168.1.207
+[root@localhost ~]# ssh -p 22 root@192.168.1.207
+The authenticity of host '192.168.1.207 (192.168.1.207)' can't be established.
+RSA key fingerprint is 4f:10:a8:15:b1:45:e8:c5:f5:92:02:14:04:7b:24:f2.
+Are you sure you want to continue connecting (yes/no)? yes              <== 会出现一个提示
+Warning: Permanently added '192.168.1.207' (RSA) to the list of known hosts.
+root@192.168.1.207's password:                                          <== 输入 207 这个服务器 root 账户密码
+[root@localhost ~]# ifconfig eth1 | grep 'inet addr:'
+          inet addr:192.168.1.207  Bcast:192.168.7.255  Mask:255.255.248.0  <== 登录成功, 我们现在是 207
+
+
+## 需要注意的地方可能就是端口, 因为有些服务器使用的并不是默认的 22 端口, 所以特别注意.
+```
+
+### ssh-keygen命令 : 身份验证密钥生成、管理和转换
+> ssh-keygen
+
+### ssh-copy-id命令 : 在远程计算机的授权密钥中安装公钥
+>  ssh-copy-id [-i [identity_file]] [user@]machine
+
+### ssh免密登录
+我们发现我们使用 206 连接到 207 的时候, 每次都要输入密码, 感觉不太方便, 所以我们使用秘钥来登录.
+```bash
+## 206 服务器上操作 ssh-keygen 用来生成 ssh 钥匙
+[root@localhost ~]# ssh-keygen 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 
+Created directory '/root/.ssh'.
+Enter passphrase (empty for no passphrase):        <== 输入秘钥密码, 更加安全
+Enter same passphrase again:                       <== 再次输入
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+49:9a:d6:28:ff:c4:26:05:57:af:71:fe:1f:23:82:00 root@localhost.localdomain
+The key's randomart image is:
++--[ RSA 2048]----+
+|          .      |
+|         . .     |
+|     E. o . o    |
+|      .O . =     |
+|    . =.S . .    |
+|     + o. .  .   |
+|      o +. . ..o |
+|       =    . ..o|
+|        .       .|
++-----------------+
+[root@localhost ~]# ll .ssh
+total 12
+-rw-------. 1 root root 1675 Apr 26 04:04 id_rsa       <== 私钥
+-rw-r--r--. 1 root root  408 Apr 26 04:04 id_rsa.pub   <== 公钥
+-rw-r--r--. 1 root root  395 Apr 26 04:07 known_hosts
+
+非对称加密算法:
+1. 使用公钥加密的数据, 需要使用私钥解密
+2. 使用私钥加密的数据, 需要使用公钥加密
+
+
+## 把公钥传送到 207 服务器上
+[root@localhost ~]# ssh-copy-id root@192.168.1.207
+The authenticity of host '192.168.1.207 (192.168.1.207)' can't be established.
+RSA key fingerprint is 4f:10:a8:15:b1:45:e8:c5:f5:92:02:14:04:7b:24:f2.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.1.207' (RSA) to the list of known hosts.
+root@192.168.1.207's password:        <== 207 服务器的 root 账户密码
+Now try logging into the machine, with "ssh 'root@192.168.1.207'", and check in:
+
+  .ssh/authorized_keys
+
+to make sure we haven't added extra keys that you weren't expecting.
+
+
+## 尝试登录到 207, 发现没有让输入密码
+[root@localhost ~]# ssh root@192.168.1.207
+Last login: Sat Jun  8 04:36:07 2019 from 192.168.1.11
+```
+
+### 别名登录
+我们在 206 机器上登录 207, 每次都要输入到很长的一串命令, 那么我们又该如何来简化呢?
+```bash
+## 在 206 主机下 ~/.ssh/config中配置以下内容, 保存并退出
+[root@localhost ~]# vim ~/.ssh/config
+Host 207
+    HostName 192.168.1.207
+    User root
+    Port 22
+
+## 尝试连接到 207, 前边配置的 Host 跟上的名称
+[root@localhost ~]# ssh 207
+Last login: Sat Jun  8 04:55:16 2019 from 192.168.1.206
+[root@localhost ~]# ifconfig eth1 | grep 'inet addr:'
+          inet addr:192.168.1.207  Bcast:192.168.7.255  Mask:255.255.248.0
+
+
+## 这样对我们来说, 是不是又方便了呢 ^_^.
+```
