@@ -2870,6 +2870,7 @@ ifconfig -a                                             : 查看所有接口地�
 ifconfig INTERFACE                                      : 查看特定的接口信息
 ifconfig INTERFACE [up|down]                            : 启用或禁用特定的接口
 ifconfig INTERFACE { IP/MASK掩码长度 | IP netmask MASK } : 临时切换 IP 地址
+ifconfig INTERFACE:NUM IP                               : 一个网卡设置多个 IP 地址            
 
 ## ifconfig 查看所有处于活动状态的接口地址
 [root@localhost ~]# ifconfig
@@ -2988,6 +2989,71 @@ eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34
 第八行 : 
 		RX bytes            : 接收的数据量
 		TX bytes            : 发送的数据量
+
+
+## 一个网卡设置多个 IP 地址
+[root@localhost ~]# ifconfig 
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.7.255  Mask:255.255.248.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:9075 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:3827 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:796679 (778.0 KiB)  TX bytes:400979 (391.5 KiB)
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)
+[root@localhost ~]# ifconfig eth0:0 192.168.1.208
+[root@localhost ~]# ifconfig 
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34    <== MAC 地址
+          inet addr:192.168.1.206  Bcast:192.168.7.255  Mask:255.255.248.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:9075 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:3827 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:796679 (778.0 KiB)  TX bytes:400979 (391.5 KiB)
+
+eth0:0    Link encap:Ethernet  HWaddr 00:0C:29:27:50:34     <== MAC 地址一样, 重启消失
+          inet addr:192.168.1.208  Bcast:192.168.1.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)
+
+## 关闭之后发现找不到了
+[root@localhost ~]# ifconfig eth0:0 down
+[root@localhost ~]# ifconfig
+eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
+          inet addr:192.168.1.206  Bcast:192.168.7.255  Mask:255.255.248.0
+          inet6 addr: fe80::20c:29ff:fe27:5034/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:9285 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:3899 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:814376 (795.2 KiB)  TX bytes:408123 (398.5 KiB)
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)
 ```
 
 ## netstat命令
