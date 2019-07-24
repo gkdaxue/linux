@@ -2933,9 +2933,11 @@ lo        Link encap:Local Loopback    <== 因为我们现在已经启用了, �
           collisions:0 txqueuelen:0 
           RX bytes:2352 (2.2 KiB)  TX bytes:2352 (2.2 KiB)
 
+
 ## 给网卡临时切换 IP 地址 (重启失效), 如果使用 ssh 连接到服务器会自动断开链接.
 ## 因为网卡的 IP 地址已经改变. 所以需要使用新的 IP 地址来连接.
 [root@localhost ~]# ifconfig eth0 192.168.1.207/24
+## 因为我们使用的是 ssh 连接上的, 但是服务器的 IP 地址已经改变了, 所以我们重新使用新 IP 连接上
 [root@localhost ~]# ifconfig eth0
 eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34  
           inet addr:192.168.1.207  Bcast:192.168.1.255  Mask:255.255.255.0
@@ -2945,6 +2947,26 @@ eth0      Link encap:Ethernet  HWaddr 00:0C:29:27:50:34
           TX packets:67730 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000 
           RX bytes:24706520 (23.5 MiB)  TX bytes:7481628 (7.1 MiB)
+## 然后我们尝试 ping 一下百度, 发现不能 ping 通了.
+[root@localhost ~]# ping www.baidu.com
+connect: Network is unreachable
+## 这个时候我们就需要增加一个默认的路由来操作了.
+[root@localhost ~]# route add default gw 192.168.1.1
+[root@localhost ~]# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.1.0     *               255.255.255.0   U     0      0        0 eth0
+default         192.168.1.1     0.0.0.0         UG    0      0        0 eth0  <== 我们新增的路由
+## 然后我们现在就可以 ping 通了.
+[root@localhost ~]# ping -c 3 www.baidu.com
+PING www.a.shifen.com (180.97.33.108) 56(84) bytes of data.
+64 bytes from 180.97.33.108: icmp_seq=1 ttl=56 time=5.18 ms
+64 bytes from 180.97.33.108: icmp_seq=2 ttl=56 time=5.25 ms
+64 bytes from 180.97.33.108: icmp_seq=3 ttl=56 time=5.15 ms
+
+--- www.a.shifen.com ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2026ms
+rtt min/avg/max/mdev = 5.155/5.198/5.259/0.044 ms
 
 
 ## 然后我们来分析一下显示的各个字段的含义
