@@ -2734,3 +2734,332 @@ Last login: Sat Jun  8 04:55:16 2019 from 192.168.1.206
 ```
 
 ##  ip命令
+> ip [-s] { link | address | route } COMMAND
+
+| 选项 | 作用 |
+| :--: | ---- |
+| -s | 显示出设备的统计信息 |
+
+### ip link操作
+```bash
+ip link show [ DEVICE ] : 显示出这个设备的相关属性
+ip link set DEVICE 动作和参数 
+动作和参数主要如下 :
+	1. up | down    : 启动或关闭某个接口
+	2. address MAC  : 设置 MAC 地址 
+	3. name NEWNAME : 给与这个设备一个名称
+	4. mtu MTU      : 设置最大传输单元
+
+
+## ip link show 演示
+[root@localhost ~]# ip link show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:27:50:34 brd ff:ff:ff:ff:ff:ff
+
+[root@localhost ~]# ip link show eth0
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:27:50:34 brd ff:ff:ff:ff:ff:ff
+
+[root@localhost ~]# ip -s link show eth0
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:27:50:34 brd ff:ff:ff:ff:ff:ff
+    RX: bytes  packets  errors  dropped overrun mcast   
+    1178621    13415    0       0       0       0       
+    TX: bytes  packets  errors  dropped carrier collsns 
+    584654     5568     0       0       0       0    
+
+
+## ip link set DEVICE { up | down } 演示
+[root@localhost ~]# ip link show lo
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+[root@localhost ~]# ip link set lo down
+[root@localhost ~]# ip link show lo
+1: lo: <LOOPBACK> mtu 65536 qdisc noqueue state DOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+[root@localhost ~]# ip link set lo up
+[root@localhost ~]# ip link show lo
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+
+
+## ip link set DEVICE name NEWNAME 
+[root@localhost ~]# ip link set lo name gkdaxue
+RTNETLINK answers: Device or resource busy                   <== 必须先关闭这个网卡
+[root@localhost ~]# ip link set lo down
+[root@localhost ~]# ip link set lo name gkdaxue
+[root@localhost ~]# ip link show 
+1: gkdaxue: <LOOPBACK> mtu 65536 qdisc noqueue state DOWN    <== 名称变为了 gkdaxue
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:27:50:34 brd ff:ff:ff:ff:ff:ff
+## 还原回来, 避免出问题
+[root@localhost ~]# ip link set gkdaxue name lo
+[root@localhost ~]# ip link show
+1: lo: <LOOPBACK> mtu 65536 qdisc noqueue state DOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:27:50:34 brd ff:ff:ff:ff:ff:ff
+```
+
+### ip address操作
+```bash
+ip address show [ dev STRING ] : 查看 IP 信息
+ip address { add | del } IFADDR dev STRING : 相关参数的设置
+    IFADDR 
+        1. broadcast ADDR : 设置广播地址, 如果设置为 + 则表示让系统自动计算
+        2. label STRING   : 这个设备的别名, 如 eth0:0
+        3. via            : 从这个 GATEWAY 出去
+        4. scope SCOPE-ID :
+                           host   : 仅允许本机内部的连接
+                           link   : 仅允许本设备自我连接
+                           global : 允许来自所有来源的连接(默认) 
+
+
+## ip address show : 显示 IP 信息
+[root@localhost ~]# ip address show
+1: lo: <LOOPBACK> mtu 65536 qdisc noqueue state DOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:27:50:34 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.206/21 brd 192.168.7.255 scope global eth0
+    inet6 fe80::20c:29ff:fe27:5034/64 scope link 
+       valid_lft forever preferred_lft forever
+[root@localhost ~]# ip address show eth0
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:27:50:34 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.206/21 brd 192.168.7.255 scope global eth0
+    inet6 fe80::20c:29ff:fe27:5034/64 scope link 
+       valid_lft forever preferred_lft forever
+
+
+## ip address { add | del } IFADDR dev STRING : 设置相关参数
+[root@localhost ~]# ip address add 192.168.1.208/21 broadcast + label eth0:gkdaxue dev eth0
+[root@localhost ~]# ip address show
+1: lo: <LOOPBACK> mtu 65536 qdisc noqueue state DOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:27:50:34 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.206/21 brd 192.168.7.255 scope global eth0
+    inet 192.168.1.208/21 brd 192.168.7.255 scope global secondary eth0:gkdaxue  <== 这里多了一个 IP 地址
+    inet6 fe80::20c:29ff:fe27:5034/64 scope link 
+       valid_lft forever preferred_lft forever
+[root@localhost ~]# ip address del 192.168.1.208/21 dev eth0
+[root@localhost ~]# ip address show
+1: lo: <LOOPBACK> mtu 65536 qdisc noqueue state DOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:27:50:34 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.206/21 brd 192.168.7.255 scope global eth0                   <== 之前的那一行已经消失
+    inet6 fe80::20c:29ff:fe27:5034/64 scope link 
+       valid_lft forever preferred_lft forever
+```
+
+### ip route设置
+```bash
+ip route show : 显示路由的的设置
+ip route { add | del } [ IP或网络号 ] [ via GATEWAY ] [ dev 设备] : 设置路由表
+    IP或网络 : 可以设置网络号或者 IP 地址
+    via     : 从这个 GATEWAY 发送数据(不一定需要)
+    dev     : 从这个设备连出去
+    mtu     : 可以额外的设置 MTU 的数值
+
+
+### ip route show : 显示出当前的路由信息
+[root@localhost ~]# ip route show
+192.168.0.0/21 dev eth0  proto kernel  scope link  src 192.168.1.206  metric 1 
+default via 192.168.1.1 dev eth0  proto static 
+proto : 指此路由的协议, 主要有 Redirect Kernel Boot Static Ra等; Kernel 指的是由内核判断自动设定
+
+
+## ip route add 
+[root@localhost ~]# ip route add 192.168.1.0/24 via 192.168.1.0 dev eth0
+[root@localhost ~]# ip route show
+192.168.1.0/24 via 192.168.1.0 dev eth0 
+192.168.0.0/21 dev eth0  proto kernel  scope link  src 192.168.1.206 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+default via 192.168.1.1 dev eth0  proto static 
+
+
+## ip route del
+[root@localhost ~]# ip route del 192.168.1.0/24
+[root@localhost ~]# ip route show
+192.168.0.0/21 dev eth0  proto kernel  scope link  src 192.168.1.206 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+default via 192.168.1.1 dev eth0  proto static 
+```
+
+## host命令 : 查询某个主机的 IP
+> host [ -a ] hostname [ server ]
+
+| 选项 | 作用 |
+| :----: | ----- |
+| -a | 显示该主机名的详细数据 |
+| server |不使用 /etc/resolv.conf 文件中定义的 DNS 的服务器 IP 来查询 |
+
+```bash
+## 查看简略信息
+[root@localhost ~]# host www.baidu.com
+www.baidu.com is an alias for www.a.shifen.com.
+www.a.shifen.com has address 180.97.33.108
+www.a.shifen.com has address 180.97.33.107
+
+## 查看详细信息, 默认使用 /etc/resolv.conf 文件中定义的查询
+[root@localhost ~]# host -a www.baidu.com
+Trying "www.baidu.com"
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 627
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;www.baidu.com.			IN	ANY
+
+;; ANSWER SECTION:
+www.baidu.com.		22	IN	CNAME	www.a.shifen.com.
+
+Received 58 bytes from 192.168.1.1#53 in 6 ms
+
+## 使用特定的 DNS 服务器IP, 不使用 /etc/resolv.conf 文件中定义的
+[root@localhost ~]# host -a  www.baidu.com  114.114.114.114
+Trying "www.baidu.com"
+Using domain server:
+Name: 114.114.114.114
+Address: 114.114.114.114#53
+Aliases: 
+
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 57531
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;www.baidu.com.			IN	ANY
+
+;; ANSWER SECTION:
+www.baidu.com.		738	IN	CNAME	www.a.shifen.com.
+
+Received 58 bytes from 114.114.114.114#53 in 41 ms
+```
+
+## dig命令 : 常用的域名查询工具，可以用来测试域名系统工作是否正常
+```bash
+[root@localhost ~]# dig www.baidu.com
+
+## dig 命令的版本以及输入的参数
+; <<>> DiG 9.8.2rc1-RedHat-9.8.2-0.62.rc1.el6 <<>> www.baidu.com
+;; global options: +cmd
+
+## 显示服务返回的一些技术详情, 比较重要的是 status, 如果为 NOERROR 则说明本次查询成功结束
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 18675
+;; flags: qr rd ra; QUERY: 1, ANSWER: 3, AUTHORITY: 5, ADDITIONAL: 5
+
+## 要查询的域名
+;; QUESTION SECTION:
+;www.baidu.com.			IN	A
+
+## 查询到的结果
+;; ANSWER SECTION:
+www.baidu.com.		445	IN	CNAME	www.a.shifen.com.
+www.a.shifen.com.	72	IN	A	180.97.33.108
+www.a.shifen.com.	72	IN	A	180.97.33.107
+
+;; AUTHORITY SECTION:
+a.shifen.com.		1020	IN	NS	ns4.a.shifen.com.
+a.shifen.com.		1020	IN	NS	ns5.a.shifen.com.
+a.shifen.com.		1020	IN	NS	ns1.a.shifen.com.
+a.shifen.com.		1020	IN	NS	ns2.a.shifen.com.
+a.shifen.com.		1020	IN	NS	ns3.a.shifen.com.
+
+;; ADDITIONAL SECTION:
+ns1.a.shifen.com.	420	IN	A	61.135.165.224
+ns2.a.shifen.com.	420	IN	A	220.181.33.32
+ns3.a.shifen.com.	420	IN	A	112.80.255.253
+ns4.a.shifen.com.	420	IN	A	14.215.177.229
+ns5.a.shifen.com.	420	IN	A	180.76.76.95
+
+## 查询的统计信息
+;; Query time: 6 msec
+;; SERVER: 192.168.1.1#53(192.168.1.1)
+;; WHEN: Sun Jun  9 10:18:50 2019
+;; MSG SIZE  rcvd: 260
+```
+
+## nslookup命令 : 作为 IP 与 主机名对应的检查
+**也是使用 /etc/resolv.conf 这个文件作为 DNS 服务器的来源选择.**
+>  nslookup [hostname|ip]
+
+```bash
+[root@localhost ~]# cat /etc/resolv.conf 
+# Generated by NetworkManager
+nameserver 192.168.1.1
+
+## nslookup 域名
+[root@localhost ~]# nslookup www.baidu.com
+Server:		192.168.1.1
+Address:	192.168.1.1#53
+
+Non-authoritative answer:
+www.baidu.com	canonical name = www.a.shifen.com.
+Name:	www.a.shifen.com
+Address: 180.97.33.108
+Name:	www.a.shifen.com
+Address: 180.97.33.107
+```
+
+## ftp命令
+**ftp 默认使用 21端口, 20端口用来传输数据.**
+> ftp  [host | ip ] [ port ]
+
+```bash
+## 需要先安装 ftp 软件
+[root@localhost ~]# yum install ftp vsftpd -y
+
+[root@localhost ~]# useradd gkdaxue
+[root@localhost ~]# passwd gkdaxue
+Changing password for user gkdaxue.
+New password: 
+BAD PASSWORD: it is too simplistic/systematic
+BAD PASSWORD: is too simple
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+[root@localhost ~]# 
+
+## 关闭防火墙等操作
+[root@localhost ~]# service iptables stop
+[root@localhost ~]# setenforce 0
+[root@localhost ~]# /etc/init.d/vsftpd start
+Starting vsftpd for vsftpd:                                [ OK ]
+
+## 本地用户的家目录为 /home/USERNAME 里面 
+[root@localhost ~]# ftp 192.168.1.206 21
+Connected to 192.168.1.206 (192.168.1.206).
+220 (vsFTPd 2.2.2)
+Name (192.168.1.206:root): gkdaxue           <== 输入本地用户账号
+331 Please specify the password.
+Password:                                    <== 输入本地用户密码
+230 Login successful.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+ftp> pwd                                     <== 查看当前目录
+257 "/home/gkdaxue"
+ftp> mkdir gkdaxue_ftp_dir                   <== 创建一个文件夹
+257 "/home/gkdaxue/gkdaxue_ftp_dir" created
+ftp> dir                                     <== 显示目录内容
+227 Entering Passive Mode (192,168,1,206,155,127).
+150 Here comes the directory listing.
+drwxr-xr-x    2 500      500          4096 Jun 09 04:18 gkdaxue_ftp_dir
+226 Directory send OK.
+ftp> get file_name    <== 下载单个文件
+ftp> mget file_name*  <== 下载多个文件, 可以使用通配符
+ftp> put file_name    <== 上传一个文件
+ftp> delete file      <== 删除 file 文件
+ftp> passive          <== 关闭或启动 passive 模式
+ftp> binary           <== 数据传输模式设置为 binary 格式
+ftp> bye              <== 退出 ftp
+```
+
+
+
